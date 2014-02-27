@@ -6,6 +6,8 @@ CreanvasJs.CreanvasController = function(
 	this.canvas = canvas;
 	this.context = context;
 	
+	// TODO improve event creation
+	
 	this.click = function(eventData){
 		this.clickEvent.dispatch(eventData);
 	};
@@ -32,16 +34,24 @@ CreanvasJs.CreanvasController = function(
 
 	this.reDraw = new Creevents.Creevent();		
 	
+	this.needRedraw = true;
+	
 	var controller = this;
 	
-	var drawingAll = setInterval(
+	var checkRedraw = setInterval(
 			function()
 			{
-				// to improve? redraw on need only?
-				context.beginPath();
-				context.fillStyle = "#FFF";
-				context.fillRect(0,0,canvas.width,canvas.height);
-				controller.reDraw.dispatch();
+				if (controller.needRedraw)
+					{
+						controller.needRedraw = false;
+						// to improve? redraw only needed parts? a Rectangle of stuff
+						// when image background: will need to redraw the whole anyway? Or store it a getImageData?
+						// but can cause a cascade.. so can probably not do anything else...
+						context.beginPath();
+						context.fillStyle = "#FFF";
+						context.fillRect(0,0,canvas.width,canvas.height);
+						controller.reDraw.dispatch();
+					}
 			},
 			50);
 

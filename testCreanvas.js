@@ -55,10 +55,22 @@ var startStuff = function ()
 				controller.context.stroke();
 			});
 
-	test1.draw();
-	test2.draw();
-	test3.draw();
-	
+
+	var test4 = new CreanvasJs.CreanvasElement(
+			"green",
+			controller,
+			150,
+			270,
+			function () 
+			{
+			context.strokeStyle = "#Ff0";
+			context.lineWidth=5;
+				
+			controller.context.beginPath();
+			controller.context.arc(this.x,this.y,15,0,2*Math.PI);
+			controller.context.stroke();
+			});
+
 	theCanvas.addEventListener(
 			"click",
 			function(event)

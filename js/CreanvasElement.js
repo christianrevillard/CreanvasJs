@@ -25,6 +25,11 @@ CreanvasJs.CreanvasElement = function(name, controller, x, y, draw){
 		
 	};
 	
+	this.redraw  = function()
+	{
+		element.controller.needRedraw =  true;
+	};
+	
 	var isClicked = function(e){
 		var canvasXY = getCanvasFromMouse(e.clientX, e.clientY);	
 		element.draw(); // to recreate the path.
@@ -41,11 +46,25 @@ CreanvasJs.CreanvasElement = function(name, controller, x, y, draw){
 	});
 
 	var isMoved = false;
-	var movingFrom;
+	var movingFrom = null;
 	
 	controller.mouseDownEvent.register(function(e) {
 		if (isClicked(e))
 		{
+			if (e.shiftKey)
+			{ 				
+				// copy before moving - must no handle the current event!		
+				// is there a better way?
+				setTimeout (
+						function(){
+				new CreanvasJs.CreanvasElement(
+						"theCopy",
+						controller,
+						element.x,
+						element.y,
+						element.draw);},10);
+			}
+			
 			isMoved = true;
 			movingFrom = getCanvasFromMouse(e.clientX, e.clientY);	
 		}
@@ -58,6 +77,7 @@ CreanvasJs.CreanvasElement = function(name, controller, x, y, draw){
 			element.x += canvasXY.canvasX-movingFrom.canvasX;
 			element.y += canvasXY.canvasY-movingFrom.canvasY;
 			movingFrom = canvasXY;	
+			element.redraw();
 		}
 	});
 
@@ -68,6 +88,7 @@ CreanvasJs.CreanvasElement = function(name, controller, x, y, draw){
 			element.x += canvasXY.canvasX-movingFrom.canvasX;
 			element.y += canvasXY.canvasY-movingFrom.canvasY;
 			isMoved = false;
+			element.redraw();
 		}
 	});
 
