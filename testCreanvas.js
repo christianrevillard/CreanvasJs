@@ -2,104 +2,95 @@ var startStuff = function ()
 {		
 	var theCanvas = document.getElementById('theCanvas');
 	
-	var context = theCanvas.getContext("2d");		
-	context.strokeStyle='#0FF';
-	context.fillStyle='#FFF';
-
-	var controller = new CreanvasJs.CreanvasController(
-		theCanvas,
-		context);
-				
+	var controller = new CreanvasJs.CreanvasController(theCanvas);
+	
 	var test1 = new CreanvasJs.CreanvasElement(
-			"red",
-			controller,
-			400,
-			300,
-			function () 
 			{
-				controller.context.strokeStyle = "#f00";
-				controller.context.lineWidth=2;
+			controller: controller,
+			x: 400,
+			y: 300,
+			draw: function (context) 
+			{
+				context.strokeStyle = "#f00";
+				context.lineWidth=2;
 				
-				controller.context.beginPath();
-				controller.context.arc(this.x,this.y,5,0,2*Math.PI);
-				controller.context.stroke();
-			});
+				context.beginPath();
+				context.arc(this.x,this.y,5,0,2*Math.PI);
+				context.stroke();
+			}});
 
 	var test2 = new CreanvasJs.CreanvasElement(
-			"green",
-			controller,
-			500,
-			200,
-			function () 
+			{
+				controller: controller,
+			x: 500,
+			y: 200,
+			draw: function (context) 
 			{
 			context.strokeStyle = "#0f0";
 			context.lineWidth=2;
 				
-			controller.context.beginPath();
-			controller.context.arc(this.x,this.y,10,0,2*Math.PI);
-			controller.context.stroke();
-			});
+			//context.beginPath(); // forgotten, should not mess evrything up - done
+			context.arc(this.x,this.y,10,0,2*Math.PI);
+			context.stroke();
+			}});
 
 	var test3 = new CreanvasJs.CreanvasElement(
-			"blue",
-			controller,
-			200,
-			350,
-			function () 
 			{
-				controller.context.strokeStyle = "#00f";
-				controller.context.lineWidth=2;
+				controller: controller,
+			x: 200,
+			y: 350,
+			draw: function (context) 
+			{
+				context.strokeStyle = "#00f";
+				context.lineWidth=2;
 				
-				controller.context.beginPath();
-				controller.context.arc(this.x,this.y,50,0,2*Math.PI);
-				controller.context.stroke();
-			});
+				context.beginPath();
+				context.arc(this.x,this.y,50,0,2*Math.PI);
+				context.stroke();
+			}});
 
 
 	var test4 = new CreanvasJs.CreanvasElement(
-			"green",
-			controller,
-			150,
-			270,
-			function () 
+			{
+				controller: controller,
+			x: 150,
+			Y: 270,
+			z:-5,
+			draw: function (context) 
 			{
 			context.strokeStyle = "#Ff0";
 			context.lineWidth=5;
 				
-			controller.context.beginPath();
-			controller.context.arc(this.x,this.y,15,0,2*Math.PI);
-			controller.context.stroke();
-			});
+			context.beginPath();
+			context.arc(this.x,this.y,15,0,2*Math.PI);
+			context.stroke();
+			}});
 
-	theCanvas.addEventListener(
-			"click",
-			function(event)
-			{
-				// should only dispatch a click event to the elements...
-				controller.click(event);
-			});
-
-	theCanvas.addEventListener(
-			"mousedown",
-			function(event)
-			{
-				// should only dispatch a click event to the elements...
-				controller.mouseDown(event);
-			});
 	
-	theCanvas.addEventListener(
-			"mouseup",
-			function(event)
+	var test5 = new CreanvasJs.CreanvasElement(
 			{
-				// should only dispatch a click event to the elements...
-				controller.mouseUp(event);
-			});
+				controller: controller,
+			x: 200,
+			y: 300,
+			z:-10,
+			draw: function (context) 
+			{
+				
+				// two different paths. Only the last is clickable
+				// any way to handle this ? Is this a feature?
+				// another way to handle events?
+			context.beginPath();
+			context.strokeStyle = "#Ff0";
+			context.lineWidth=2;
+			context.arc(this.x,this.y,20,0,Math.PI);
+			context.stroke();
+				
+			context.beginPath();
+			context.strokeStyle = "#0FF";
+			context.lineWidth=5;
+			context.arc(this.x,this.y,20,Math.PI,2*Math.PI);
+			context.stroke();
+			}});
 
-	theCanvas.addEventListener(
-			"mousemove",
-			function(event)
-			{
-				// should only dispatch a click event to the elements...
-				controller.mouseMove(event);
-			});
+	
 };

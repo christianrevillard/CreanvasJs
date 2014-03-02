@@ -1,54 +1,61 @@
 var CreanvasJs 	= CreanvasJs || {};		
 
-CreanvasJs.CreanvasElement = function(name, controller, x, y, draw){
-	// basic element
-	// needs 
-		// -position
-		// draw function
-		// event handling
-		// ..to design: how affected by other stuff? when to redraw?
+CreanvasJs.CreanvasElement = function(elementData){
 
-	this.name = name;
-	this.controller = controller;
-	this.x = x;
-	this.y = y;
-	this.draw = draw;	// should be private
+	if (!elementData.hasOwnProperty('controller'))
+	{
+		return; // should throw error
+	};
+
+	if (!elementData.hasOwnProperty('draw'))
+	{
+		return; // should throw error
+	};
+
+	this.controller = elementData.controller;
+	this.x = elementData.x || 0;
+	this.y = elementData.y || 0;
+	this.z = elementData.z || 0;
+	this.draw = elementData.draw;	
 	
 	var element = this;
 		
-	var getCanvasFromMouse  = function(mouseX, mouseY)
-	{
-		var bb = controller.canvas.getBoundingClientRect();
-		return { 
-			canvasX:(mouseX-bb.left)*controller.canvas.width/bb.width,
-			canvasY: (mouseY-bb.top)*controller.canvas.height/bb.height};
-		
-	};
+	this.controller.addEventListener('draw', function(e) {
+		element.controller.context.beginPath();
+		element.draw(element.controller.context);
+	}, 
+	element.z);
+
 	
-	this.redraw  = function()
-	{
-		element.controller.needRedraw =  true;
-	};
+	// not need if not event, but still very generic... 
 	
 	var isClicked = function(e){
-		var canvasXY = getCanvasFromMouse(e.clientX, e.clientY);	
-		element.draw(); // to recreate the path.
-		return controller.context.isPointInPath(
-				canvasXY.canvasX, 
-				canvasXY.canvasY);
+		var canvasXY = element.controller.getCanvasXYFromClientXY(e.clientX, e.clientY);	
+		element.controller.context.beginPath();
+		element.draw(element.controller.context); // to recreate the path. - avoid redrawing all??
+		// weakness: will only work with the last path in 'draw' function
+		return element.controller.context.isPointInPath(
+				canvasXY.x, 
+				canvasXY.y);
 	};
 
-	controller.clickEvent.register(function(e) {
+	
+
+	
+	// mouse events, not basic, should not be in basic element definition	
+	
+	this.controller.addEventListener('click', function(e) {
 		if (isClicked(e))			
 		{	
 			//alert(name);		
 		}
-	});
+	}, 
+	element.z);
 
 	var isMoved = false;
 	var movingFrom = null;
 	
-	controller.mouseDownEvent.register(function(e) {
+	this.controller.addEventListener('mousedown', function(e) {
 		if (isClicked(e))
 		{
 			if (e.shiftKey)
@@ -58,49 +65,49 @@ CreanvasJs.CreanvasElement = function(name, controller, x, y, draw){
 				setTimeout (
 						function(){
 				new CreanvasJs.CreanvasElement(
-						"theCopy",
-						controller,
-						element.x,
-						element.y,
-						element.draw);},10);
+						{ 
+							controller: element.controller,
+							x: element.x,
+							y: element.y,
+							draw: element.draw});},10);
 			}
 			
 			isMoved = true;
-			movingFrom = getCanvasFromMouse(e.clientX, e.clientY);	
+			movingFrom = element.controller.getCanvasXYFromClientXY(e.clientX, e.clientY);	
 		}
-	});
+	}, 
+	element.z);
 
-	controller.mouseMoveEvent.register(function(e) {
+	this.controller.addEventListener('mousemove', function(e) {
 		if (isMoved)
 		{
-			var canvasXY = getCanvasFromMouse(e.clientX, e.clientY);	
-			element.x += canvasXY.canvasX-movingFrom.canvasX;
-			element.y += canvasXY.canvasY-movingFrom.canvasY;
+			var canvasXY = element.controller.getCanvasXYFromClientXY(e.clientX, e.clientY);	
+			element.x += canvasXY.x-movingFrom.x;
+			element.y += canvasXY.y-movingFrom.y;
 			movingFrom = canvasXY;	
-			element.redraw();
+			element.triggerRedraw();
 		}
-	});
+	}, 
+	element.z);
 
-	controller.mouseUpEvent.register(function(e) {
+	this.controller.addEventListener('mouseup', function(e) {
 		if (isMoved)
 		{
-			var canvasXY = getCanvasFromMouse(e.clientX, e.clientY);	
-			element.x += canvasXY.canvasX-movingFrom.canvasX;
-			element.y += canvasXY.canvasY-movingFrom.canvasY;
+			var canvasXY = element.controller.getCanvasXYFromClientXY(e.clientX, e.clientY);	
+			element.x += canvasXY.x-movingFrom.x;
+			element.y += canvasXY.y-movingFrom.y;
 			isMoved = false;
-			element.redraw();
+			element.triggerRedraw();
 		}
-	});
+	}, 
+	element.z);
+};
 
-	controller.reDraw.register(function(e) {
-		element.draw();
-	});
-	
-	
+CreanvasJs.CreanvasElement.prototype.triggerRedraw = function()
+{
+	this.controller.needRedraw =  true;
 };
 
 // specific elements, circles and stuff
  
 // more advanced elements
-
-// But first : drag and drop ! and think redraw
