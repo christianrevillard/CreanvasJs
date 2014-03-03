@@ -1,11 +1,11 @@
 var Creevents = Creevents || {};		
 
-Creevents.CreeventRegister = function()
+Creevents.EventContainer = function()
 {	
 	var events = [];
 	var register = this;
 	
-	this.dispatchEvent = function(eventId, eventData)
+	this.dispatch = function(eventId, eventData)
 	{
 		if (events[eventId])
 		{
@@ -13,7 +13,7 @@ Creevents.CreeventRegister = function()
 		}
 	};
 
-	this.registerEvent = function(eventId, callback, rank)
+	this.register = function(eventId, callback, rank)
 	{
 		if (events[eventId])
 		{
@@ -21,7 +21,7 @@ Creevents.CreeventRegister = function()
 		}
 	};
 
-	this.cancelEvent = function(eventId, handle)
+	this.cancel = function(eventId, handle)
 	{
 		if (events[eventId])
 		{
@@ -30,12 +30,12 @@ Creevents.CreeventRegister = function()
 	};
 	
 
-	this.addCustomEvent = function(eventId)
+	this.addEvent = function(eventId)
 	{
 		if (events[eventId])
 			return; // already there !
 
-		events[eventId] = new Creevents.Creevent();					
+		events[eventId] = new Creevents.Event();					
 	};
 
 	this.registerControlEvent = function (control, eventId)
@@ -43,13 +43,13 @@ Creevents.CreeventRegister = function()
 		if (events[eventId])
 			return; // already there !
 		
-		events[eventId] = new Creevents.Creevent();			
+		events[eventId] = new Creevents.Event();			
 
 		control.addEventListener(
 			eventId,
 			function(event)
 			{
-				register.dispatchEvent(eventId, event);
+				register.dispatch(eventId, event);
 			});
 	};
 };

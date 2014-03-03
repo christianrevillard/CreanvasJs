@@ -2,13 +2,24 @@ var startStuff = function ()
 {		
 	var theCanvas = document.getElementById('theCanvas');
 	
-	var controller = new CreanvasJs.CreanvasController(theCanvas);
+	var controller = new Creanvas.Controller(
+			{
+				canvas:theCanvas, 
+				backgroundColor: "#DDD",
+				drawBackground : 
+					function (context) 
+					{
+						context.fillStyle = "#666";
+						context.fillRect(100,100,theCanvas.width-200,theCanvas.height-200);
+					},		
+			});
 	
-	var test1 = new CreanvasJs.CreanvasElement(
+	var test1 = new Creanvas.Element(
 			{
 			controller: controller,
 			x: 400,
 			y: 300,
+			movable: true,
 			draw: function (context) 
 			{
 				context.strokeStyle = "#f00";
@@ -19,11 +30,12 @@ var startStuff = function ()
 				context.stroke();
 			}});
 
-	var test2 = new CreanvasJs.CreanvasElement(
+	var test2 = new Creanvas.Element(
 			{
 				controller: controller,
 			x: 500,
 			y: 200,
+			movable: true,
 			draw: function (context) 
 			{
 			context.strokeStyle = "#0f0";
@@ -34,11 +46,12 @@ var startStuff = function ()
 			context.stroke();
 			}});
 
-	var test3 = new CreanvasJs.CreanvasElement(
+	var test3 = new Creanvas.Element(
 			{
 				controller: controller,
 			x: 200,
 			y: 350,
+			onclick: function(){ alert(this.x + ',' + this.y)},
 			draw: function (context) 
 			{
 				context.strokeStyle = "#00f";
@@ -50,7 +63,7 @@ var startStuff = function ()
 			}});
 
 
-	var test4 = new CreanvasJs.CreanvasElement(
+	var test4 = new Creanvas.Element(
 			{
 				controller: controller,
 			x: 150,
@@ -67,7 +80,7 @@ var startStuff = function ()
 			}});
 
 	
-	var test5 = new CreanvasJs.CreanvasElement(
+	var test5 = new Creanvas.Element(
 			{
 				controller: controller,
 			x: 200,
@@ -91,6 +104,16 @@ var startStuff = function ()
 			context.arc(this.x,this.y,20,Math.PI,2*Math.PI);
 			context.stroke();
 			}});
-
 	
+	
+	// prevent a Galaxy bug stuff - can we do better ? must handle scrolling manually...
+	function touchHandlerDummy(e)
+	{
+	    e.preventDefault();
+	    return false;
+	}
+	document.addEventListener("touchstart", touchHandlerDummy, false);
+	document.addEventListener("touchmove", touchHandlerDummy, false);
+	document.addEventListener("touchend", touchHandlerDummy, false);
+
 };
