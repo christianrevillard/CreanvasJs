@@ -3,6 +3,13 @@ var Creanvas = Creanvas || {};
 Creanvas.Controller = function(canvasData) {
 	var canvas, needRedraw, refreshTime, controller, events;
 
+	var isStopped = false;
+	
+	this.stop = function()
+	{
+		isStopped = true;
+	};
+	
 	controller = this;
 
 	canvas = canvasData.canvas;
@@ -12,6 +19,8 @@ Creanvas.Controller = function(canvasData) {
 
 	events = new Creevents.EventContainer();			
 	events.addEvent('draw');
+	events.addEvent('drop');
+	events.addEvent('drag');
 	events.registerControlEvent(canvas, 'click');
 	events.registerControlEvent(canvas, 'mousedown');
 	events.registerControlEvent(canvas, 'mouseup');
@@ -22,15 +31,16 @@ Creanvas.Controller = function(canvasData) {
 		
 	this.redraw = function()
 	{
-		needRedraw = true;
+		if (!isStopped)
+			needRedraw = true;
 	};	
 
-	this.getCanvasXYFromClientXY  = function(clientX, clientY)
+	this.getCanvasXYFromClientXY  = function(clientXY)
 	{
 		var boundings = canvas.getBoundingClientRect();
 		return { 
-			x: (clientX-boundings.left) * canvas.width/boundings.width,
-			y: (clientY-boundings.top) * canvas.height/boundings.height};		
+			x: (clientXY.clientX-boundings.left) * canvas.width/boundings.width,
+			y: (clientXY.clientY-boundings.top) * canvas.height/boundings.height};		
 	};
 
 	this.addEventListener = function(eventId, eventHandler, rank)
@@ -42,6 +52,9 @@ Creanvas.Controller = function(canvasData) {
 	{
 		events.cancel(eventId, eventHandle);
 	};
+
+//	controller.context.transform(1,0,0.1,1,0,0);
+//	controller.context.rotate(Math.PI/4);
 
 	setInterval(
 			function()
@@ -65,7 +78,9 @@ Creanvas.Controller = function(canvasData) {
 				context.fillRect(0,0,canvas.width,canvas.height);
 			},
 		z: -Infinity});
+	
+	this.dispatchEvent = function(id, eventData)
+	{
+		events.dispatch(id, eventData);
+	};
 };
-
-
-
