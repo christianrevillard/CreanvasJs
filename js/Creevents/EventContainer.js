@@ -38,7 +38,7 @@ Creevents.EventContainer = function()
 		events[eventId] = new Creevents.Event();					
 	};
 
-	this.registerControlEvent = function (control, eventId)
+	this.registerControlEvent = function (control, eventId, preventDefault)
 	{
 		if (events[eventId])
 			return; // already there !
@@ -49,6 +49,9 @@ Creevents.EventContainer = function()
 			eventId,
 			function(event)
 			{
+				if (preventDefault)
+					event.preventDefault();
+				
 				register.dispatch(eventId, event);
 			});
 	};

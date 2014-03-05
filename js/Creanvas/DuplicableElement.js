@@ -1,60 +1,59 @@
-var Creanvas = Creanvas || {};		
+// duplicableData:
+// generatorCount : number of copies to make. Default: Infinity
+
+var Creanvas = Creanvas || {};
 
 Creanvas.elementDecorators = Creanvas.elementDecorators || [];
 
-Creanvas.elementDecorators.push(
-{
-	type: 'duplicable',
-	applyTo: function(element, eventsToHandle, duplicableData)
-	{
-		var makeCopy = function(e) {
-			eventsToHandle.push(function()
-			{		
-				if (element.isPointInPath(e))			
-				{
-					if (duplicableData.generatorCount>0)
-					{
-						var copy = new Creanvas.Element(
-						{ 
-							controller: element.controller,
-							x: element.x,
-							y: element.y,
-							draw: element.draw,
-							movable:true
-						});
-						
-						copy.startMoving(e);
-						
-						duplicableData.generatorCount--;
+Creanvas.elementDecorators
+		.push({
+			type : 'duplicable',
+			applyTo : function(element, eventsToHandle, duplicableData) {
+				var generatorCount = duplicableData
+						.hasOwnProperty('generatorCount') ? duplicableData.generatorCount
+						: Infinity;
+
+				var makeCopy = function(e) {
+					if (duplicableData.isBlocked && duplicableData.isBlocked()) 
+						return;
+					
+					if (generatorCount > 0) {
+						eventsToHandle.push(function() {
+									var doDuplicate = function(e) {
+										if (element.isPointInPath(e)) {
+											generatorCount--;
+
+											var elementData = element.elementData;
+											elementData.x = element.x;
+											elementData.y = element.y;
+											elementData.originalDuplicable = elementData.originalDuplicable || elementData.duplicable
+											elementData.duplicable = false;
+											elementData.movable = {isBlocked:elementData.originalDuplicable.isBlocked};
+
+											var copy = new Creanvas.Element(
+													elementData);
+
+											copy.startMoving(e, e.identifier);
+
+											return true;
+										}
+										return false;
+									};
+
+									if (e.targetTouches) {
+										for ( var touch = 0; touch < e.targetTouches.length; touch++) {
+											if (doDuplicate(e.targetTouches[touch]))
+												break;
+										}
+									} else {
+										doDuplicate(e);
+									}
+								});
 					}
-				}
-			});
+					element.triggerRedraw();
+				};
 
-			element.triggerRedraw();
-		};
-
-		var makeCopypad = function(e) {
-			eventsToHandle.push(function()
-					{		
-					for (var touch = 0; touch<e.targetTouches.length; touch++)				
-						{
-						if (element.isPointInPath(e.targetTouches[touch]))
-						{						
-							var copy = new Creanvas.Element(
-									{ 
-										controller: element.controller,
-										x: element.x,
-										y: element.y,
-										draw: element.draw,
-										movable:true});
-							copy.startMoving(e, e.targetTouches[touch].identifier);						
-						}
-					}
-			element.triggerRedraw();
-			});
-		};
-
-		element.controller.addEventListener('mousedown', makeCopy);
-		element.controller.addEventListener('touchstart', makeCopypad);
-	}
-});
+				element.controller.addEventListener('mousedown', makeCopy);
+				element.controller.addEventListener('touchstart', makeCopy);
+			}
+		});

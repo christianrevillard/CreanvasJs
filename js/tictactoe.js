@@ -4,55 +4,86 @@ CreTictactoe.onload = function ()
 {		
 	var theCanvas = document.getElementById('theCanvas');
 	var controller;
+	
 	var setUp = function()
 	{
-			controller = new Creanvas.Controller(
-			{
-				canvas:theCanvas, 
-				drawBackground : 
-					function (context) 
-					{
-						context.strokeStyle = "#000";
+		var blockedX = false;
+		var blockedO = true;
 
-						context.fillStyle = "#666";
-						context.fillRect(0,0,700,500);
-
-
-						var gradient = context.createLinearGradient(100,100,600,400);
-						gradient.addColorStop(0.0,"#EEE");
-						gradient.addColorStop(1.0,"#999");
-
-						
-						context.fillStyle = gradient;
-						context.fillRect(25,25,450,450);
-						context.fillRect(525,75,150,150);
-						context.fillRect(525,250,150,150);
-						
-						context.moveTo(25+150,25);
-						context.lineTo(25+150,25+450);
-						context.moveTo(25+300,25);
-						context.lineTo(25+300,25+450);
-						context.moveTo(25,25+150);
-						context.lineTo(25+450,25+150);
-						context.moveTo(25,25+300);
-						context.lineTo(25+450,25+300);
-						context.lineWidth=4;
-						context.lineCap='round';
-						context.stroke();
-						
-					},		
-			});
-	
-	var markX= new Creanvas.Element(
+		controller = new Creanvas.Controller(
 		{
+			canvas:theCanvas, 
+			drawBackground : 
+				function (context) 
+				{
+					context.strokeStyle = "#000";
+
+					context.fillStyle = "#666";
+					context.fillRect(0,0,700,500);
+
+
+					var gradient = context.createLinearGradient(100,100,600,400);
+					gradient.addColorStop(0.0,"#EEE");
+					gradient.addColorStop(1.0,"#999");
+
+					
+					context.fillStyle = gradient;
+					context.fillRect(25,25,450,450);
+					context.fillRect(525,75,150,150);
+					context.fillRect(525,250,150,150);
+					
+					context.moveTo(25+150,25);
+					context.lineTo(25+150,25+450);
+					context.moveTo(25+300,25);
+					context.lineTo(25+300,25+450);
+					context.moveTo(25,25+150);
+					context.lineTo(25+450,25+150);
+					context.moveTo(25,25+300);
+					context.lineTo(25+450,25+300);
+					context.lineWidth=4;
+					context.lineCap='round';
+					context.stroke();
+					
+				},		
+		});
+	
+		controller.addEventListener('dropped',
+		function(e)
+		{
+			blockedX = !blockedX;
+			blockedO = !blockedO;
+			currentPlayer.y = blockedX?325:150;
+			controller.redraw();
+		});
+
+		var currentPlayer = new Creanvas.Element(
+				{
+					controller: controller,
+				x: 600,
+				y: 150,
+				z:-100,
+				draw: function (context) 
+				{
+					var gradient = context.createLinearGradient(100,100,600,400);
+					gradient.addColorStop(0.0,"#FF0");
+					gradient.addColorStop(1.0,"#BBB");					
+					context.fillStyle = gradient;
+					context.fillRect(this.x-75,this.y-75,150,150);
+				}});
+
+		
+		var markX= new Creanvas.Element(
+		{
+			name:'X',
 			controller: controller,
 			x: 600,
 			y: 150,
-			duplicable: {generatorCount:3},
+			duplicable: {generatorCount:3, isBlocked:function(){return blockedX;}},
+			droppable: true,
 			draw: function (context) 
 			{
 				var color1, color2;
-				if (this.isDropped)
+				if (this.dropZone)
 				{
 					color1 =  "#D22";
 					color2= "#600";
@@ -83,14 +114,16 @@ CreTictactoe.onload = function ()
 
 	var markO = new Creanvas.Element(
 			{
+				name:'O',
 				controller: controller,
 			x: 600,
 			y: 325,
-			duplicable: {generatorCount:3},
+			duplicable: {generatorCount:3, isBlocked:function(){return blockedO;}},
+			droppable: true,
 			draw: function (context) 
 			{
 				var color1, color2;
-				if (this.isDropped)
+				if (this.dropZone)
 				{
 					color1 = "#88F";
 					color2= "#FFF";
@@ -119,7 +152,7 @@ CreTictactoe.onload = function ()
 			dropzone:{
 				dropX:100+x*150,
 				dropY:100+y*150,
-				dropCount:1}, 
+				availableSpots:1}, 
 			draw: function (context) 
 			{
 				context.moveTo(this.x, this.y);
@@ -131,22 +164,23 @@ CreTictactoe.onload = function ()
 		});
 	};
 	
-	var case00 = tttCase(0,0);
-	var case01 = tttCase(0,1);
-	var case02 = tttCase(0,2);
-	var case10 = tttCase(1,0);
-	var case11 = tttCase(1,1);
-	var case12 = tttCase(1,2);
-	var case20 = tttCase(2,0);
-	var case21 = tttCase(2,1);
-	var case22 = tttCase(2,2);
-		
+	var cases = [];
+	
+	for (var i = 0; i<3; i++)
+	{		
+		cases[i] = [];
+		for (var j = 0; j<3; j++)
+		{
+			cases[i][j] = tttCase(i,j);			
+		}
+	}
+
 	var resetButton = new Creanvas.Element(
 			{
 				controller: controller,
 			x: 600,
 			y: 35,
-			clickable: {onclick:function(){
+			clickable : {onclick:function(){			
 				controller.stop();
 				setUp();
 				}},
@@ -160,17 +194,111 @@ CreTictactoe.onload = function ()
 				context.fillStyle = gradient;
 				context.fill();
 			}});
+	
+	var hasWon = function (element)
+	{
+		controller.stop();
+
+		var elementData = element.elementData;
+		elementData.z = Infinity;
+		elementData.x = 325;
+		elementData.y = 250;
+
+		controller = new Creanvas.Controller({
+			canvas:theCanvas,
+			drawBackground:function(context)
+			{
+				var gradient = context.createLinearGradient(elementData.x-75,elementData.y-125,elementData.x-75+300,elementData.y-125+400);
+				gradient.addColorStop(0.0,"#ff0");
+				gradient.addColorStop(1.0,"#f00");
+
+				context.fillStyle= gradient;
+				context.fillRect(elementData.x-75, elementData.y-125,150, 200);
+
+				context.fillStyle="#00d";
+				context.font= "24pt Times Roman";
+				context.fillText(
+						"VINNER !!",
+						elementData.x-75,
+						elementData.y-100);
+				element.elementData.draw(context);
+			}});
+		
+		elementData.controller = controller;
+		elementData.duplicable = false;
+		elementData.clickable = {onclick:function(){			
+			controller.stop();
+			setUp();
+			}};
+
+		var winner = new Creanvas.Element(elementData);
+	};
+
+	var won = function(list)
+	{
+		if (list.length!=3)
+			return false;
+		
+		if (list.filter(function(e){ return e.i == list[0].i}).length == 3)
+			return true;
+
+		if (list.filter(function(e){ return e.j == list[0].j}).length == 3)
+			return true;
+
+		if (list.filter(function(e){ return e.i == e.j}).length == 3)
+			return true;
+
+		if (list.filter(function(e){ return e.i == 2 - e.j}).length == 3)
+			return true;
+
+		return false;
+	}
+	
+	var game = setInterval(
+			function()
+			{
+				var Xs = [];
+				var Os = [];
+				for (var i = 0; i<3; i++)
+				{		
+					for (var j = 0; j<3; j++)
+					{
+						if (cases[i][j].droppedElements.length>0 )
+						{
+							if (cases[i][j].droppedElements[0].name=='X')
+							{
+								Xs.push({i:i,j:j});
+							}
+							else if (cases[i][j].droppedElements[0].name=='O')
+							{
+								Os.push({i:i,j:j});
+							}
+						}
+					}
+				}
+				
+				if (won(Xs))
+				{
+					clearInterval(game);
+					hasWon(markX);					
+				}
+				if (won(Os))
+				{
+					clearInterval(game);
+					hasWon(markO);
+				}
+			}
+			,100);
 	};
 	
 	setUp();
-	// prevent a Galaxy bug stuff - can we do better ? must handle scrolling manually...
-	function touchHandlerDummy(e)
-	{
-	    e.preventDefault();
-	    return false;
-	}
 	
-	document.addEventListener("touchstart", touchHandlerDummy, false);
-	document.addEventListener("touchmove", touchHandlerDummy, false);
-	document.addEventListener("touchend", touchHandlerDummy, false);
+	// fix Galaxy Chrome scrolling bug
+	document.addEventListener(
+		"touchmove", function touchHandlerDummy(e)
+		{
+		    e.preventDefault();
+		    return false;
+		},
+		false);	
 };

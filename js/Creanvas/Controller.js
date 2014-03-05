@@ -21,6 +21,7 @@ Creanvas.Controller = function(canvasData) {
 	events.addEvent('draw');
 	events.addEvent('drop');
 	events.addEvent('drag');
+	events.addEvent('dropped');
 	events.registerControlEvent(canvas, 'click');
 	events.registerControlEvent(canvas, 'mousedown');
 	events.registerControlEvent(canvas, 'mouseup');

@@ -20,17 +20,27 @@ Creanvas.elementDecorators.push(
 			isMoved = true;
 			movingFrom = element.controller.getCanvasXYFromClientXY(e);	
 			touchIdentifier = id;
-			element.controller.dispatchEvent('drag', {moveEvent:e, element:element});
+			if (element.isDroppable)
+			{
+				element.controller.dispatchEvent('drag', {moveEvent:e, element:element});
+			}
 		};
 
 		element.moveCompleted = function(e)
 		{
 			isMoved = false;
 			movingFrom = null;
-			element.controller.dispatchEvent('drop', {moveEvent:e, element:element});
+			if (element.isDroppable)
+			{
+				element.controller.dispatchEvent('drop', {moveEvent:e, element:element});
+			}
 		};
 
 		var beginMove = function(e) {
+
+			if (movableData.isBlocked && movableData.isBlocked()) 
+				return;
+			
 			eventsToHandle.push(function()
 			{
 				var doMove = function(e)
@@ -62,6 +72,9 @@ Creanvas.elementDecorators.push(
 		element.controller.addEventListener('touchstart', beginMove);
 			
 		var move = function(e) {
+			if (movableData.isBlocked && movableData.isBlocked()) 
+				return;
+			
 			eventsToHandle.push(function()
 					{		
 						var doMove = function(e)
@@ -100,6 +113,9 @@ Creanvas.elementDecorators.push(
 		element.controller.addEventListener('touchmove', move);
 
 		var moveend = function(e) {
+			if (movableData.isBlocked && movableData.isBlocked()) 
+				return;
+			
 			eventsToHandle.push(function()
 			{
 				var doMove = function(e)

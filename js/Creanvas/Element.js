@@ -12,11 +12,15 @@ Creanvas.Element = function(elementData){
 		return; // TODO error throw / handling
 	};
 
+	
+	this.elementData = elementData;
 	this.controller = elementData.controller;
 	this.x = elementData.x || 0;
 	this.y = elementData.y || 0;
 	this.z = elementData.z || 0;
 	this.draw = elementData.draw;	
+	this.id = name + Date.now();	
+	this.name = elementData.name;	
 	
 	var element = this;
 		

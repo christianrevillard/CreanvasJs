@@ -7,17 +7,25 @@ Creanvas.elementDecorators.push(
 	type: 'dropzone',
 	applyTo: function(element, eventsToHandle, dropzoneData)
 	{
+		element.droppedElements = [];
+		
 		var drop = function(e) {
+			
+			if(!e.element.isDroppable)
+				return;
+			
 			eventsToHandle.push(function()
 			{		
 				if (element.isPointInPath(e.moveEvent))			
 				{
-					if (dropzoneData.dropCount>0 && !e.element.isDropped)
+					if (dropzoneData.availableSpots > 0 && !e.element.dropZone)
 					{
-						dropzoneData.dropCount--;
-						e.element.x = dropzoneData.dropX;
-						e.element.y = dropzoneData.dropY;
-						e.element.isDropped = true;
+						dropzoneData.availableSpots--;
+						e.element.x = dropzoneData.dropX || element.x;
+						e.element.y = dropzoneData.dropY || element.y;
+						e.element.dropZone = element;
+						element.droppedElements.push(e.element);
+						element.controller.dispatchEvent('dropped', {dropZone:element, element:e.element});
 					}
 				}
 			});
@@ -28,15 +36,18 @@ Creanvas.elementDecorators.push(
 		element.controller.addEventListener('drop', drop);
 
 		var drag = function(e) {
+
+			if(e.element.dropZone !== element)
+				return;
+
 			eventsToHandle.push(function()
-					{		
+			{		
 				if (element.isPointInPath(e.moveEvent))			
 				{
-					if (e.element.isDropped)
-					{
-						e.element.isDropped = false;
-						dropzoneData.dropCount++;
-					}
+					e.element.dropZone = null;
+					dropzoneData.availableSpots++;
+					element.droppedElements.splice(
+							element.droppedElements.indexOf(e.element),1);	
 				}
 			});
 			element.triggerRedraw();
