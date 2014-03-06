@@ -1,23 +1,18 @@
 var Creanvas = Creanvas || {};		
 
-Creanvas.Controller = function(canvasData) {
+Creanvas.Controller = function(controllerData) {
 	var canvas, needRedraw, refreshTime, controller, events;
 
-	var isStopped = false;
-	
-	this.stop = function()
-	{
-		isStopped = true;
-	};
-	
 	controller = this;
 
-	canvas = canvasData.canvas;
-	this.context = canvas.getContext("2d");	
+	canvas = controllerData.canvas;
+	controller.context = canvas.getContext("2d");	
 	needRedraw = true;	
-	refreshTime = canvasData.refreshTime || 50; // ms	
+	isStopping = false;
+	refreshTime = controllerData.refreshTime || 50; // ms	
 
 	events = new Creevents.EventContainer();			
+	events.addEvent('deactivate');
 	events.addEvent('draw');
 	events.addEvent('drop');
 	events.addEvent('drag');
@@ -29,11 +24,15 @@ Creanvas.Controller = function(canvasData) {
 	events.registerControlEvent(canvas, 'touchstart');
 	events.registerControlEvent(canvas, 'touchend');
 	events.registerControlEvent(canvas, 'touchmove');
-		
+			
+	this.stop = function()
+	{
+		events.dispatch('deactivate');
+	};
+
 	this.redraw = function()
 	{
-		if (!isStopped)
-			needRedraw = true;
+		needRedraw = true;
 	};	
 
 	this.getCanvasXYFromClientXY  = function(clientXY)
@@ -46,7 +45,7 @@ Creanvas.Controller = function(canvasData) {
 
 	this.addEventListener = function(eventId, eventHandler, rank)
 	{
-		events.register(eventId, eventHandler, rank);
+		return events.register(eventId, eventHandler, rank);
 	};
 
 	this.removeEventListener = function(eventId, eventHandle)
@@ -54,34 +53,50 @@ Creanvas.Controller = function(canvasData) {
 		events.cancel(eventId, eventHandle);
 	};
 
-//	controller.context.transform(1,0,0.1,1,0,0);
-//	controller.context.rotate(Math.PI/4);
+	this.addElement  = function (element)
+	{
+		element.controller = controller;
+				
+		element.addEventListener(
+		{
+			eventId: 'draw',
+			rank: element.z,
+			handler: function(e) { element.drawAndHandleEvents();
+		}});
+
+		element.addEventListener(
+		{
+			eventId: 'deactivate', 
+			handler: function(e) { element.deactivate(); }
+		});
+	};
+		
+	this.dispatchEvent = function(id, eventData)
+	{
+		events.dispatch(id, eventData);
+	};
+	
+	//background
+	new Creanvas.Element(
+	{
+		controller: controller,
+		draw: 
+			controllerData.drawBackground ||  
+			function (context) 
+			{
+				context.fillStyle = controllerData.backgroundStyle || "#FFF";
+				context.fillRect(0,0,canvas.width,canvas.height);
+			},
+		z: -Infinity});
 
 	setInterval(
 			function()
 			{
 				if (needRedraw)
-					{
-						needRedraw = false;
-						events.dispatch('draw');
-					}
+				{
+					needRedraw = false;
+					events.dispatch('draw');
+				}
 			},
 			refreshTime);
-
-	var background = new Creanvas.Element(
-	{
-		controller: controller,
-		draw: 
-			canvasData.drawBackground ||  
-			function (context) 
-			{
-				context.fillStyle = canvasData.backgroundColor || "#FFF";
-				context.fillRect(0,0,canvas.width,canvas.height);
-			},
-		z: -Infinity});
-	
-	this.dispatchEvent = function(id, eventData)
-	{
-		events.dispatch(id, eventData);
-	};
 };

@@ -7,17 +7,23 @@ Creanvas.elementDecorators.push(
 	type: 'clickable',
 	applyTo: function(element, eventsToHandle, clickData)
 	{	
-		element.controller.addEventListener('click', function(e){
+		var onclick = clickData.onclick;
 
-			eventsToHandle.push(function()
-			{
-				if (element.isPointInPath(e))			
-				{	
-					clickData.onclick.call(element);
-				}			
-			});
+		element.addEventListener(
+				{
+					decoratorType:'clickable',
+					eventId: 'click', 
+					handler: function(e){
+						eventsToHandle.push(function()
+						{
+							if (element.isPointInPath(e))			
+							{	
+								onclick.call(element);
+							}			
+						});
 
 			element.triggerRedraw();
-		});
+				}
+			});
 	}
 });

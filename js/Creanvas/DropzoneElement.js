@@ -7,6 +7,10 @@ Creanvas.elementDecorators.push(
 	type: 'dropzone',
 	applyTo: function(element, eventsToHandle, dropzoneData)
 	{
+		var availableSpots = dropzoneData.availableSpots;
+		var dropX = dropzoneData.dropX;
+		var dropY = dropzoneData.dropY;
+		
 		element.droppedElements = [];
 		
 		var drop = function(e) {
@@ -18,11 +22,11 @@ Creanvas.elementDecorators.push(
 			{		
 				if (element.isPointInPath(e.moveEvent))			
 				{
-					if (dropzoneData.availableSpots > 0 && !e.element.dropZone)
+					if (availableSpots > 0 && !e.element.dropZone)
 					{
-						dropzoneData.availableSpots--;
-						e.element.x = dropzoneData.dropX || element.x;
-						e.element.y = dropzoneData.dropY || element.y;
+						availableSpots--;
+						e.element.x = dropX || element.x;
+						e.element.y = dropY || element.y;
 						e.element.dropZone = element;
 						element.droppedElements.push(e.element);
 						element.controller.dispatchEvent('dropped', {dropZone:element, element:e.element});
@@ -33,7 +37,10 @@ Creanvas.elementDecorators.push(
 			element.triggerRedraw();
 		};
 
-		element.controller.addEventListener('drop', drop);
+		element.addEventListener({
+			decoratorType:'dropzone',
+			eventId:'drop', 
+			handler:drop});
 
 		var drag = function(e) {
 
@@ -45,7 +52,7 @@ Creanvas.elementDecorators.push(
 				if (element.isPointInPath(e.moveEvent))			
 				{
 					e.element.dropZone = null;
-					dropzoneData.availableSpots++;
+					availableSpots++;
 					element.droppedElements.splice(
 							element.droppedElements.indexOf(e.element),1);	
 				}
@@ -53,6 +60,9 @@ Creanvas.elementDecorators.push(
 			element.triggerRedraw();
 		};
 
-		element.controller.addEventListener('drag', drag);
+		element.addEventListener({
+			decoratorType:'dropzone',
+			eventId:'drag', 
+			handler:drag});
 	}
 });

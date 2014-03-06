@@ -1,5 +1,6 @@
 // duplicableData:
 // generatorCount : number of copies to make. Default: Infinity
+// isBlocked: function that allow to block the duplication
 
 var Creanvas = Creanvas || {};
 
@@ -9,12 +10,15 @@ Creanvas.elementDecorators
 		.push({
 			type : 'duplicable',
 			applyTo : function(element, eventsToHandle, duplicableData) {
+				
+				var isBlocked = duplicableData.isBlocked;
+
 				var generatorCount = duplicableData
 						.hasOwnProperty('generatorCount') ? duplicableData.generatorCount
 						: Infinity;
 
 				var makeCopy = function(e) {
-					if (duplicableData.isBlocked && duplicableData.isBlocked()) 
+					if (isBlocked && isBlocked()) 
 						return;
 					
 					if (generatorCount > 0) {
@@ -23,15 +27,12 @@ Creanvas.elementDecorators
 										if (element.isPointInPath(e)) {
 											generatorCount--;
 
-											var elementData = element.elementData;
-											elementData.x = element.x;
-											elementData.y = element.y;
-											elementData.originalDuplicable = elementData.originalDuplicable || elementData.duplicable
-											elementData.duplicable = false;
-											elementData.movable = {isBlocked:elementData.originalDuplicable.isBlocked};
+											var copy = element.clone();
 
-											var copy = new Creanvas.Element(
-													elementData);
+											copy.removeDecorator('duplicable');
+
+											copy.applyDecorator(
+													Creanvas.getElementDecorator('movable'),{});
 
 											copy.startMoving(e, e.identifier);
 
@@ -52,8 +53,15 @@ Creanvas.elementDecorators
 					}
 					element.triggerRedraw();
 				};
+				
+				element.addEventListener({
+					decoratorType:'duplicable',
+					eventId:'mousedown', 
+					handler:makeCopy});
 
-				element.controller.addEventListener('mousedown', makeCopy);
-				element.controller.addEventListener('touchstart', makeCopy);
+				element.addEventListener({
+					decoratorType:'duplicable',
+					eventId:'touchstart', 
+					handler:makeCopy});
 			}
 		});

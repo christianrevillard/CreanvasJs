@@ -1,3 +1,6 @@
+// movableData:
+// isBlocked: function that allow to block the duplication
+
 var Creanvas = Creanvas || {};		
 
 Creanvas.elementDecorators = Creanvas.elementDecorators || [];
@@ -10,6 +13,7 @@ Creanvas.elementDecorators.push(
 		var isMoved = false;
 		var touchIdentifier = null;	
 		var movingFrom = null;
+		var isBlocked = movableData.isBlock;
 		
 		element.startMoving = function(e, id)
 		{
@@ -38,7 +42,7 @@ Creanvas.elementDecorators.push(
 
 		var beginMove = function(e) {
 
-			if (movableData.isBlocked && movableData.isBlocked()) 
+			if (isBlocked && isBlocked()) 
 				return;
 			
 			eventsToHandle.push(function()
@@ -68,11 +72,18 @@ Creanvas.elementDecorators.push(
 			});
 		};
 
-		element.controller.addEventListener('mousedown', beginMove);
-		element.controller.addEventListener('touchstart', beginMove);
+		element.addEventListener({
+			decoratorType:'movable',
+			eventId:'mousedown', 
+			handler:beginMove});
+
+		element.addEventListener({
+			decoratorType:'movable',
+			eventId:'touchstart', 
+			handler:beginMove});
 			
 		var move = function(e) {
-			if (movableData.isBlocked && movableData.isBlocked()) 
+			if (isBlocked && isBlocked()) 
 				return;
 			
 			eventsToHandle.push(function()
@@ -109,11 +120,18 @@ Creanvas.elementDecorators.push(
 			element.triggerRedraw();
 		};	
 
-		element.controller.addEventListener('mousemove', move);
-		element.controller.addEventListener('touchmove', move);
+		element.addEventListener({
+			decoratorType:'movable',
+			eventId:'mousemove', 
+			handler:move});
+
+		element.addEventListener({
+			decoratorType:'movable',
+			eventId:'touchmove', 
+			handler:move});
 
 		var moveend = function(e) {
-			if (movableData.isBlocked && movableData.isBlocked()) 
+			if (isBlocked && isBlocked()) 
 				return;
 			
 			eventsToHandle.push(function()
@@ -151,7 +169,14 @@ Creanvas.elementDecorators.push(
 			element.triggerRedraw();
 		};
 
-		element.controller.addEventListener('mouseup', moveend);
-		element.controller.addEventListener('touchend', moveend);		
+		element.addEventListener({
+			decoratorType:'movable',
+			eventId:'mouseup', 
+			handler:moveend});
+
+		element.addEventListener({
+			decoratorType:'movable',
+			eventId:'touchend', 
+			handler:moveend});
 	}
 });

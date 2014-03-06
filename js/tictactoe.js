@@ -47,6 +47,7 @@ CreTictactoe.onload = function ()
 				},		
 		});
 	
+		// not stopped !! should it be on an element? just created to listen?
 		controller.addEventListener('dropped',
 		function(e)
 		{
@@ -197,58 +198,58 @@ CreTictactoe.onload = function ()
 	
 	var hasWon = function (element)
 	{
-		controller.stop();
-
-		var elementData = element.elementData;
-		elementData.z = Infinity;
-		elementData.x = 325;
-		elementData.y = 250;
-
-		controller = new Creanvas.Controller({
-			canvas:theCanvas,
-			drawBackground:function(context)
+		controller.stop(); 
+				
+		new Creanvas.Element(
+		{
+			controller: controller,		
+			draw:function(context)
 			{
-				var gradient = context.createLinearGradient(elementData.x-75,elementData.y-125,elementData.x-75+300,elementData.y-125+400);
+				var gradient = context.createLinearGradient(325-75,250-125,325-75+300,250-125+400);
 				gradient.addColorStop(0.0,"#ff0");
 				gradient.addColorStop(1.0,"#f00");
 
 				context.fillStyle= gradient;
-				context.fillRect(elementData.x-75, elementData.y-125,150, 200);
+				context.fillRect(325-75, 250-125,150, 200);
 
 				context.fillStyle="#00d";
 				context.font= "24pt Times Roman";
 				context.fillText(
 						"VINNER !!",
-						elementData.x-75,
-						elementData.y-100);
-				element.elementData.draw(context);
+						325-75,
+						250-100);
 			}});
 		
-		elementData.controller = controller;
-		elementData.duplicable = false;
-		elementData.clickable = {onclick:function(){			
-			controller.stop();
-			setUp();
-			}};
+		var winner = element.clone();
+		winner.z = Infinity;
+		winner.x = 325;
+		winner.y = 250;
+		winner.removeDecorator('duplicable');
 
-		var winner = new Creanvas.Element(elementData);
-	};
+		winner.applyDecorator(
+				Creanvas.getElementDecorator('clickable'),
+				{onclick:function(){			
+					controller.stop();
+					setUp();}});
+		
+		controller.redraw();
+};
 
 	var won = function(list)
 	{
 		if (list.length!=3)
 			return false;
 		
-		if (list.filter(function(e){ return e.i == list[0].i}).length == 3)
+		if (list.filter(function(e){ return e.i == list[0].i;}).length == 3)
 			return true;
 
-		if (list.filter(function(e){ return e.j == list[0].j}).length == 3)
+		if (list.filter(function(e){ return e.j == list[0].j;}).length == 3)
 			return true;
 
-		if (list.filter(function(e){ return e.i == e.j}).length == 3)
+		if (list.filter(function(e){ return e.i == e.j;}).length == 3)
 			return true;
 
-		if (list.filter(function(e){ return e.i == 2 - e.j}).length == 3)
+		if (list.filter(function(e){ return e.i == 2 - e.j;}).length == 3)
 			return true;
 
 		return false;
