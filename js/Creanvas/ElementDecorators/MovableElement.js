@@ -10,12 +10,12 @@ CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 CreJs.Creanvas.elementDecorators.push(
 {
 	type: 'movable',
-	applyTo: function(element, eventsToHandle, movableData)
+	applyTo: function(element, eventHandler, movableData)
 	{
 		var isMoved = false;
 		var touchIdentifier = null;	
 		var movingFrom = null;
-		var isBlocked = movableData.isBlock;
+		var isBlocked = movableData.isBlocked;
 		
 		element.startMoving = function(e, id)
 		{
@@ -28,7 +28,7 @@ CreJs.Creanvas.elementDecorators.push(
 			touchIdentifier = id;
 			if (element.isDroppable)
 			{
-				element.controller.dispatchEvent('drag', {moveEvent:e, element:element});
+				element.controller.events.dispatch('drag', {moveEvent:e, element:element});
 			}
 		};
 
@@ -38,7 +38,7 @@ CreJs.Creanvas.elementDecorators.push(
 			movingFrom = null;
 			if (element.isDroppable)
 			{
-				element.controller.dispatchEvent('drop', {moveEvent:e, element:element});
+				element.controller.events.dispatch('drop', {moveEvent:e, element:element});
 			}
 		};
 
@@ -47,7 +47,7 @@ CreJs.Creanvas.elementDecorators.push(
 			if (isBlocked && isBlocked()) 
 				return;
 			
-			eventsToHandle.push(function()
+			eventHandler.addPendingEvent(function()
 			{
 				var doMove = function(e)
 				{
@@ -74,21 +74,23 @@ CreJs.Creanvas.elementDecorators.push(
 			});
 		};
 
-		element.addEventListener({
-			decoratorType:'movable',
+		element.controller.events.addEventListener({
+			eventGroupType:'movable',
 			eventId:'mousedown', 
-			handler:beginMove});
+			handleEvent:beginMove,
+			listenerId:element.id});
 
-		element.addEventListener({
-			decoratorType:'movable',
+		element.controller.events.addEventListener({
+			eventGroupType:'movable',
 			eventId:'touchstart', 
-			handler:beginMove});
+			handleEvent:beginMove,
+			listenerId:element.id});
 			
 		var move = function(e) {
 			if (isBlocked && isBlocked()) 
 				return;
 			
-			eventsToHandle.push(function()
+			eventHandler.addPendingEvent(function()
 					{		
 						var doMove = function(e)
 						{
@@ -122,21 +124,23 @@ CreJs.Creanvas.elementDecorators.push(
 			element.triggerRedraw();
 		};	
 
-		element.addEventListener({
-			decoratorType:'movable',
+		element.controller.events.addEventListener({
+			eventGroupType:'movable',
 			eventId:'mousemove', 
-			handler:move});
+			handleEvent:move,
+			listenerId:element.id});
 
-		element.addEventListener({
-			decoratorType:'movable',
+		element.controller.events.addEventListener({
+			eventGroupType:'movable',
 			eventId:'touchmove', 
-			handler:move});
+			handleEvent:move,
+			listenerId:element.id});
 
 		var moveend = function(e) {
 			if (isBlocked && isBlocked()) 
 				return;
 			
-			eventsToHandle.push(function()
+			eventHandler.addPendingEvent(function()
 			{
 				var doMove = function(e)
 				{
@@ -171,14 +175,16 @@ CreJs.Creanvas.elementDecorators.push(
 			element.triggerRedraw();
 		};
 
-		element.addEventListener({
-			decoratorType:'movable',
+		element.controller.events.addEventListener({
+			eventGroupType:'movable',
 			eventId:'mouseup', 
-			handler:moveend});
+			handleEvent:moveend,
+			listenerId:element.id});
 
-		element.addEventListener({
-			decoratorType:'movable',
+		element.controller.events.addEventListener({
+			eventGroupType:'movable',
 			eventId:'touchend', 
-			handler:moveend});
+			handleEvent:moveend,
+			listenerId:element.id});
 	}
 });

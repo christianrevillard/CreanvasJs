@@ -46,18 +46,8 @@ CreTictactoe.onload = function ()
 					
 				},		
 		});
-	
-		// not stopped !! should it be on an element? just created to listen?
-		controller.addEventListener('dropped',
-		function(e)
-		{
-			blockedX = !blockedX;
-			blockedO = !blockedO;
-			currentPlayer.y = blockedX?325:150;
-			controller.redraw();
-		});
-
-		var currentPlayer = controller.addElement({
+			
+				var currentPlayer = controller.addElement({
 				x: 600,
 				y: 150,
 				z:-100,
@@ -138,7 +128,7 @@ CreTictactoe.onload = function ()
 
 	var tttCase = function(x,y)
 	{
-		return controller.addElement({
+		var theCase = controller.addElement({
 			x: 25 + x*150,
 			y: 25 + y*150,
 			z:-100,
@@ -155,6 +145,21 @@ CreTictactoe.onload = function ()
 				context.closePath();
 			}
 		});
+		
+		theCase.events.addEventListener(
+				{
+				eventid:'droppedInZone',
+				handleEvent: function(e)
+				{
+					blockedX = !blockedX;
+					blockedO = !blockedO;
+					currentPlayer.y = blockedX?325:150;
+					controller.redraw();
+				},
+				listenerId:'application'}
+				);
+		
+		return theCase;
 	};
 	
 	var cases = [];

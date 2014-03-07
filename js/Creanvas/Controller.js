@@ -3,7 +3,7 @@ var CreJs = CreJs || {};
 CreJs.Creanvas = CreJs.Creanvas || {};		
 
 CreJs.Creanvas.Controller = function(controllerData) {
-	var canvas, needRedraw, refreshTime, controller, events;
+	var canvas, needRedraw, refreshTime, controller;
 
 	controller = this;
 
@@ -13,23 +13,23 @@ CreJs.Creanvas.Controller = function(controllerData) {
 	isStopping = false;
 	refreshTime = controllerData.refreshTime || 50; // ms	
 
-	events = new CreJs.Creevents.EventContainer();			
-	events.addEvent('deactivate');
+	this.events = new CreJs.Creevents.EventContainer();			
+/*	events.addEvent('deactivate');
 	events.addEvent('draw');
 	events.addEvent('drop');
 	events.addEvent('drag');
-	events.addEvent('dropped');
-	events.registerControlEvent(canvas, 'click');
-	events.registerControlEvent(canvas, 'mousedown');
-	events.registerControlEvent(canvas, 'mouseup');
-	events.registerControlEvent(canvas, 'mousemove');
-	events.registerControlEvent(canvas, 'touchstart');
-	events.registerControlEvent(canvas, 'touchend');
-	events.registerControlEvent(canvas, 'touchmove');
+	events.addEvent('dropped');*/
+	this.events.registerControlEvent(canvas, 'click');
+	this.events.registerControlEvent(canvas, 'mousedown');
+	this.events.registerControlEvent(canvas, 'mouseup');
+	this.events.registerControlEvent(canvas, 'mousemove');
+	this.events.registerControlEvent(canvas, 'touchstart');
+	this.events.registerControlEvent(canvas, 'touchend');
+	this.events.registerControlEvent(canvas, 'touchmove');
 			
 	this.stop = function()
 	{
-		events.dispatch('deactivate');
+		controller.events.dispatch('deactivate');
 	};
 
 	this.redraw = function()
@@ -45,7 +45,7 @@ CreJs.Creanvas.Controller = function(controllerData) {
 			y: (clientXY.clientY-boundings.top) * canvas.height/boundings.height};		
 	};
 
-	this.addEventListener = function(eventId, eventHandler, rank)
+/*	this.addEventListener = function(eventId, eventHandler, rank)
 	{
 		return events.register(eventId, eventHandler, rank);
 	};
@@ -54,21 +54,21 @@ CreJs.Creanvas.Controller = function(controllerData) {
 	{
 		events.cancel(eventId, eventHandle);
 	};
-
+*/
 	this.addElement  = function (elementData)
 	{
 		elementData.controller = controller;
 
 		var element = new CreJs.Creanvas.Element(elementData);
-								
+						
 		return element;
 	};
 		
-	this.dispatchEvent = function(id, eventData)
+/*	this.dispatchEvent = function(id, eventData)
 	{
 		events.dispatch(id, eventData);
 	};
-	
+	*/
 	//background
 	this.addElement({
 		draw: 
@@ -87,7 +87,7 @@ CreJs.Creanvas.Controller = function(controllerData) {
 				if (needRedraw)
 				{
 					needRedraw = false;
-					events.dispatch('draw');
+					controller.events.dispatch('draw');
 				}
 			},
 			refreshTime);

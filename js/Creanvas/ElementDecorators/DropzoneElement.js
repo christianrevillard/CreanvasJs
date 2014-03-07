@@ -7,7 +7,7 @@ CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 CreJs.Creanvas.elementDecorators.push(
 {
 	type: 'dropzone',
-	applyTo: function(element, eventsToHandle, dropzoneData)
+	applyTo: function(element, eventHandler, dropzoneData)
 	{
 		var availableSpots = dropzoneData.availableSpots;
 		var dropX = dropzoneData.dropX;
@@ -20,7 +20,7 @@ CreJs.Creanvas.elementDecorators.push(
 			if(!e.element.isDroppable)
 				return;
 			
-			eventsToHandle.push(function()
+			eventHandler.addPendingEvent(function()
 			{		
 				if (element.isPointInPath(e.moveEvent))			
 				{
@@ -31,7 +31,8 @@ CreJs.Creanvas.elementDecorators.push(
 						e.element.y = dropY || element.y;
 						e.element.dropZone = element;
 						element.droppedElements.push(e.element);
-						element.controller.dispatchEvent('dropped', {dropZone:element, element:e.element});
+						e.element.events.dispatch('droppedElement', {dropZone:element, element:e.element});
+						element.events.dispatch('droppedInZone', {dropZone:element, element:e.element});
 					}
 				}
 			});
@@ -39,17 +40,18 @@ CreJs.Creanvas.elementDecorators.push(
 			element.triggerRedraw();
 		};
 
-		element.addEventListener({
-			decoratorType:'dropzone',
+		element.controller.events.addEventListener({
+			eventGroupType:'dropzone',
 			eventId:'drop', 
-			handler:drop});
+			handleEvent:drop,
+			listenerId:element.id});
 
 		var drag = function(e) {
 
 			if(e.element.dropZone !== element)
 				return;
 
-			eventsToHandle.push(function()
+			eventHandler.addPendingEvent(function()
 			{		
 				if (element.isPointInPath(e.moveEvent))			
 				{
@@ -62,9 +64,10 @@ CreJs.Creanvas.elementDecorators.push(
 			element.triggerRedraw();
 		};
 
-		element.addEventListener({
-			decoratorType:'dropzone',
+		element.controller.events.addEventListener({
+			eventGroupType:'dropzone',
 			eventId:'drag', 
-			handler:drag});
+			handleEvent:drag,
+			listenerId:element.id});
 	}
 });

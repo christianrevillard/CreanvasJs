@@ -11,7 +11,7 @@ CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 CreJs.Creanvas.elementDecorators
 		.push({
 			type : 'duplicable',
-			applyTo : function(element, eventsToHandle, duplicableData) {
+			applyTo : function(element, eventHandler, duplicableData) {
 				
 				var isBlocked = duplicableData.isBlocked;
 
@@ -24,7 +24,7 @@ CreJs.Creanvas.elementDecorators
 						return;
 					
 					if (generatorCount > 0) {
-						eventsToHandle.push(function() {
+						eventHandler.addPendingEvent(function() {
 									var doDuplicate = function(e) {
 										if (element.isPointInPath(e)) {
 											generatorCount--;
@@ -34,7 +34,9 @@ CreJs.Creanvas.elementDecorators
 											copy.removeDecorator('duplicable');
 
 											copy.applyDecorator(
-													CreJs.Creanvas.getElementDecorator('movable'),{});
+													CreJs.Creanvas.getElementDecorator('movable'),{
+														isBlocked : duplicableData.isBlocked
+													});
 
 											copy.startMoving(e, e.identifier);
 
@@ -56,14 +58,16 @@ CreJs.Creanvas.elementDecorators
 					element.triggerRedraw();
 				};
 				
-				element.addEventListener({
-					decoratorType:'duplicable',
+				element.controller.events.addEventListener({
+					eventGroupType:'duplicable',
 					eventId:'mousedown', 
-					handler:makeCopy});
+					handleEvent:makeCopy,
+					listenerId:element.id});
 
-				element.addEventListener({
-					decoratorType:'duplicable',
+				element.controller.events.addEventListener({
+					eventGroupType:'duplicable',
 					eventId:'touchstart', 
-					handler:makeCopy});
+					handleEvent:makeCopy,
+					listenerId:element.id});
 			}
 		});

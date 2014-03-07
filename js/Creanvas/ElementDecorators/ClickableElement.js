@@ -7,16 +7,16 @@ CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 CreJs.Creanvas.elementDecorators.push(
 {
 	type: 'clickable',
-	applyTo: function(element, eventsToHandle, clickData)
+	applyTo: function(element, eventHandler, clickData)
 	{	
 		var onclick = clickData.onclick;
 
-		element.addEventListener(
+		element.controller.events.addEventListener(
 				{
 					decoratorType:'clickable',
 					eventId: 'click', 
-					handler: function(e){
-						eventsToHandle.push(function()
+					handleEvent: function(e){
+						eventHandler.addPendingEvent(function()
 						{
 							if (element.isPointInPath(e))			
 							{	

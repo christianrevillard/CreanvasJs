@@ -17,14 +17,16 @@ var CreJs = CreJs || {};
 		};
 		
 		// can add a optional rank to ensure calling order of the handlers
-		this.register = function(handleEvent, rank)
+		this.addEventListener = function(listenerData)
 		{
 			var handlerGuid = helpers.GetGuid();
 			
 			eventHandlers.push({
 				handlerGuid:handlerGuid, 
-				handleEvent:handleEvent, 
-				rank:rank});
+				handleEvent:listenerData.handleEvent, 
+				rank:listenerData.rank,
+				listenerId:listenerData.listenerId,
+				eventGroupType:listenerData.eventGroupType});
 	
 			eventHandlers = eventHandlers.sort(
 				function(a,b) { return (a.rank || Infinity)  - (b.rank || Infinity); }
@@ -34,9 +36,14 @@ var CreJs = CreJs || {};
 			return handlerGuid;
 		};
 	
-		this.cancel = function(handlerGuid)
+		this.removeEventListener = function(listenerData)
 		{
-			eventHandlers = eventHandlers.filter(function(registered){ return registered.handlerGuid != handlerGuid;});
+			eventHandlers = eventHandlers.filter(
+					function(registered){ 
+						return (! listenerData.handlerGuid || (registered.handlerGuid != listenerData.handlerGuid))
+								&& (! listenerData.listenerId || (registered.listenerId != listenerData.listenerId))
+								&& (! listenerData.eventGroupType || (registered.listenerId != listenerData.eventGroupType));
+						});
 		};
 	};
 })();

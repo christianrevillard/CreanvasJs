@@ -19,16 +19,17 @@ var CreJs = CreJs || {};
 		this.x = elementData.x || 0;
 		this.y = elementData.y || 0;
 		this.z = elementData.z || 0;
-		this.id = name + Date.now();	
+		this.id = CreJs.CreHelpers.GetGuid();	
 		this.name = elementData.name;	
 	
 		var draw = elementData.draw;	
 	
 		var element = this;
 					
-		var eventsToHandle = [];
-
-		var eventListeners = [];
+		var eventHandler = new CreJs.Creevents.EventHandlerContainer();
+		eventHandler.name = elementData.name;
+		
+		this.events = new CreJs.Creevents.EventContainer();			
 	
 		this.isPointInPath = function(clientXY){
 			// weakness: will only work with the last path in 'draw' function
@@ -38,29 +39,7 @@ var CreJs = CreJs || {};
 				canvasXY.x, 
 				canvasXY.y);
 		};
-		
-		this.addEventListener = function(listenerData)
-		{
-			eventListeners.push(
-					{
-						decoratorType:listenerData.decoratorType,
-						eventId:listenerData.eventId,
-						handlerGuid:element.controller.addEventListener(
-							listenerData.eventId, 
-							listenerData.handler, 
-							listenerData.rank)});
-		};
-		
-		var handleEvents = function()
-		{
-			// check events just after draw while we know the path
-			while(eventsToHandle.length>0)
-			{
-				eventsToHandle.shift()();
-			}
-		};
-			
-		
+
 		if (CreJs.Creanvas.elementDecorators)
 		{
 			for(var decoratorId=0; decoratorId<creanvas.elementDecorators.length; decoratorId++)
@@ -68,7 +47,7 @@ var CreJs = CreJs || {};
 				var decorator = CreJs.Creanvas.elementDecorators[decoratorId];
 				if (elementData.hasOwnProperty(decorator.type) && elementData[decorator.type])
 				{
-					decorator.applyTo(element, eventsToHandle, elementData[decorator.type]);
+					decorator.applyTo(element, eventHandler, elementData[decorator.type]);
 				}
 			}
 		}
@@ -80,52 +59,45 @@ var CreJs = CreJs || {};
 	
 		this.applyDecorator = function(decorator, decoratorData)
 		{
-			decorator.applyTo(element, eventsToHandle, decoratorData);
+			decorator.applyTo(element, eventHandler, decoratorData);
 		};
 		
 		this.removeDecorator = function (decoratorType)
 		{
-			var toCancel = eventListeners.filter(function(listener){ return listener.decoratorType == decoratorType;});
-			toCancel.forEach(function(listener){
-				element.controller.removeEventListener(
-					listener.eventId, 
-					listener.handlerGuid);
-			});
-			eventListeners = eventListeners.filter(function(listener){ return listener.decoratorType != decoratorType;});
+			element.controller.events.removeEventListener(
+					{eventGroupType:decoratorType,
+						listenerId:element.id});
 		};
 		
 		this.deactivate = function ()
 		{
-			while(eventListeners.length>0)
-			{
-				var listener = eventListeners.pop();
-				
-				element.controller.removeEventListener(
-						listener.eventId, 
-						listener.handlerGuid);
-			}
+			controller.events.removeEventListener({listenerId:element.id});
 		};
 		
-		element.addEventListener(
+		element.controller.events.addEventListener(
 		{
 			eventId: 'draw',
 			rank: element.z,
-			handler: function(e) { 
+			listenerId:element.id,
+			handleEvent: function(e) { 
 				element.controller.context.beginPath(); // missing in draw() would mess everything up...
 				draw.call(element, element.controller.context);
-				handleEvents();
+				eventHandler.handlePendingEvents();
 		}});
 
-		element.addEventListener(
+		element.controller.events.addEventListener(
 		{
 			eventId: 'deactivate', 
-			handler: function(e) { element.deactivate(); }
+			listenerId:element.id,
+			handleEvent: function(e) { element.deactivate(); }
 		});
 
+
+		this.triggerRedraw = function()
+		{
+			element.controller.redraw();
+		};	
 	};
 	
-	creanvas.Element.prototype.triggerRedraw = function()
-	{
-		this.controller.redraw();
-	};
-})();
+
+}());
