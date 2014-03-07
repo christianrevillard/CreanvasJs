@@ -1,6 +1,8 @@
-var Creanvas = Creanvas || {};		
+var CreJs = CreJs || {};
 
-Creanvas.Controller = function(controllerData) {
+CreJs.Creanvas = CreJs.Creanvas || {};		
+
+CreJs.Creanvas.Controller = function(controllerData) {
 	var canvas, needRedraw, refreshTime, controller, events;
 
 	controller = this;
@@ -11,7 +13,7 @@ Creanvas.Controller = function(controllerData) {
 	isStopping = false;
 	refreshTime = controllerData.refreshTime || 50; // ms	
 
-	events = new Creevents.EventContainer();			
+	events = new CreJs.Creevents.EventContainer();			
 	events.addEvent('deactivate');
 	events.addEvent('draw');
 	events.addEvent('drop');
@@ -53,22 +55,13 @@ Creanvas.Controller = function(controllerData) {
 		events.cancel(eventId, eventHandle);
 	};
 
-	this.addElement  = function (element)
+	this.addElement  = function (elementData)
 	{
-		element.controller = controller;
-				
-		element.addEventListener(
-		{
-			eventId: 'draw',
-			rank: element.z,
-			handler: function(e) { element.drawAndHandleEvents();
-		}});
+		elementData.controller = controller;
 
-		element.addEventListener(
-		{
-			eventId: 'deactivate', 
-			handler: function(e) { element.deactivate(); }
-		});
+		var element = new CreJs.Creanvas.Element(elementData);
+								
+		return element;
 	};
 		
 	this.dispatchEvent = function(id, eventData)
@@ -77,9 +70,7 @@ Creanvas.Controller = function(controllerData) {
 	};
 	
 	//background
-	new Creanvas.Element(
-	{
-		controller: controller,
+	this.addElement({
 		draw: 
 			controllerData.drawBackground ||  
 			function (context) 
@@ -92,6 +83,7 @@ Creanvas.Controller = function(controllerData) {
 	setInterval(
 			function()
 			{
+				// check events
 				if (needRedraw)
 				{
 					needRedraw = false;

@@ -1,11 +1,13 @@
 // movableData:
 // isBlocked: function that allow to block the duplication
 
-var Creanvas = Creanvas || {};		
+var CreJs = CreJs || {};
 
-Creanvas.elementDecorators = Creanvas.elementDecorators || [];
+CreJs.Creanvas = CreJs.Creanvas || {};		
 
-Creanvas.elementDecorators.push(
+CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+
+CreJs.Creanvas.elementDecorators.push(
 {
 	type: 'movable',
 	applyTo: function(element, eventsToHandle, movableData)

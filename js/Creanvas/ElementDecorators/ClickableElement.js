@@ -1,8 +1,10 @@
-var Creanvas = Creanvas || {};		
+var CreJs = CreJs || {};
 
-Creanvas.elementDecorators = Creanvas.elementDecorators || [];
+CreJs.Creanvas = CreJs.Creanvas || {};		
 
-Creanvas.elementDecorators.push(
+CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+
+CreJs.Creanvas.elementDecorators.push(
 {
 	type: 'clickable',
 	applyTo: function(element, eventsToHandle, clickData)

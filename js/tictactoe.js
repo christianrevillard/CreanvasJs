@@ -10,7 +10,7 @@ CreTictactoe.onload = function ()
 		var blockedX = false;
 		var blockedO = true;
 
-		controller = new Creanvas.Controller(
+		controller = new CreJs.Creanvas.Controller(
 		{
 			canvas:theCanvas, 
 			drawBackground : 
@@ -57,9 +57,7 @@ CreTictactoe.onload = function ()
 			controller.redraw();
 		});
 
-		var currentPlayer = new Creanvas.Element(
-				{
-					controller: controller,
+		var currentPlayer = controller.addElement({
 				x: 600,
 				y: 150,
 				z:-100,
@@ -73,10 +71,8 @@ CreTictactoe.onload = function ()
 				}});
 
 		
-		var markX= new Creanvas.Element(
-		{
+		var markX= 	controller.addElement({
 			name:'X',
-			controller: controller,
 			x: 600,
 			y: 150,
 			duplicable: {generatorCount:3, isBlocked:function(){return blockedX;}},
@@ -113,10 +109,8 @@ CreTictactoe.onload = function ()
 				context.arc(this.x,this.y,50,0,2*Math.PI);
 			}});
 
-	var markO = new Creanvas.Element(
-			{
-				name:'O',
-				controller: controller,
+	var markO = controller.addElement({
+			name:'O',
 			x: 600,
 			y: 325,
 			duplicable: {generatorCount:3, isBlocked:function(){return blockedO;}},
@@ -144,9 +138,7 @@ CreTictactoe.onload = function ()
 
 	var tttCase = function(x,y)
 	{
-		return new Creanvas.Element(
-		{
-			controller: controller,
+		return controller.addElement({
 			x: 25 + x*150,
 			y: 25 + y*150,
 			z:-100,
@@ -176,9 +168,7 @@ CreTictactoe.onload = function ()
 		}
 	}
 
-	var resetButton = new Creanvas.Element(
-			{
-				controller: controller,
+	var resetButton = controller.addElement({
 			x: 600,
 			y: 35,
 			clickable : {onclick:function(){			
@@ -200,9 +190,7 @@ CreTictactoe.onload = function ()
 	{
 		controller.stop(); 
 				
-		new Creanvas.Element(
-		{
-			controller: controller,		
+		controller.addElement({
 			draw:function(context)
 			{
 				var gradient = context.createLinearGradient(325-75,250-125,325-75+300,250-125+400);
@@ -227,7 +215,7 @@ CreTictactoe.onload = function ()
 		winner.removeDecorator('duplicable');
 
 		winner.applyDecorator(
-				Creanvas.getElementDecorator('clickable'),
+				CreJs.Creanvas.getElementDecorator('clickable'),
 				{onclick:function(){			
 					controller.stop();
 					setUp();}});

@@ -2,11 +2,13 @@
 // generatorCount : number of copies to make. Default: Infinity
 // isBlocked: function that allow to block the duplication
 
-var Creanvas = Creanvas || {};
+var CreJs = CreJs || {};
 
-Creanvas.elementDecorators = Creanvas.elementDecorators || [];
+CreJs.Creanvas = CreJs.Creanvas || {};		
 
-Creanvas.elementDecorators
+CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+
+CreJs.Creanvas.elementDecorators
 		.push({
 			type : 'duplicable',
 			applyTo : function(element, eventsToHandle, duplicableData) {
@@ -32,7 +34,7 @@ Creanvas.elementDecorators
 											copy.removeDecorator('duplicable');
 
 											copy.applyDecorator(
-													Creanvas.getElementDecorator('movable'),{});
+													CreJs.Creanvas.getElementDecorator('movable'),{});
 
 											copy.startMoving(e, e.identifier);
 

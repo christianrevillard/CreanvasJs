@@ -2,7 +2,7 @@ var startStuff = function ()
 {		
 	var theCanvas = document.getElementById('theCanvas');
 	
-	var controller = new Creanvas.Controller(
+	var controller = new CreJs.Creanvas.Controller(
 			{
 				canvas:theCanvas, 
 				backgroundColor: "#DDD",
@@ -14,9 +14,7 @@ var startStuff = function ()
 					},		
 			});
 	
-	var test1 = new Creanvas.Element(
-			{
-			controller: controller,
+	controller.addElement({
 			x: 400,
 			y: 300,
 			movable: true,
@@ -30,9 +28,7 @@ var startStuff = function ()
 				context.stroke();
 			}});
 
-	var test2 = new Creanvas.Element(
-			{
-				controller: controller,
+	controller.addElement({
 			x: 500,
 			y: 200,
 			movable: true,
@@ -46,9 +42,7 @@ var startStuff = function ()
 			context.stroke();
 			}});
 
-	var test3 = new Creanvas.Element(
-			{
-				controller: controller,
+	controller.addElement({
 			x: 200,
 			y: 350,
 			onclick: function(){ alert(this.x + ',' + this.y)},
@@ -63,9 +57,7 @@ var startStuff = function ()
 			}});
 
 
-	var test4 = new Creanvas.Element(
-			{
-				controller: controller,
+	controller.addElement({
 			x: 150,
 			Y: 270,
 			z:-5,
@@ -80,9 +72,7 @@ var startStuff = function ()
 			}});
 
 	
-	var test5 = new Creanvas.Element(
-			{
-				controller: controller,
+	controller.addElement({
 			x: 200,
 			y: 300,
 			z:-10,
