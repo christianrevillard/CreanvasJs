@@ -1,3 +1,6 @@
+// delayed events, keep track and handle them on request
+// not needed at the moment...
+/*
 var CreJs = CreJs || {};
 
 (function(){
@@ -21,3 +24,4 @@ var CreJs = CreJs || {};
 		};
 	};
 }());
+*/

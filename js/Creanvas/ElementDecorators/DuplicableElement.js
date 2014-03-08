@@ -4,64 +4,78 @@
 
 var CreJs = CreJs || {};
 
-CreJs.Creanvas = CreJs.Creanvas || {};		
+(function(){
+	CreJs.Creanvas = CreJs.Creanvas || {};		
+	
+	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+	
+	CreJs.Creanvas.elementDecorators.push(
+	{
+		type : 'duplicable',
+		applyTo : function(element, duplicableData) {
+			
+			var isBlocked = duplicableData.isBlocked;
 
-CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+			var generatorCount = duplicableData
+					.hasOwnProperty('generatorCount') ? duplicableData.generatorCount
+					: Infinity;
 
-CreJs.Creanvas.elementDecorators
-		.push({
-			type : 'duplicable',
-			applyTo : function(element, eventTarget, duplicableData) {
+			var getTarget = function(e)
+			{
+				if (e.targetTouches)
+				{
+					for (var touch = 0; touch< e.targetTouches.length; touch++)			
+					{
+						if (element.isPointInPath( e.targetTouches[touch]))
+						{
+							return e.targetTouches[touch];
+						};			
+					};		
+				} else
+				{
+					if (element.isPointInPath(e))
+					{
+						return e;
+					};
+				}
 				
-				var isBlocked = duplicableData.isBlocked;
+				return null;
+			};
+			
+			var makeCopy = function(e) {
+				if (isBlocked && isBlocked()) 
+					return;
 
-				var generatorCount = duplicableData
-						.hasOwnProperty('generatorCount') ? duplicableData.generatorCount
-						: Infinity;
+				if (generatorCount<=0) 
+					return;
 
-				var makeCopy = function(e) {
-					if (isBlocked && isBlocked()) 
-						return;
-					
-					if (generatorCount > 0) {
-						eventTarget.queueEvent(function() {
-									var doDuplicate = function(e) {
-										if (element.isPointInPath(e)) {
-											generatorCount--;
-
-											var copy = element.clone();
-
-											copy.removeDecorator('duplicable');
-
-											copy.applyDecorator(
-													CreJs.Creanvas.getElementDecorator('movable'),{
-														isBlocked : duplicableData.isBlocked
-													});
-
-											copy.startMoving(e, e.identifier);
-
-											return true;
-										}
-										return false;
-									};
-
-									if (e.targetTouches) {
-										for ( var touch = 0; touch < e.targetTouches.length; touch++) {
-											if (doDuplicate(e.targetTouches[touch]))
-												break;
-										}
-									} else {
-										doDuplicate(e);
-									}
-								});
-					}
-					element.triggerRedraw();
-				};
+				var target = getTarget(e);
 				
-				element.controller.events.addEventListener({
-					eventGroupType:'duplicable',
-					eventId:'pointerDown', 
-					handleEvent:makeCopy,
-					listenerId:element.id});
-			}
-		});
+				if (!target) 
+					return;
+				
+				generatorCount--;
+
+				var copy = element.clone();
+
+				copy.removeDecorator('duplicable');
+
+				copy.applyDecorator(
+						CreJs.Creanvas.getElementDecorator('movable'),
+						{
+							isBlocked : duplicableData.isBlocked
+						});
+
+				copy.startMoving(target);
+
+				element.triggerRedraw();
+			};
+			
+			element.controller.events.addEventListener({
+				eventGroupType:'duplicable',
+				eventId:'pointerDown', 
+				handleEvent:makeCopy,
+				listenerId:element.id});
+		}
+	});
+}());

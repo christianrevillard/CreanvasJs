@@ -1,17 +1,19 @@
 var CreJs = CreJs || {};
 
-CreJs.Creanvas = CreJs.Creanvas || {};		
+(function(){
 
-CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+	CreJs.Creanvas = CreJs.Creanvas || {};		
 
-CreJs.Creanvas.getElementDecorator = function(type)
-{
-	var match = CreJs.Creanvas.elementDecorators.filter(function(d){ return d.type == type;});
+	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	if (match.length == 0)
-		return null;
-	
-	return match[0];
-};
-
+	CreJs.Creanvas.getElementDecorator = function(type)
+	{
+		var match = CreJs.Creanvas.elementDecorators.filter(function(d){ return d.type == type;});
+		
+		if (match.length == 0)
+			return null;
+		
+		return match[0];
+	};
+}());
 

@@ -1,10 +1,8 @@
 var CreJs = CreJs || {};
 
-CreJs.CreHelpers = CreJs.CreHelpers || {};
-
 (function()
 {
-	var helpers = CreJs.CreHelpers;
+	var helpers = CreJs.CreHelpers = CreJs.CreHelpers|| {};
 	
 	helpers.GetGuid = function()
 	{
@@ -24,6 +22,6 @@ CreJs.CreHelpers = CreJs.CreHelpers || {};
 		if (n<=0)
 			return '';
 		
-		return s + helpers.repeatString(s, n-1)
+		return s + helpers.repeatString(s, n-1);
 	};
 })();

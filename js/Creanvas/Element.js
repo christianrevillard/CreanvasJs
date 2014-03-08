@@ -25,18 +25,14 @@ var CreJs = CreJs || {};
 		var draw = elementData.draw;	
 	
 		var element = this;
-					
-		var eventTarget = new CreJs.Creevents.EventTarget();
-		
+							
 		this.events = new CreJs.Creevents.EventContainer();			
-	
+			
 		this.isPointInPath = function(clientXY){
-			// weakness: will only work with the last path in 'draw' function
-			// and only just after drawing this element.
+
 			var canvasXY = element.controller.getCanvasXYFromClientXY(clientXY);	
-			return element.controller.context.isPointInPath(
-				canvasXY.x, 
-				canvasXY.y);
+
+			return element.controller.noDrawContext.isPointInPath(element, draw, canvasXY);
 		};
 
 		if (CreJs.Creanvas.elementDecorators)
@@ -46,7 +42,7 @@ var CreJs = CreJs || {};
 				var decorator = CreJs.Creanvas.elementDecorators[decoratorId];
 				if (elementData.hasOwnProperty(decorator.type) && elementData[decorator.type])
 				{
-					decorator.applyTo(element, eventTarget, elementData[decorator.type]);
+					decorator.applyTo(element, elementData[decorator.type]);
 				}
 			}
 		}
@@ -58,7 +54,7 @@ var CreJs = CreJs || {};
 	
 		this.applyDecorator = function(decorator, decoratorData)
 		{
-			decorator.applyTo(element, eventTarget, decoratorData);
+			decorator.applyTo(element, decoratorData);
 		};
 		
 		this.removeDecorator = function (decoratorType)
@@ -81,7 +77,6 @@ var CreJs = CreJs || {};
 			handleEvent: function(e) { 
 				element.controller.context.beginPath(); // missing in draw() would mess everything up...
 				draw.call(element, element.controller.context);
-				eventTarget.handleEvents();
 		}});
 
 		element.controller.events.addEventListener(
