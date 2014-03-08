@@ -13,19 +13,14 @@ CreJs.Creanvas.Controller = function(controllerData) {
 	isStopping = false;
 	refreshTime = controllerData.refreshTime || 50; // ms	
 
-	this.events = new CreJs.Creevents.EventContainer();			
-/*	events.addEvent('deactivate');
-	events.addEvent('draw');
-	events.addEvent('drop');
-	events.addEvent('drag');
-	events.addEvent('dropped');*/
-	this.events.registerControlEvent(canvas, 'click');
-	this.events.registerControlEvent(canvas, 'mousedown');
-	this.events.registerControlEvent(canvas, 'mouseup');
-	this.events.registerControlEvent(canvas, 'mousemove');
-	this.events.registerControlEvent(canvas, 'touchstart');
-	this.events.registerControlEvent(canvas, 'touchend');
-	this.events.registerControlEvent(canvas, 'touchmove');
+	this.events = new CreJs.Creevents.EventContainer();		
+	this.events.registerControlEvent(canvas, 'click', 'click');
+	this.events.registerControlEvent(canvas, 'mousedown','pointerDown');
+	this.events.registerControlEvent(canvas, 'mouseup','pointerUp');
+	this.events.registerControlEvent(canvas, 'mousemove','pointerMove');
+	this.events.registerControlEvent(canvas, 'touchstart','pointerDown');
+	this.events.registerControlEvent(canvas, 'touchend','pointerUp');
+	this.events.registerControlEvent(canvas, 'touchmove','pointerMove');
 			
 	this.stop = function()
 	{

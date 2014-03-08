@@ -3,16 +3,16 @@ var CreJs = CreJs || {};
 (function(){
 	var creevents = CreJs.Creevents = CreJs.Creevents || {};		
 	
-	creevents.EventHandlerContainer = function()
+	creevents.EventTarget = function()
 	{
 		var pendingEvents = [];
 
-		this.addPendingEvent = function(handleEvent)
+		this.queueEvent = function(handleEvent)
 		{
 			pendingEvents.push(handleEvent);
 		};
 		
-		this.handlePendingEvents = function()
+		this.handleEvents = function()
 		{
 			while(pendingEvents.length>0)
 			{

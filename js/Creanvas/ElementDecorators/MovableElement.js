@@ -10,7 +10,7 @@ CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 CreJs.Creanvas.elementDecorators.push(
 {
 	type: 'movable',
-	applyTo: function(element, eventHandler, movableData)
+	applyTo: function(element, eventTarget, movableData)
 	{
 		var isMoved = false;
 		var touchIdentifier = null;	
@@ -47,7 +47,7 @@ CreJs.Creanvas.elementDecorators.push(
 			if (isBlocked && isBlocked()) 
 				return;
 			
-			eventHandler.addPendingEvent(function()
+			eventTarget.queueEvent(function()
 			{
 				var doMove = function(e)
 				{
@@ -76,13 +76,7 @@ CreJs.Creanvas.elementDecorators.push(
 
 		element.controller.events.addEventListener({
 			eventGroupType:'movable',
-			eventId:'mousedown', 
-			handleEvent:beginMove,
-			listenerId:element.id});
-
-		element.controller.events.addEventListener({
-			eventGroupType:'movable',
-			eventId:'touchstart', 
+			eventId:'pointerDown', 
 			handleEvent:beginMove,
 			listenerId:element.id});
 			
@@ -90,7 +84,7 @@ CreJs.Creanvas.elementDecorators.push(
 			if (isBlocked && isBlocked()) 
 				return;
 			
-			eventHandler.addPendingEvent(function()
+			eventTarget.queueEvent(function()
 					{		
 						var doMove = function(e)
 						{
@@ -126,13 +120,7 @@ CreJs.Creanvas.elementDecorators.push(
 
 		element.controller.events.addEventListener({
 			eventGroupType:'movable',
-			eventId:'mousemove', 
-			handleEvent:move,
-			listenerId:element.id});
-
-		element.controller.events.addEventListener({
-			eventGroupType:'movable',
-			eventId:'touchmove', 
+			eventId:'pointerMove', 
 			handleEvent:move,
 			listenerId:element.id});
 
@@ -140,7 +128,7 @@ CreJs.Creanvas.elementDecorators.push(
 			if (isBlocked && isBlocked()) 
 				return;
 			
-			eventHandler.addPendingEvent(function()
+			eventTarget.queueEvent(function()
 			{
 				var doMove = function(e)
 				{
@@ -177,13 +165,7 @@ CreJs.Creanvas.elementDecorators.push(
 
 		element.controller.events.addEventListener({
 			eventGroupType:'movable',
-			eventId:'mouseup', 
-			handleEvent:moveend,
-			listenerId:element.id});
-
-		element.controller.events.addEventListener({
-			eventGroupType:'movable',
-			eventId:'touchend', 
+			eventId:'pointerUp', 
 			handleEvent:moveend,
 			listenerId:element.id});
 	}

@@ -148,7 +148,7 @@ CreTictactoe.onload = function ()
 		
 		theCase.events.addEventListener(
 				{
-				eventid:'droppedInZone',
+				eventId:'droppedInZone',
 				handleEvent: function(e)
 				{
 					blockedX = !blockedX;
@@ -246,7 +246,7 @@ CreTictactoe.onload = function ()
 			return true;
 
 		return false;
-	}
+	};
 	
 	var game = setInterval(
 			function()

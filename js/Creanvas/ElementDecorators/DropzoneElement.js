@@ -7,7 +7,7 @@ CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 CreJs.Creanvas.elementDecorators.push(
 {
 	type: 'dropzone',
-	applyTo: function(element, eventHandler, dropzoneData)
+	applyTo: function(element, eventTarget, dropzoneData)
 	{
 		var availableSpots = dropzoneData.availableSpots;
 		var dropX = dropzoneData.dropX;
@@ -20,7 +20,7 @@ CreJs.Creanvas.elementDecorators.push(
 			if(!e.element.isDroppable)
 				return;
 			
-			eventHandler.addPendingEvent(function()
+			eventTarget.queueEvent(function()
 			{		
 				if (element.isPointInPath(e.moveEvent))			
 				{
@@ -51,7 +51,7 @@ CreJs.Creanvas.elementDecorators.push(
 			if(e.element.dropZone !== element)
 				return;
 
-			eventHandler.addPendingEvent(function()
+			eventTarget.queueEvent(function()
 			{		
 				if (element.isPointInPath(e.moveEvent))			
 				{

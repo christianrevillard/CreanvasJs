@@ -26,8 +26,7 @@ var CreJs = CreJs || {};
 	
 		var element = this;
 					
-		var eventHandler = new CreJs.Creevents.EventHandlerContainer();
-		eventHandler.name = elementData.name;
+		var eventTarget = new CreJs.Creevents.EventTarget();
 		
 		this.events = new CreJs.Creevents.EventContainer();			
 	
@@ -47,7 +46,7 @@ var CreJs = CreJs || {};
 				var decorator = CreJs.Creanvas.elementDecorators[decoratorId];
 				if (elementData.hasOwnProperty(decorator.type) && elementData[decorator.type])
 				{
-					decorator.applyTo(element, eventHandler, elementData[decorator.type]);
+					decorator.applyTo(element, eventTarget, elementData[decorator.type]);
 				}
 			}
 		}
@@ -59,7 +58,7 @@ var CreJs = CreJs || {};
 	
 		this.applyDecorator = function(decorator, decoratorData)
 		{
-			decorator.applyTo(element, eventHandler, decoratorData);
+			decorator.applyTo(element, eventTarget, decoratorData);
 		};
 		
 		this.removeDecorator = function (decoratorType)
@@ -71,7 +70,7 @@ var CreJs = CreJs || {};
 		
 		this.deactivate = function ()
 		{
-			controller.events.removeEventListener({listenerId:element.id});
+			element.controller.events.removeEventListener({listenerId:element.id});
 		};
 		
 		element.controller.events.addEventListener(
@@ -82,7 +81,7 @@ var CreJs = CreJs || {};
 			handleEvent: function(e) { 
 				element.controller.context.beginPath(); // missing in draw() would mess everything up...
 				draw.call(element, element.controller.context);
-				eventHandler.handlePendingEvents();
+				eventTarget.handleEvents();
 		}});
 
 		element.controller.events.addEventListener(

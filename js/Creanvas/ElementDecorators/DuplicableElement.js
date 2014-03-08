@@ -11,7 +11,7 @@ CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 CreJs.Creanvas.elementDecorators
 		.push({
 			type : 'duplicable',
-			applyTo : function(element, eventHandler, duplicableData) {
+			applyTo : function(element, eventTarget, duplicableData) {
 				
 				var isBlocked = duplicableData.isBlocked;
 
@@ -24,7 +24,7 @@ CreJs.Creanvas.elementDecorators
 						return;
 					
 					if (generatorCount > 0) {
-						eventHandler.addPendingEvent(function() {
+						eventTarget.queueEvent(function() {
 									var doDuplicate = function(e) {
 										if (element.isPointInPath(e)) {
 											generatorCount--;
@@ -60,13 +60,7 @@ CreJs.Creanvas.elementDecorators
 				
 				element.controller.events.addEventListener({
 					eventGroupType:'duplicable',
-					eventId:'mousedown', 
-					handleEvent:makeCopy,
-					listenerId:element.id});
-
-				element.controller.events.addEventListener({
-					eventGroupType:'duplicable',
-					eventId:'touchstart', 
+					eventId:'pointerDown', 
 					handleEvent:makeCopy,
 					listenerId:element.id});
 			}

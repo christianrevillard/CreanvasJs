@@ -6,13 +6,20 @@ var CreJs = CreJs || {};
 	creevents.EventContainer = function()
 	{	
 		var container = this;
-		var events = [];		
+		var events = {};		
+		var eventIds = [];		
+		
+		var addEvent = function(eventId)
+		{
+			eventIds.push(eventId);
+			events[eventId] = new creevents.Event();											
+		};
 		
 		this.addEventListener = function(listenerData)
 		{
 			if (!events[listenerData.eventId])
 			{
-				events[listenerData.eventId] = new creevents.Event();								
+				addEvent(listenerData.eventId);
 			}
 			return events[listenerData.eventId].addEventListener(listenerData);
 		};
@@ -31,23 +38,27 @@ var CreJs = CreJs || {};
 			{
 				events[listenerData.eventId].removeEventListener(listenerData);
 			}
+			else
+			{
+				eventIds.forEach(function(eventId){ events[eventId].removeEventListener(listenerData);});
+			}
 		};
 
-		this.registerControlEvent = function (control, eventId, preventDefault)
+		this.registerControlEvent = function (control, controlEventId, customEventId, preventDefault)
 		{
-			if (events[eventId])
-				return; // already there !
-			
-			events[eventId] = new creevents.Event();			
-	
+			if (!events[customEventId])
+			{
+				addEvent(customEventId);
+			}
+
 			control.addEventListener(
-				eventId,
+					controlEventId,
 				function(event)
 				{
 					if (preventDefault)
 						event.preventDefault();
 					
-					container.dispatch(eventId, event);
+					container.dispatch(customEventId, event);
 				});
 		};
 	};

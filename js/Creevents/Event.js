@@ -40,9 +40,9 @@ var CreJs = CreJs || {};
 		{
 			eventHandlers = eventHandlers.filter(
 					function(registered){ 
-						return (! listenerData.handlerGuid || (registered.handlerGuid != listenerData.handlerGuid))
-								&& (! listenerData.listenerId || (registered.listenerId != listenerData.listenerId))
-								&& (! listenerData.eventGroupType || (registered.listenerId != listenerData.eventGroupType));
+						return (Boolean(listenerData.handlerGuid) && (registered.handlerGuid != listenerData.handlerGuid))
+								|| (Boolean(listenerData.listenerId) && (registered.listenerId != listenerData.listenerId))
+								|| (Boolean(listenerData.eventGroupType) && (registered.eventGroupType != listenerData.eventGroupType));
 						});
 		};
 	};
