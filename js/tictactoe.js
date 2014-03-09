@@ -45,6 +45,7 @@ CreTictactoe.onload = function ()
 					context.stroke();
 					
 				},		
+			log: function(data){ document.getElementById('log').innerHTML = data + "\n" + document.getElementById('log').innerHTML;}
 		});
 			
 				var currentPlayer = controller.addElement({

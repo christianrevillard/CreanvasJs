@@ -21,21 +21,25 @@ var CreJs = CreJs || {};
 			
 			element.startMoving = function(e)
 			{				
+				element.controller.log('Starting moving - identifier: ' + e.identifier);
 				isMoving = true;
 				movingFrom = element.controller.getCanvasXYFromClientXY(e);	
 				touchIdentifier = e.identifier;
 				if (element.isDroppable)
 				{
+					element.controller.log('Trigger drag - identifier: ' + e.identifier);
 					element.controller.events.dispatch('drag', {moveEvent:e, element:element});
 				}
 			};
 	
 			element.moveCompleted = function(e)
 			{
+				element.controller.log('Completed move - identifier: ' + e.identifier);
 				isMoving = false;
 				movingFrom = null;
 				if (element.isDroppable)
 				{
+					element.controller.log('Trigger drop - identifier: ' + e.identifier);
 					element.controller.events.dispatch('drop', {moveEvent:e, element:element});
 				}
 			};
@@ -112,7 +116,7 @@ var CreJs = CreJs || {};
 
 				if (!target)
 					return;
-				
+
 				var canvasXY = element.controller.getCanvasXYFromClientXY(target);	
 				element.x += canvasXY.x-movingFrom.x;
 				element.y += canvasXY.y-movingFrom.y;
@@ -133,15 +137,17 @@ var CreJs = CreJs || {};
 				if (isBlocked && isBlocked()) 
 					return;
 
+				element.controller.log('Checking End event');
 				var target = getTargetMoving(e, e.changedTouches);
 
 				if (!target)
 					return;
 
+				element.controller.log('End detected for touch ' + touchIdentifier);
 				var canvasXY = element.controller.getCanvasXYFromClientXY(e);	
 				element.x += canvasXY.x-movingFrom.x;
 				element.y += canvasXY.y-movingFrom.y;
-				element.moveCompleted(e);	
+				element.moveCompleted(target);	
 				touchIdentifier = null;
 				element.triggerRedraw();
 			};

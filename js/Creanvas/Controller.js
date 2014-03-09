@@ -51,7 +51,11 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.Controller = function(controllerData) {
 		var canvas, needRedraw, refreshTime, controller;
-	
+
+		this.log = controllerData.log;
+		
+		this.log('Starting controller');
+
 		controller = this;
 	
 		canvas = controllerData.canvas;
