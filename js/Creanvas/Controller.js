@@ -2,81 +2,190 @@ var CreJs = CreJs || {};
 
 (function(){
 	CreJs.Creanvas = CreJs.Creanvas || {};		
-	
-
-	
-	
-	CreJs.Creanvas.NoDrawContext = function(context)
-	{
-		var noDrawContext = this;
-		var isInPath = false;
-		var canvasXY = null;
 		
-		// does not matter we do not draw!
-		this.lineWidth = 0;
-		this.lineCap= 0;
-		this.fillStyle = 0;
-		this.strokeStyle = 0;
-		this.createRadialGradient = function() { return context.createLinearGradient(0,0,0,0);};
-		this.createLinearGradient = function() { return context.createLinearGradient(0,0,0,0);};
-
-		// moving is what it is all about
-		this.moveTo  = function(a1,a2)  { return context.moveTo(a1, a2);};
-		this.lineTo  = function(a1,a2)  { return context.lineTo(a1, a2);};
-		this.bezierCurveTo = function(a1,a2,a3,a4,a5,a6) { return context.bezierCurveTo(a1,a2,a3,a4,a5,a6);};
-		this.arc = function(a1,a2,a3,a4,a5) { return context.arc(a1,a2,a3,a4,a5);};
-		this.closePath = function() { context.closePath();}
-		
-		// stop all actual drawing
-		this.stroke = function(){};
-		this.fill = function(){};
-		this.fillRect = function(){};
-		
-		this.beginPath = function()
-		{
-			// we want to trigger if in a subpath too!
-			isInPath = isInPath || context.isPointInPath(canvasXY.x, canvasXY.y);
-			context.beginPath();
-		};
-		
-		this.isPointInPath = function(element, draw, e){
-			canvasXY = e;
-			context.beginPath();
-			isInPath = false;
-			draw.call(element,noDrawContext);
-			noDrawContext.beginPath();
-			return isInPath;
-		};
-	};
-	
 	CreJs.Creanvas.Controller = function(controllerData) {
 		var canvas, needRedraw, refreshTime, controller;
 
-		this.log = controllerData.log;
+		controller = this;
+		canvas = controllerData.canvas;
+
+		var temporaryRenderingCanvas = canvas.ownerDocument.createElement('canvas');
+			
+		var temporaryRenderingContext = temporaryRenderingCanvas.getContext("2d");
+
+			var images = [];
+			images.push(temporaryRenderingContext.getImageData(0,0,temporaryRenderingCanvas.width,temporaryRenderingCanvas.height));
+
+			temporaryRenderingContext.strokeStyle="#0F0";
+			temporaryRenderingContext.stroke();
+			images.push(temporaryRenderingContext.getImageData(0,0,temporaryRenderingCanvas.width,temporaryRenderingCanvas.height));
+
+						
+			this.log = function(logData){
+				if (controllerData.log)
+					controllerData.log(logData);
+			};
+
+			//for heavy load stuff that can be handled by a worker / WebSocket
+		var asynchronousController;
+		if (window.Worker && (!controllerData.noWorker))
+		{			
+			asynchronousController = {};
+			asynchronousController.worker = new Worker("js/Creanvas/AsynchronousControllerWorker.js");
+			asynchronousController.receiveMessage = function(message){ asynchronousController.worker.postMessage(message);};
+			asynchronousController.worker.onmessage = function(e){ asynchronousController.sendMessage(e.data)};
+			asynchronousController.sendMessage = function(message) { controller.receiveMessage(message)};
+		}
+		else
+		{
+			// fall back to synchronous calls
+			asynchronousController = new CreJs.Creanvas.HeavyLoadController();
+			asynchronousController.sendMessage = function(message){ controller.receiveMessage(message)};
+		}
 		
+		this.receiveMessage = function(message)
+		{
+			this.log("HeavyLoad: " + message);
+		};
+		
+		this.sendMessage = function(message)
+		{
+			asynchronousController.receiveMessage(message);
+		};
+	
+		
+		this.sendMessage("Test heavy load");
+		
+			
 		this.log('Starting controller');
 
-		controller = this;
 	
-		canvas = controllerData.canvas;
 		controller.context = canvas.getContext("2d");	
 		controller.noDrawContext = new CreJs.Creanvas.NoDrawContext(controller.context);
-		needRedraw = true;	
-		isStopping = false;
+		needRedraw = true;
+		isDrawing = false;
 		refreshTime = controllerData.refreshTime || 50; // ms	
-	
+
+		
+		this.triggerPointedElementEvent = function(eventId, event)
+		{
+			var hit = false;
+			elements
+			.filter(function(e){return e.canHandle(eventId);})
+			.sort(function(a,b){return (b.z || 0 - a.z || 0);})
+			.forEach(
+					function(element)
+					{
+						
+						if (hit)
+							return;
+						
+						if (element.hit(event.x, event.y))
+						{
+							element.events.dispatch(eventId, event);
+							hit = true;
+						}
+					}
+				);
+		};
+
+		this.triggerElementEventByIdentifier = function(eventId, event)
+		{
+			elements
+			.forEach(
+					function(element)
+					{							
+						if (element.touchIdentifier == event.touchIdentifier)
+						{
+							element.events.dispatch(eventId, event);
+						}
+					}
+				);
+		};
+		
+		this.registerCanvasPointerEvent = function (controlEventId, customEventId)
+		{
+			canvas.addEventListener(controlEventId,
+				function(event)
+				{
+					setTimeout(function()
+					{	
+						var triggerEvent = function(clientXY, touchIdentifier)
+						{							
+							controller.log("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+							var eventData = controller.getCanvasXYFromClientXY(clientXY);
+							eventData.touchIdentifier = touchIdentifier;
+							controller.triggerPointedElementEvent(customEventId, eventData);
+						}
+						
+						if (event.changedTouches)
+						{
+							for(var i=0;i<event.changedTouches.length;i++)
+							{
+								 triggerEvent(event.changedTouches[i], event.changedTouches[i].identifier);
+							}
+						}
+						else
+						{
+							triggerEvent(event, -1);
+						}
+					});
+				});
+		};
+		
+		this.registerTouchIdentifierEvent = function (controlEventId, customEventId)
+		{
+			canvas.addEventListener(
+					controlEventId,
+				function(event)
+				{
+					setTimeout(function()
+					{	
+						var triggerEvent = function(clientXY, touchIdentifier)
+						{							
+							controller.log("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+							var eventData = controller.getCanvasXYFromClientXY(clientXY);
+							eventData.touchIdentifier = touchIdentifier;
+							controller.triggerElementEventByIdentifier(customEventId, eventData);
+						}
+
+						
+						if (event.changedTouches)
+						{
+							for(var i=0;i<event.changedTouches.length;i++)
+							{
+								 triggerEvent(event.changedTouches[i], event.changedTouches[i].identifier);
+							}
+						}
+						else
+						{
+							triggerEvent(event, -1);
+						}
+					});
+				});
+		};
+		
 		this.events = new CreJs.Creevents.EventContainer();		
-		this.events.registerControlEvent(canvas, 'click', 'click');
-		this.events.registerControlEvent(canvas, 'mousedown','pointerDown');
-		this.events.registerControlEvent(canvas, 'mouseup','pointerUp');
-		this.events.registerControlEvent(canvas, 'mousemove','pointerMove');
-		this.events.registerControlEvent(canvas, 'touchstart','pointerDown');
-		this.events.registerControlEvent(canvas, 'touchend','pointerUp');
-		this.events.registerControlEvent(canvas, 'touchmove','pointerMove');
+		this.registerCanvasPointerEvent('click', 'click');
+		// create two handlers... wrong
+
+		this.registerCanvasPointerEvent('mousedown','pointerDown');
+		this.registerCanvasPointerEvent('touchstart','pointerDown');
+
+		this.registerTouchIdentifierEvent('mousemove','pointerMove');
+		this.registerTouchIdentifierEvent('touchmove','pointerMove');
+
+		this.registerTouchIdentifierEvent('mouseup','pointerUp');
+		this.registerTouchIdentifierEvent('touchend','pointerUp');
+
+		//this.registerPointerEvent('drop');
+
+		var topElementEventsToHandle = [];
 				
 		this.stop = function()
 		{
 			controller.events.dispatch('deactivate');
+			elements = [];
 		};
 	
 		this.redraw = function()
@@ -88,55 +197,75 @@ var CreJs = CreJs || {};
 		{
 			var boundings = canvas.getBoundingClientRect();
 			return { 
-				x: (clientXY.clientX-boundings.left) * canvas.width/boundings.width,
-				y: (clientXY.clientY-boundings.top) * canvas.height/boundings.height};		
+				x: Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width),
+				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};		
 		};
 	
-	/*	this.addEventListener = function(eventId, eventHandler, rank)
-		{
-			return events.register(eventId, eventHandler, rank);
-		};
-	
-		this.removeEventListener = function(eventId, eventHandle)
-		{
-			events.cancel(eventId, eventHandle);
-		};
-	*/
+		var elements = [];
+		
 		this.addElement  = function (elementData)
 		{
 			elementData.controller = controller;
-	
+
+			temporaryRenderingCanvas.width = elementData.width;
+			temporaryRenderingCanvas.height = elementData.height;
+			temporaryRenderingContext.beginPath();
+			
+			var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2}			
+			temporaryRenderingContext.translate(translate.dx, translate.dy);
+			elementData.draw(temporaryRenderingContext);
+			temporaryRenderingContext.translate(-translate.dx, -translate.dy);
+			elementData.image = temporaryRenderingContext.getImageData(0, 0, temporaryRenderingCanvas.width, temporaryRenderingCanvas.height);
 			var element = new CreJs.Creanvas.Element(elementData);
-							
+			element.dx = translate.dx;
+			element.dy = translate.dy;
+			elements.push(element);
 			return element;
 		};
 			
-	/*	this.dispatchEvent = function(id, eventData)
-		{
-			events.dispatch(id, eventData);
-		};
-		*/
 		//background
 		this.addElement({
+			name:'background',
+			width:canvas.width,
+			height:canvas.height,
+			translate:{dx:0, dy:0},
 			draw: 
 				controllerData.drawBackground ||  
 				function (context) 
 				{
 					context.fillStyle = controllerData.backgroundStyle || "#FFF";
-					context.fillRect(0,0,canvas.width,canvas.height);
+					context.fillRect(0,0,this.width,this.height);
 				},
 			z: -Infinity});
-	
+		
 		setInterval(
 				function()
 				{
-					// check events
-					if (needRedraw)
-					{
+					if (needRedraw && !isDrawing)
+					{						
 						needRedraw = false;
-						controller.events.dispatch('draw');
+						isDrawing = true;
+						
+						elements
+						.sort(function(a,b){return ((a.z || 0) - (b.z || 0));})
+						.forEach(function(element)
+						{
+							//controller.log('rendering ' + element.name + ' (' + element.z+ ')');
+							temporaryRenderingCanvas.width = element.image.width;
+							temporaryRenderingCanvas.height = element.image.height;					
+							temporaryRenderingContext.putImageData(element.image,0,0);
+							controller.context.drawImage(
+									temporaryRenderingCanvas,
+									element.x - element.dx,
+									element.y - element.dy);					
+						});
+					
+						isDrawing = false;
+												
 					}
 				},
 				refreshTime);
+		
+
 	};
 }());

@@ -12,6 +12,7 @@ var CreJs = CreJs || {};
 		{
 			element.isDroppable = true;
 			element.dropZone = droppableData.dropZone;
+			element.controller.log('Now droppable: ' + element.id);
 		}
 	});
 }());

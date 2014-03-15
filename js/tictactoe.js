@@ -7,11 +7,17 @@ CreTictactoe.onload = function ()
 	
 	var setUp = function()
 	{
+		document.getElementById("canvas2").addEventListener('click',
+		function(e){ 
+			document.getElementById("theDiv").innerHTML="clicked";
+		});
+		
 		var blockedX = false;
 		var blockedO = true;
 
 		controller = new CreJs.Creanvas.Controller(
 		{
+			noWorker:true,
 			canvas:theCanvas, 
 			drawBackground : 
 				function (context) 
@@ -45,24 +51,30 @@ CreTictactoe.onload = function ()
 					context.stroke();
 					
 				},		
-			log: function(data){ document.getElementById('log').innerHTML = data + "\n" + document.getElementById('log').innerHTML;}
+			log: new CreJs.Crelog.Logger().log
+				
 		});
 			
 				var currentPlayer = controller.addElement({
+					name:'currentPlayer',
+				width:150,
+				height:150,
 				x: 600,
 				y: 150,
-				z:-100,
+				z:-99,
 				draw: function (context) 
 				{
-					var gradient = context.createLinearGradient(100,100,600,400);
+					var gradient = context.createLinearGradient(25,25,525,325);
 					gradient.addColorStop(0.0,"#FF0");
 					gradient.addColorStop(1.0,"#BBB");					
 					context.fillStyle = gradient;
-					context.fillRect(this.x-75,this.y-75,150,150);
+					context.fillRect(-75,-75,150,150);
 				}});
 
 		
 		var markX= 	controller.addElement({
+			width:150,
+			height:150,
 			name:'X',
 			x: 600,
 			y: 150,
@@ -82,26 +94,28 @@ CreTictactoe.onload = function ()
 					color2= "#900";
 				}
 				context.lineCap='round';
-				context.lineWidth=10;
-				context.moveTo(this.x-50,this.y-50);
-				context.bezierCurveTo(this.x+50,this.y,this.x, this.y+50, this.x+50,this.y+50);
-				context.moveTo(this.x-50,this.y+50);
-				context.bezierCurveTo(this.x-20,this.y,this.x+30, this.y-25,   this.x+50,this.y-50);
-				var gradient = context.createLinearGradient(this.x-45,this.y-30,this.x+55,this.y+60);
+				context.lineWidth=40;
+				context.moveTo(-50,-50);
+				context.bezierCurveTo(50,0,0,50,50,50);
+				context.moveTo(-50,50);
+				context.bezierCurveTo(-20,0,30, -25, 50, -50);
+				var gradient = context.createLinearGradient(-45,-30,55,60);
 				gradient.addColorStop(0.0,color1);
 				gradient.addColorStop(1.0,color2);
 				context.strokeStyle = gradient;
 				context.stroke();
-				context.moveTo(this.x-50,this.y-50);
-				context.lineTo(this.x+50,this.y-50);
-				context.moveTo(this.x+50,this.y+50);
-				context.lineTo(this.x-50,this.y+50);
+				context.moveTo(-50,-50);
+				context.lineTo(50,-50);
+				context.moveTo(50,50);
+				context.lineTo(-50,50);
 				
-				context.arc(this.x,this.y,50,0,2*Math.PI);
+				context.arc(0,0,50,0,2*Math.PI);
 			}});
 
 	var markO = controller.addElement({
 			name:'O',
+			width:150,
+			height:150,
 			x: 600,
 			y: 325,
 			duplicable: {generatorCount:3, isBlocked:function(){return blockedO;}},
@@ -119,8 +133,8 @@ CreTictactoe.onload = function ()
 					color1 =  "#AAF";
 					color2= "#DDD";
 				}
-				context.arc(this.x,this.y,50,0,2*Math.PI);
-				var gradient = context.createRadialGradient(this.x,this.y,45,this.x-10,this.y-5,3);
+				context.arc(0,0,50,0,2*Math.PI);
+				var gradient = context.createRadialGradient(0,0,45,-10,-5,3);
 				gradient.addColorStop(0.0,color1);
 				gradient.addColorStop(1.0,color2);
 				context.fillStyle = gradient;
@@ -130,26 +144,28 @@ CreTictactoe.onload = function ()
 	var tttCase = function(x,y)
 	{
 		var theCase = controller.addElement({
+			name:'case(' + x + ',' + y + ')',
+			width:150,
+			height:150,
 			x: 25 + x*150,
 			y: 25 + y*150,
 			z:-100,
+			translate:{dx:0, dy:0},
 			dropzone:{
 				dropX:100+x*150,
 				dropY:100+y*150,
 				availableSpots:1}, 
 			draw: function (context) 
 			{
-				context.moveTo(this.x, this.y);
-				context.lineTo(this.x+150, this.y);
-				context.lineTo(this.x+150, this.y+150);
-				context.lineTo(this.x, this.y+150);
-				context.closePath();
+				// 99% transparent!
+				context.fillStyle ="rgba(0,0,0,0.01)"; 
+				context.fillRect(0, 0,150,150);
 			}
 		});
 		
 		theCase.events.addEventListener(
 				{
-				eventId:'droppedInZone',
+				eventId:'droppedIn',
 				handleEvent: function(e)
 				{
 					blockedX = !blockedX;
@@ -175,6 +191,8 @@ CreTictactoe.onload = function ()
 	}
 
 	var resetButton = controller.addElement({
+			width:150,
+			height:150,
 			x: 600,
 			y: 35,
 			clickable : {onclick:function(){			
@@ -183,8 +201,8 @@ CreTictactoe.onload = function ()
 				}},
 			draw: function (context) 
 			{
-				context.arc(this.x,this.y,25,0,2*Math.PI);
-				var gradient = context.createRadialGradient(this.x,this.y,25,this.x-10,this.y-5,5);
+				context.arc(0,0,25,0,2*Math.PI);
+				var gradient = context.createRadialGradient(0,0,25,-10,-5,5);
 				gradient.addColorStop(0.0,"#00F");
 				gradient.addColorStop(0.5,"#FFF");
 				gradient.addColorStop(1.0,"#F00");
@@ -197,21 +215,25 @@ CreTictactoe.onload = function ()
 		controller.stop(); 
 				
 		controller.addElement({
+			x:325,
+			y:250,
+			width:150,
+			height:150,
 			draw:function(context)
 			{
-				var gradient = context.createLinearGradient(325-75,250-125,325-75+300,250-125+400);
+				var gradient = context.createLinearGradient(-75,-125,-75+300,-125+400);
 				gradient.addColorStop(0.0,"#ff0");
 				gradient.addColorStop(1.0,"#f00");
 
 				context.fillStyle= gradient;
-				context.fillRect(325-75, 250-125,150, 200);
+				context.fillRect(-75, -125,150, 200);
 
 				context.fillStyle="#00d";
 				context.font= "24pt Times Roman";
 				context.fillText(
 						"VINNER !!",
-						325-75,
-						250-100);
+						-75,
+						-100);
 			}});
 		
 		var winner = element.clone();
@@ -260,11 +282,11 @@ CreTictactoe.onload = function ()
 					{
 						if (cases[i][j].droppedElements.length>0 )
 						{
-							if (cases[i][j].droppedElements[0].name=='X')
+							if (cases[i][j].droppedElements[0].name[0] == 'X')
 							{
 								Xs.push({i:i,j:j});
 							}
-							else if (cases[i][j].droppedElements[0].name=='O')
+							else if (cases[i][j].droppedElements[0].name[0] == 'O')
 							{
 								Os.push({i:i,j:j});
 							}

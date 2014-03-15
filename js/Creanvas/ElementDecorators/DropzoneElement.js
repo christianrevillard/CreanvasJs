@@ -18,55 +18,38 @@ var CreJs = CreJs || {};
 			
 			var drop = function(e) {
 				
-				if(!e.element.isDroppable)
-					return;
-
 				if (availableSpots <= 0)
 					return
-					
-				if(e.element.dropZone)
-					return;
+									
+				element.controller.log('drop event on dropzone ' + element.id + ', dropped ' + e.droppedElement.id);
 
-				if (!element.isPointInPath(e.moveEvent))
-					return;
-				
 				availableSpots--;
-				e.element.x = dropX || element.x;
-				e.element.y = dropY || element.y;
-				e.element.dropZone = element;
-				element.droppedElements.push(e.element);
-				e.element.events.dispatch('droppedElement', {dropZone:element, element:e.element});
-				element.events.dispatch('droppedInZone', {dropZone:element, element:e.element});
+				e.droppedElement.x = dropX || element.x;
+				e.droppedElement.y = dropY || element.y;
+				e.droppedElement.dropZone = element;
+				element.droppedElements.push(e.droppedElement);
+				e.droppedElement.events.dispatch('dropped', {dropZone:element, droppedElement:e.droppedElement});
+				element.events.dispatch('droppedIn', {dropZone:element, droppedElement:e.droppedElement});
 				element.triggerRedraw();
 			};
 	
-			element.controller.events.addEventListener({
+			element.events.addEventListener({
 				eventGroupType:'dropzone',
 				eventId:'drop', 
 				handleEvent:drop,
 				listenerId:element.id});
 	
-			var drag = function(e) {
+			element.drag = function(draggedElement) {
 	
-				if(e.element.dropZone !== element)
-					return;
-	
-				if (!element.isPointInPath(e.moveEvent))	
-					return;
-				
-				e.element.dropZone = null;
+				element.controller.log('dragging from dropzone ' + element.id + ', dragged ' + draggedElement.id);
+
+				draggedElement.dropZone = null;
 				availableSpots++;
 				element.droppedElements.splice(
-						element.droppedElements.indexOf(e.element),1);	
+						element.droppedElements.indexOf(draggedElement),1);	
 
 				element.triggerRedraw();
 			};
-	
-			element.controller.events.addEventListener({
-				eventGroupType:'dropzone',
-				eventId:'drag', 
-				handleEvent:drag,
-				listenerId:element.id});
 		}
 	});
 }());

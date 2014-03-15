@@ -5,15 +5,39 @@ var CreJs = CreJs || {};
 	var creevents = CreJs.Creevents = CreJs.Creevents || {};		
 	var helpers;	
 
-	creevents.Event = function()
+	creevents.Event = function(eventId)
 	{
+		this.eventId = eventId;
+		
 		helpers = CreJs.CreHelpers;
 
 		var eventHandlers = [];
-	
-		this.dispatch = function(eventData)
-		{
-			eventHandlers.forEach(function(handler){ handler.handleEvent(eventData);});
+
+		var logger = new CreJs.Crelog.Logger();
+		
+		this.dispatch = function(eventData, callback)
+		{		
+			var myDispatch = helpers.GetGuid();
+			
+			var count = eventHandlers.length;
+			if (eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
+				logger.log("Dispatching " + count + " " + eventData.eventId + ". (" + myDispatch + ")");			
+			
+			eventHandlers.forEach(function(handler){ 
+				handler.debugEvent = eventId;
+				setTimeout(
+						function()
+						{
+							if (eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
+								logger.log("Actually handling " + eventData.eventId + ". (" + myDispatch + ")");			
+							handler.handleEvent(eventData);
+							count--;
+							if (count==0 && callback)
+							{	
+								callback();
+							}
+						});
+				});
 		};
 		
 		// can add a optional rank to ensure calling order of the handlers

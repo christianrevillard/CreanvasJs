@@ -9,10 +9,15 @@ var CreJs = CreJs || {};
 		var events = {};		
 		var eventIds = [];		
 		
+		this.hasEvent = function(eventId)
+		{
+			return events[eventId] != undefined;
+		};
+		
 		var addEvent = function(eventId)
 		{
 			eventIds.push(eventId);
-			events[eventId] = new creevents.Event();											
+			events[eventId] = new creevents.Event(eventId);											
 		};
 		
 		this.addEventListener = function(listenerData)
@@ -24,12 +29,15 @@ var CreJs = CreJs || {};
 			return events[listenerData.eventId].addEventListener(listenerData);
 		};
 						
-		this.dispatch = function(eventId, eventData)
+		this.dispatch = function(eventId, eventData, callback)
 		{
 			if (events[eventId])
 			{
-				events[eventId].dispatch(eventData);
-			}
+				if (eventData)
+					eventData.eventId = eventId;
+				
+				events[eventId].dispatch(eventData, callback);
+			}		
 		};
 	
 		this.removeEventListener = function(listenerData)
@@ -44,7 +52,7 @@ var CreJs = CreJs || {};
 			}
 		};
 
-		this.registerControlEvent = function (control, controlEventId, customEventId, preventDefault)
+		this.registerControlEvent = function (control, controlEventId, customEventId)
 		{
 			if (!events[customEventId])
 			{
@@ -55,10 +63,12 @@ var CreJs = CreJs || {};
 					controlEventId,
 				function(event)
 				{
-					if (preventDefault)
-						event.preventDefault();
-					
-					container.dispatch(customEventId, event);
+					event.preventDefault();
+					setTimeout(function()
+					{					
+						container.dispatch(customEventId, event);
+					},
+					0);
 				});
 		};
 	};
