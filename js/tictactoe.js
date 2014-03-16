@@ -73,6 +73,15 @@ CreTictactoe.onload = function ()
 			name:'X',
 			x: 600,
 			y: 150,
+			angle: Math.PI / 4,
+			rules:[
+			       {
+			    	  checkTime: 80, //ms
+			    	  rule: function()
+			    	  {
+			    		  this.angle+= Math.PI / 32;
+			    	  }
+			       }],
 			duplicable: {generatorCount:3, isBlocked:function(){return blockedX;}},
 			droppable: true,
 			draw: function (context) 
@@ -106,13 +115,42 @@ CreTictactoe.onload = function ()
 				
 				context.arc(0,0,50,0,2*Math.PI);
 			}});
-
+		
 	var markO = controller.addElement({
 			name:'O',
 			width:150,
 			height:150,
 			x: 600,
 			y: 325,
+			scaleX:0.8,
+			scaleY:1.2,
+			rules:[
+			       {
+			    	  checkTime: 80, //ms
+			    	  rule: function()
+			    	  {
+			    		  var previous = this.scaleX;
+			    		  if (this.scaleX>1.2)
+			    		  {
+			    			  this.scaleX-=0.05;
+			    		  }
+			    		  else if (this.scaleX<0.8)
+			    		  {
+			    			  this.scaleX+=0.05;			    			  
+			    		  }
+			    		  else if (this.scaleX > (this.previousScaleX || this.scaleX))
+			    		  {
+			    			  this.scaleX+=0.05;
+			    		  }
+			    		  else
+			    		  {
+			    			  this.scaleX-=0.05;			    			  
+			    		  }
+
+			    		  this.previousScaleX=previous;
+		    			  this.scaleY=2-this.scaleX;
+			    	  }
+			       }],
 			duplicable: {generatorCount:3, isBlocked:function(){return blockedO;}},
 			droppable: true,
 			draw: function (context) 

@@ -28,7 +28,23 @@ var CreJs = CreJs || {};
 		var draw = elementData.draw;	
 		this.width = elementData.width;
 		this.height = elementData.height;
+		this.angle = elementData.angle;
+		this.scaleX = elementData.scaleX;
+		this.scaleY = elementData.scaleY;
 		
+		if (elementData.rules)
+		{
+			elementData.rules.forEach(function(rule)
+			{
+				setInterval(
+						function()
+						{
+							rule.rule.call(element);					
+							element.triggerRedraw();
+						},
+						rule.checkTime);
+			});
+		};
 		var element = this;
 							
 		this.events = new CreJs.Creevents.EventContainer();			

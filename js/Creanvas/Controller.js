@@ -4,6 +4,10 @@
 // Collision between elements. Can be checkec on worker, xoring a 1/0 image
 //Decorator: selfMoving, Solid(collision), Massive (mass, gravity)
 
+var a;
+
+// Begin with scale, rotate, to see if it fits in the context stuff
+
 var CreJs = CreJs || {};
 
 (function(){
@@ -249,12 +253,22 @@ var CreJs = CreJs || {};
 						.forEach(function(element)
 						{
 							//controller.log('rendering ' + element.name + ' (' + element.z+ ')');
-						//	temporaryRenderingCanvas.width = element.image.width;
-							//temporaryRenderingCanvas.height = element.image.height;					
-							//temporaryRenderingContext.putImageData(element.image,0,0);
+/*							controller.context.drawImage(
+									element.temporaryRenderingCanvas,
+									0, 0, element.width, element.height,
+									element.x - element.dx, element.y - element.dy, element.width, element.height);	//width height will be transformed!				
+*/
+							
+							controller.context.translate(element.x, element.y);
+							controller.context.rotate(element.angle || 0);
+							controller.context.scale(element.scaleX || 1, element.scaleY || 1);
 							controller.context.drawImage(
-									element.temporaryRenderingCanvas,0,0,element.width,element.height,
-									element.x - element.dx, element.y - element.dy, element.width,element.height);	//width height will be transformed!				
+									element.temporaryRenderingCanvas,
+									0, 0, element.width, element.height,
+									-element.dx, -element.dy, element.width, element.height);	//width height will be transformed!				
+							controller.context.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
+							controller.context.rotate(- (element.angle || 0));
+							controller.context.translate(-element.x, - element.y);
 						});
 					
 						isDrawing = false;
