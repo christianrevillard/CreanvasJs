@@ -32,6 +32,10 @@ var CreJs = CreJs || {};
 		this.scaleX = elementData.scaleX;
 		this.scaleY = elementData.scaleY;
 		
+		var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2};			
+		this.dx = translate.dx;
+		this.dy = translate.dy;
+		
 		if (elementData.rules)
 		{
 			elementData.rules.forEach(function(rule)
@@ -78,11 +82,15 @@ var CreJs = CreJs || {};
 			imageY >= 0 &&
 			imageY <= element.height && 
 			element.image.data[4*imageY*element.width + 4*imageX + 3]>0;
-		}
+		};
 
 		this.clone = function()
 		{
-			return element.controller.addElement(elementData);
+			var newElement = element.controller.addElementWithoutContext(elementData);
+			newElement.temporaryRenderingCanvas = element.temporaryRenderingCanvas;
+			newElement.temporaryRenderingContext = element.temporaryRenderingContext;
+			newElement.image = element.image;
+			return newElement;
 		};
 	
 		this.applyDecorator = function(decorator, decoratorData)

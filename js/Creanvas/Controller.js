@@ -1,12 +1,9 @@
 // Clean code... again
-// Self moving elements
-// Rotating - hand and automatic.
+
 // Collision between elements. Can be checkec on worker, xoring a 1/0 image
 //Decorator: selfMoving, Solid(collision), Massive (mass, gravity)
 
 var a;
-
-// Begin with scale, rotate, to see if it fits in the context stuff
 
 var CreJs = CreJs || {};
 
@@ -144,7 +141,7 @@ var CreJs = CreJs || {};
 							var eventData = controller.getCanvasXYFromClientXY(clientXY);
 							eventData.touchIdentifier = touchIdentifier;
 							controller.triggerElementEventByIdentifier(customEventId, eventData);
-						}
+						};
 
 						
 						if (event.changedTouches)
@@ -199,13 +196,22 @@ var CreJs = CreJs || {};
 		};
 	
 		var elements = [];
-		
-		this.addElement  = function (elementData)
+
+		this.addElementWithoutContext  = function (elementData)
 		{
 			elementData.controller = controller;
 
-
 			var element = new CreJs.Creanvas.Element(elementData);
+
+
+			elements.push(element);
+			return element;
+			
+		};
+
+		this.addElement  = function (elementData)
+		{
+			var element = this.addElementWithoutContext(elementData);
 
 			element.temporaryRenderingCanvas = canvas.ownerDocument.createElement('canvas');			
 			element.temporaryRenderingContext = element.temporaryRenderingCanvas.getContext("2d");
@@ -213,15 +219,11 @@ var CreJs = CreJs || {};
 			element.temporaryRenderingCanvas.height = elementData.height;
 			element.temporaryRenderingContext.beginPath();
 			
-			var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2};			
-			element.temporaryRenderingContext.translate(translate.dx, translate.dy);
+			element.temporaryRenderingContext.translate(element.dx, element.dy);
 			elementData.draw(element.temporaryRenderingContext);
 			// several image:store them here with offset
 			element.image = element.temporaryRenderingContext.getImageData(0, 0, elementData.width, elementData.height);
-			
-			element.dx = translate.dx;
-			element.dy = translate.dy;
-			elements.push(element);
+
 			return element;
 		};
 			
