@@ -7,11 +7,6 @@ CreTictactoe.onload = function ()
 	
 	var setUp = function()
 	{
-		document.getElementById("canvas2").addEventListener('click',
-		function(e){ 
-			document.getElementById("theDiv").innerHTML="clicked";
-		});
-		
 		var blockedX = false;
 		var blockedO = true;
 

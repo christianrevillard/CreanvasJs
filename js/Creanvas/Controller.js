@@ -1,3 +1,9 @@
+// Clean code... again
+// Self moving elements
+// Rotating - hand and automatic.
+// Collision between elements. Can be checkec on worker, xoring a 1/0 image
+//Decorator: selfMoving, Solid(collision), Massive (mass, gravity)
+
 var CreJs = CreJs || {};
 
 (function(){
@@ -8,23 +14,11 @@ var CreJs = CreJs || {};
 
 		controller = this;
 		canvas = controllerData.canvas;
-
-		var temporaryRenderingCanvas = canvas.ownerDocument.createElement('canvas');
-			
-		var temporaryRenderingContext = temporaryRenderingCanvas.getContext("2d");
-
-			var images = [];
-			images.push(temporaryRenderingContext.getImageData(0,0,temporaryRenderingCanvas.width,temporaryRenderingCanvas.height));
-
-			temporaryRenderingContext.strokeStyle="#0F0";
-			temporaryRenderingContext.stroke();
-			images.push(temporaryRenderingContext.getImageData(0,0,temporaryRenderingCanvas.width,temporaryRenderingCanvas.height));
-
 						
-			this.log = function(logData){
-				if (controllerData.log)
-					controllerData.log(logData);
-			};
+		this.log = function(logData){
+			if (controllerData.log)
+				controllerData.log(logData);
+		};
 
 			//for heavy load stuff that can be handled by a worker / WebSocket
 		var asynchronousController;
@@ -33,14 +27,14 @@ var CreJs = CreJs || {};
 			asynchronousController = {};
 			asynchronousController.worker = new Worker("js/Creanvas/AsynchronousControllerWorker.js");
 			asynchronousController.receiveMessage = function(message){ asynchronousController.worker.postMessage(message);};
-			asynchronousController.worker.onmessage = function(e){ asynchronousController.sendMessage(e.data)};
-			asynchronousController.sendMessage = function(message) { controller.receiveMessage(message)};
+			asynchronousController.worker.onmessage = function(e){ asynchronousController.sendMessage(e.data);};
+			asynchronousController.sendMessage = function(message) { controller.receiveMessage(message);};
 		}
 		else
 		{
 			// fall back to synchronous calls
 			asynchronousController = new CreJs.Creanvas.HeavyLoadController();
-			asynchronousController.sendMessage = function(message){ controller.receiveMessage(message)};
+			asynchronousController.sendMessage = function(message){ controller.receiveMessage(message);};
 		}
 		
 		this.receiveMessage = function(message)
@@ -61,7 +55,6 @@ var CreJs = CreJs || {};
 
 	
 		controller.context = canvas.getContext("2d");	
-		controller.noDrawContext = new CreJs.Creanvas.NoDrawContext(controller.context);
 		needRedraw = true;
 		isDrawing = false;
 		refreshTime = controllerData.refreshTime || 50; // ms	
@@ -207,16 +200,21 @@ var CreJs = CreJs || {};
 		{
 			elementData.controller = controller;
 
-			temporaryRenderingCanvas.width = elementData.width;
-			temporaryRenderingCanvas.height = elementData.height;
-			temporaryRenderingContext.beginPath();
-			
-			var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2}			
-			temporaryRenderingContext.translate(translate.dx, translate.dy);
-			elementData.draw(temporaryRenderingContext);
-			temporaryRenderingContext.translate(-translate.dx, -translate.dy);
-			elementData.image = temporaryRenderingContext.getImageData(0, 0, temporaryRenderingCanvas.width, temporaryRenderingCanvas.height);
+
 			var element = new CreJs.Creanvas.Element(elementData);
+
+			element.temporaryRenderingCanvas = canvas.ownerDocument.createElement('canvas');			
+			element.temporaryRenderingContext = element.temporaryRenderingCanvas.getContext("2d");
+			element.temporaryRenderingCanvas.width = elementData.width;
+			element.temporaryRenderingCanvas.height = elementData.height;
+			element.temporaryRenderingContext.beginPath();
+			
+			var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2};			
+			element.temporaryRenderingContext.translate(translate.dx, translate.dy);
+			elementData.draw(element.temporaryRenderingContext);
+			// several image:store them here with offset
+			element.image = element.temporaryRenderingContext.getImageData(0, 0, elementData.width, elementData.height);
+			
 			element.dx = translate.dx;
 			element.dy = translate.dy;
 			elements.push(element);
@@ -251,13 +249,12 @@ var CreJs = CreJs || {};
 						.forEach(function(element)
 						{
 							//controller.log('rendering ' + element.name + ' (' + element.z+ ')');
-							temporaryRenderingCanvas.width = element.image.width;
-							temporaryRenderingCanvas.height = element.image.height;					
-							temporaryRenderingContext.putImageData(element.image,0,0);
+						//	temporaryRenderingCanvas.width = element.image.width;
+							//temporaryRenderingCanvas.height = element.image.height;					
+							//temporaryRenderingContext.putImageData(element.image,0,0);
 							controller.context.drawImage(
-									temporaryRenderingCanvas,
-									element.x - element.dx,
-									element.y - element.dy);					
+									element.temporaryRenderingCanvas,0,0,element.width,element.height,
+									element.x - element.dx, element.y - element.dy, element.width,element.height);	//width height will be transformed!				
 						});
 					
 						isDrawing = false;

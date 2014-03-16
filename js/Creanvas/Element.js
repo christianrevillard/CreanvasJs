@@ -91,6 +91,8 @@ var CreJs = CreJs || {};
 		this.deactivate = function ()
 		{
 			element.controller.events.removeEventListener({listenerId:element.id});
+			element.temporaryRenderingCanvas = null;
+			element.temporaryRenderingContext = null;
 		};
 		
 		element.controller.events.addEventListener(
