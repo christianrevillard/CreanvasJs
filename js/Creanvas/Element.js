@@ -28,28 +28,31 @@ var CreJs = CreJs || {};
 		var draw = elementData.draw;	
 		this.width = elementData.width;
 		this.height = elementData.height;
-		this.angle = elementData.angle;
-		this.scaleX = elementData.scaleX;
-		this.scaleY = elementData.scaleY;
+		this.angle = elementData.angle || 0;
+		this.scaleX = elementData.scaleX || 1;
+		this.scaleY = elementData.scaleY || 1;
 		
 		var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2};			
 		this.dx = translate.dx;
 		this.dy = translate.dy;
+		var element = this;
 		
 		if (elementData.rules)
 		{
+			element.rules = [];
 			elementData.rules.forEach(function(rule)
 			{
+				var  ruleId = element.rules.length;
+				element.rules.push(rule);
 				setInterval(
 						function()
 						{
-							rule.rule.call(element);					
+							element.rules[ruleId].rule.call(element);					
 							element.triggerRedraw();
 						},
 						rule.checkTime);
 			});
 		};
-		var element = this;
 							
 		this.events = new CreJs.Creevents.EventContainer();			
 			
@@ -87,7 +90,6 @@ var CreJs = CreJs || {};
 		this.clone = function()
 		{
 			var newElement = element.controller.addElementWithoutContext(elementData);
-			newElement.temporaryRenderingCanvas = element.temporaryRenderingCanvas;
 			newElement.temporaryRenderingContext = element.temporaryRenderingContext;
 			newElement.image = element.image;
 			return newElement;
@@ -115,42 +117,9 @@ var CreJs = CreJs || {};
 		this.deactivate = function ()
 		{
 			element.controller.events.removeEventListener({listenerId:element.id});
-			element.temporaryRenderingCanvas = null;
 			element.temporaryRenderingContext = null;
 		};
 		
-		element.controller.events.addEventListener(
-		{
-			eventId: 'draw',
-			rank: element.z,
-			listenerId:element.id,
-			handleEvent: function(e) { 			
-				
-/*				element.controller.context.beginPath(); // missing in draw() would mess everything up...
-
-				var eventsToCheck = e.events.filter(function(x){ return element.canHandle(x.eventId);});
-				
-				eventsToCheck.forEach(function(eventPoint)
-				{
-					eventPoint.mask = element.controller.context.createImageData(1,1);
-					eventPoint.mask.data[3]=0;
-					element.controller.context.putImageData(eventPoint.mask, eventPoint.event.x, eventPoint.event.y);
-				});
-								
-				draw.call(element, element.controller.context);
-
-				eventsToCheck.forEach(function(eventPoint)
-				{
-					eventPoint.after = element.controller.context.getImageData(
-								eventPoint.event.x, eventPoint.event.y,1,1);
-
-					if (eventPoint.after.data[3] != 0)
-					{
-						eventPoint.claimingElement = element;
-					}
-				});*/
-		}});
-
 		element.controller.events.addEventListener(
 		{
 			eventId: 'deactivate', 
@@ -163,7 +132,46 @@ var CreJs = CreJs || {};
 		{
 			element.controller.redraw();
 		};	
+		
+		
+		// move to element
+		this.getCanvasXY=function(imageX, imageY)
+		{
+			return {
+				x: Math.round(element.x + imageX*element.scaleX*Math.cos(element.angle) - imageY*element.scaleY*Math.sin(element.angle)),
+				y: Math.round(element.y + imageX*element.scaleX*Math.sin(element.angle) + imageY*element.scaleY*Math.cos(element.angle))
+			};
+		};
+
+		this.getElementXY=function(canvasX, canvasY)
+		{
+			return {
+				x: Math.round(((canvasX- element.x)*Math.cos(element.angle) + (canvasY-element.y)*Math.sin(element.angle))/element.scaleX),
+				y: Math.round(((canvasY- element.y)*Math.cos(element.angle)-(canvasX-element.x)*Math.sin(element.angle))/element.scaleY),
+			};
+		};
+		
+		var getCorners = function()
+		{
+			var corners=[];
+			corners.push({x:- element.dx, y: -element.dy});
+			corners.push({x:- element.dx + element.width, y:-element.dy});
+			corners.push({x:- element.dx + element.width, y:-element.dy + element.height});
+			corners.push({x:- element.dx, y:-element.dy + element.height});
+			return corners;
+		}
+		
+		this.getClientRect = function()
+		{
+			var clientCorners = getCorners().map(function(point){return element.getCanvasXY(point.x, point.y);});
+			return {
+				top: clientCorners.reduce(function(a,b){ return Math.min(a,b.y);}, Infinity),
+				bottom: clientCorners.reduce(function(a,b){ return Math.max(a,b.y);}, -Infinity),
+				left: clientCorners.reduce(function(a,b){ return Math.min(a,b.x);}, Infinity),
+				right: clientCorners.reduce(function(a,b){ return Math.max(a,b.x);}, -Infinity)
+			};
+		}
+
 	};
-	
 
 }());

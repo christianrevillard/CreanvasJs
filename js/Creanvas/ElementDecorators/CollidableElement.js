@@ -7,21 +7,19 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators.push(
 	{
-		type: 'clickable',
-		applyTo: function(element, clickData)
+		type: 'collidable',
+		applyTo: function(element, collidableData)
 		{	
-			element.onClick = function(event)
-			{
-				clickData.onclick.call(element, event);						
-
-				element.triggerRedraw();
-			};
+			element.collidable = true;
 			
 			element.events.addEventListener(
-			{
-				eventId:'click', 
-				handleEvent:element.onClick
-			});
+					{
+						eventId:'collision',
+						handleEvent:function()
+					{
+						alert('collision');
+						element.y+=10;
+					}});
 		}
 	});
 }());
