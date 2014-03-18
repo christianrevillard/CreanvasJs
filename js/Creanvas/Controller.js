@@ -16,16 +16,36 @@ var CreJs = CreJs || {};
 	CreJs.Creanvas.Controller = function(controllerData) {
 		var canvas, needRedraw, refreshTime, controller;
 
+		var time;
+		var timeStart;
+		var timeScale = controllerData.timeScale || 1;
+
+		if (controllerData.realTime)
+		{	
+			timeStart = Date.now();
+			this.getTime = function(){return (Date.now() - timeStart) * timeScale; };					
+		}
+		else
+		{
+			time=0;
+			setInterval(
+					function(){
+						time+=10*timeScale;
+					},
+					10);
+			this.getTime = function(){return time;};
+		}
+		
 		controller = this;
 		canvas = controllerData.canvas;
 
 		var collisionCanvas = canvas.ownerDocument.createElement('canvas');		
-//		canvas.ownerDocument.body.appendChild(collisionCanvas);
+		//canvas.ownerDocument.body.appendChild(collisionCanvas);
 		collisionCanvas.width = canvas.width;
 		collisionCanvas.height = canvas.height;
 		collisionContext = collisionCanvas.getContext("2d");
 		
-		this.log = function(logData){
+		this.log = function(logData){			
 			if (controllerData.log)
 				controllerData.log(logData);
 		};
@@ -284,25 +304,49 @@ var CreJs = CreJs || {};
 		setInterval(			
 				function()
 				 {
-					var toCheck = elements.filter(function(e){ return e.collidable;});
-				
+					var toCheck = elements.filter(function(e){ return e.collidable;});					
 																	
 					toCheck.sort(function(a,b){ return a.id<b.id;}).forEach(
 						function(element)
 						{
-							collisionContext.clearRect(0,0,collisionCanvas.width,collisionCanvas.height);
+							
+							var rect1 = element.getClientRect();
+							
 
-							var others = toCheck.filter(function(other){ return other.id>element.id;});
+							var others = toCheck.filter(function(other){ return (other.id>element.id && (other.vx || other.vy  || element.vx  || element.vy));});
 							
 							if (others.length==0)
 								return;
 							
-							collisionContext.globalCompositeOperation='source-over';
 							others.forEach(
-									// saved status S1
-									// add element, paint black save - S2
 								function(other)
 								{
+									var rect2 = other.getClientRect();
+									
+									var left = Math.max(rect1.left, rect2.left);
+									var right = Math.min(rect1.right, rect2.right);
+									var top = Math.max(rect1.top, rect2.top);
+									var bottom = Math.min(rect1.bottom, rect2.bottom);
+										
+									if (bottom<=top || right<=left)
+										return;
+
+									collisionContext.globalCompositeOperation='source-over';
+								//	collisionContext.clearRect(0,0,canvas.width,canvas.height);
+
+									
+									collisionContext.clearRect(left,top,right-left,bottom-top);
+									
+									/*
+									collisionContext.strokeStyle="#F00";
+									collisionContext.beginPath();
+									collisionContext.moveTo(left-2,top-2);
+									collisionContext.lineTo(right+2,top-2);
+									collisionContext.lineTo(right+2,bottom+2);
+									collisionContext.lineTo(left-2,bottom+2);
+									collisionContext.closePath();
+									collisionContext.stroke();
+									*/
 									collisionContext.translate(other.x, other.y);
 									collisionContext.rotate(other.angle || 0);
 									collisionContext.scale(other.scaleX || 1, other.scaleY || 1);
@@ -313,40 +357,56 @@ var CreJs = CreJs || {};
 									collisionContext.scale(1/(other.scaleX || 1), 1/(other.scaleY) || 1);
 									collisionContext.rotate(- (other.angle || 0));
 									collisionContext.translate(-other.x, - other.y);						
+									
+									// save this image
+									var imageDataBefore = collisionContext.getImageData(left,top,right-left,bottom-top).data;
+									
+									collisionContext.translate(element.x, element.y);
+									collisionContext.rotate(element.angle || 0);
+									collisionContext.scale(element.scaleX || 1, element.scaleY || 1);
+									collisionContext.globalCompositeOperation='destination-out';
+									collisionContext.drawImage(
+											element.temporaryRenderingContext.canvas,
+											0, 0, element.width, element.height,
+											-element.dx, -element.dy, element.width, element.height);
 								
+									collisionContext.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
+									collisionContext.rotate(- (element.angle || 0));
+									collisionContext.translate(-element.x, - element.y);	
+									collisionContext.globalCompositeOperation='source-over';
+			
+									var imageDataAfter = collisionContext.getImageData(left,top,right-left,bottom-top).data;
+
+									var Xs=[];
+									var Ys=[];
+									for (var imageX=0;imageX<right-left; imageX++)
+									{
+										for (var imageY=0;imageY<bottom-top; imageY++)
+										{
+											// check alpha only
+											if (imageDataBefore[imageY*(right-left)*4 + imageX*4 + 3] != imageDataAfter[imageY*(right-left)*4 + imageX*4 + 3])
+											{
+												Xs.push(imageX);
+												Ys.push(imageY);
+											}
+										}
+									}
+									
+									if (Xs.length == 0)
+										return;
+									
+									// average... need more, the shape is important to find the exact consequence
+									var imageX = Xs.reduce(function(sum, x){ return sum + x;}) / Xs.length;
+									var imageY = Ys.reduce(function(sum, y){ return sum + y;}) / Ys.length;
+									
+									element.events.dispatch('collision', {element:other, contactPoint:{x:left+imageX,y:top+imageY}});
+									
+									other.events.dispatch('collision', {element:element, contactPoint:{x:left+imageX,y:top+imageY}});
 								});
 							
-							// save this image
-							var imageDataBefore = collisionContext.getImageData(0,0,collisionCanvas.width,collisionCanvas.height).data;
-							
-							collisionContext.translate(element.x, element.y);
-							collisionContext.rotate(element.angle || 0);
-							collisionContext.scale(element.scaleX || 1, element.scaleY || 1);
-							collisionContext.globalCompositeOperation='destination-out';
-							collisionContext.drawImage(
-									element.temporaryRenderingContext.canvas,
-									0, 0, element.width, element.height,
-									-element.dx, -element.dy, element.width, element.height);	//width height will be transformed!				
-						
-							collisionContext.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
-							collisionContext.rotate(- (element.angle || 0));
-							collisionContext.translate(-element.x, - element.y);	
-	
-							var imageDataAfter = collisionContext.getImageData(0,0,collisionCanvas.width,collisionCanvas.height).data;
-
-							// result ok but faaaaaaaaaaar too slow...
-							
-							for (var i=0;i<imageDataBefore.length;i++)
-							{
-								if(imageDataBefore[i]!=imageDataAfter[i])
-								{
-									element.events.dispatch('collision');
-									i = imageDataBefore.length;
-								}
-							};
-				 		});
+					 		});
 			}
-		,50);				
+		,80);				
 		
 			
 	

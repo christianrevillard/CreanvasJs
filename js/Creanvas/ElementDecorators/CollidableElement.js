@@ -15,10 +15,13 @@ var CreJs = CreJs || {};
 			element.events.addEventListener(
 					{
 						eventId:'collision',
-						handleEvent:function()
+						handleEvent:function(collisionEvent)
 					{
-						alert('collision');
-						element.y+=10;
+							//inverse speed. Must work the physics here...
+							if ((collisionEvent.contactPoint.y-element.y)*element.vy>0)
+								element.vy=-element.vy;
+							if ((collisionEvent.contactPoint.x-element.x)*element.vx>0)
+								element.vx=-element.vx;
 					}});
 		}
 	});
