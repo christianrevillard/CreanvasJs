@@ -23,14 +23,15 @@ var onload = function ()
 			height:150,
 			x: 75,
 			y: 325,
-			scaleX:0.8,
-			scaleY:1.2,
+			scaleX:1,
+			scaleY:1,
 			rules:[
 			       {
 			    	  checkTime: 80, //ms
 			    	  rule: function()
 			    	  {
-			    		  var previous = this.scaleX;
+			    		  
+/*			    		  var previous = this.scaleX;
 			    		  if (this.scaleX>1.2)
 			    		  {
 			    			  this.scaleX-=0.05;
@@ -49,7 +50,7 @@ var onload = function ()
 			    		  }
 
 			    		  this.previousScaleX=previous;
-		    			  this.scaleY=2-this.scaleX;
+		    			  this.scaleY=2-this.scaleX;*/
 			    	  }
 			       }
 			       ],
@@ -82,13 +83,13 @@ var onload = function ()
 	element1.vx = 0.2;
 	
 	element2.x=600;
-	element2.scaleX=2;
-	element2.scaley=0;
+	element2.scaleX=0.5;
+	element2.scaley=0.5;
 	element2.vx = -0.2;
 
 	element3.x=100;
 	element3.y=100;
-	element3.scaleX=0;
+	element3.scaleX=2;
 	element3.scaley=2;
 	element3.vx = 1.2;
 	element3.vy = 0.8;

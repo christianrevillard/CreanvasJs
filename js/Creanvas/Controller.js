@@ -332,7 +332,8 @@ var CreJs = CreJs || {};
 										return;
 
 									collisionContext.globalCompositeOperation='source-over';
-								//	collisionContext.clearRect(0,0,canvas.width,canvas.height);
+								
+	//								collisionContext.clearRect(0,0,canvas.width,canvas.height);
 
 									
 									collisionContext.clearRect(left,top,right-left,bottom-top);
@@ -346,7 +347,7 @@ var CreJs = CreJs || {};
 									collisionContext.lineTo(left-2,bottom+2);
 									collisionContext.closePath();
 									collisionContext.stroke();
-									*/
+*/
 									collisionContext.translate(other.x, other.y);
 									collisionContext.rotate(other.angle || 0);
 									collisionContext.scale(other.scaleX || 1, other.scaleY || 1);
@@ -377,27 +378,79 @@ var CreJs = CreJs || {};
 			
 									var imageDataAfter = collisionContext.getImageData(left,top,right-left,bottom-top).data;
 
-									var Xs=[];
-									var Ys=[];
-									for (var imageX=0;imageX<right-left; imageX++)
+									var edges=[];
+									var points=[];
+
+									for (var imageX=1;imageX<right-left-1; imageX++)
 									{
-										for (var imageY=0;imageY<bottom-top; imageY++)
+										for (var imageY=1;imageY<bottom-top-1; imageY++)
 										{
 											// check alpha only
 											if (imageDataBefore[imageY*(right-left)*4 + imageX*4 + 3] != imageDataAfter[imageY*(right-left)*4 + imageX*4 + 3])
 											{
-												Xs.push(imageX);
-												Ys.push(imageY);
+												points.push({x:imageX, y:imageY}); 
+												var edge=false;
+												for (var i=-1;i<2;i++)
+												{
+													for (var j=-1;j<2;j++)
+													{
+														if (imageDataAfter[(imageY*(right-left)-i)*4 + (imageX-j)*4 + 3] > 0
+																|| imageDataBefore[(imageY*(right-left)-i)*4 + (imageX-j)*4 + 3] == 0)
+														{
+															edge = true;
+															j=2;
+															i=2;
+														}
+													}													
+												}
+												if (edge)
+												{
+													edges.push({x:imageX, y:imageY});
+												}
 											}
 										}
 									}
-									
-									if (Xs.length == 0)
+
+									if (points.length == 0)
 										return;
-									
-									// average... need more, the shape is important to find the exact consequence
-									var imageX = Xs.reduce(function(sum, x){ return sum + x;}) / Xs.length;
-									var imageY = Ys.reduce(function(sum, y){ return sum + y;}) / Ys.length;
+
+									if (edges.length == 0)
+										return;
+
+									if (edges.length == 1)
+										return;
+
+									var d,dmax = 0;
+									var theMax = {i:0, j:edges.length-1};
+									for (var i = 1; i<edges.length; i++)
+									{
+										for (var j = i+1; j<edges.length; j++)
+										{
+											var dx = edges[i].x-edges[j].x;
+											var dy = edges[i].y-edges[j].y;
+											d = Math.sqrt(dx*dx+dy*dy);
+											if (d>dmax)
+											{
+												dmax=d;
+												theMax.i = i;
+												theMax.j = j;
+											}
+										}
+									}
+																		
+									var pente = (edges[theMax.i].y -  edges[theMax.j].y)/(edges[theMax.i].x -  edges[theMax.j].x);
+
+									var imageX = (edges[theMax.i].x +  edges[theMax.j].x)/2;
+									var imageY = (edges[theMax.i].y +  edges[theMax.j].y)/2;
+
+
+									controller.context.strokeStyle="#F00";
+									controller.context.lineWidth=5;
+									controller.context.beginPath();
+									controller.context.moveTo(left+imageX,top.imageY);
+									controller.context.lineTo(left+imageX + 50, top+imageY + 50 * pente);
+									controller.context.lineTo(left+imageX - 50, top+imageY - 50 * pente);
+									controller.context.stroke();
 									
 									element.events.dispatch('collision', {element:other, contactPoint:{x:left+imageX,y:top+imageY}});
 									
