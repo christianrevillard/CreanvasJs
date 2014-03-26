@@ -40,7 +40,7 @@ var CreJs = CreJs || {};
 		canvas = controllerData.canvas;
 
 		var collisionCanvas = canvas.ownerDocument.createElement('canvas');		
-		//canvas.ownerDocument.body.appendChild(collisionCanvas);
+		canvas.ownerDocument.body.appendChild(collisionCanvas);
 		collisionCanvas.width = canvas.width;
 		collisionCanvas.height = canvas.height;
 		collisionContext = collisionCanvas.getContext("2d");
@@ -93,7 +93,7 @@ var CreJs = CreJs || {};
 		this.triggerPointedElementEvent = function(eventId, event)
 		{
 			var hit = false;
-			elements
+			controller.elements
 			.filter(function(e){return e.canHandle(eventId);})
 			.sort(function(a,b){return (b.z || 0 - a.z || 0);})
 			.forEach(
@@ -114,7 +114,7 @@ var CreJs = CreJs || {};
 
 		this.triggerElementEventByIdentifier = function(eventId, event)
 		{
-			elements
+			controller.elements
 			.forEach(
 					function(element)
 					{							
@@ -139,7 +139,7 @@ var CreJs = CreJs || {};
 							var eventData = controller.getCanvasXYFromClientXY(clientXY);
 							eventData.touchIdentifier = touchIdentifier;
 							controller.triggerPointedElementEvent(customEventId, eventData);
-						}
+						};
 						
 						if (event.changedTouches)
 						{
@@ -204,7 +204,7 @@ var CreJs = CreJs || {};
 		this.stop = function()
 		{
 			controller.events.dispatch('deactivate');
-			elements = [];
+			controller.elements = [];
 		};
 	
 		this.redraw = function()
@@ -221,7 +221,7 @@ var CreJs = CreJs || {};
 				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};		
 		};
 	
-		var elements = [];
+		controller.elements = [];
 
 		this.addElementWithoutContext  = function (elementData)
 		{
@@ -230,7 +230,7 @@ var CreJs = CreJs || {};
 			var element = new CreJs.Creanvas.Element(elementData);
 
 
-			elements.push(element);
+			controller.elements.push(element);
 			return element;
 			
 		};
@@ -276,7 +276,7 @@ var CreJs = CreJs || {};
 						needRedraw = false;
 						isDrawing = true;
 						
-						elements
+						controller.elements
 						.sort(function(a,b){return ((a.z || 0) - (b.z || 0));})
 						.forEach(function(element)
 						{
@@ -285,6 +285,15 @@ var CreJs = CreJs || {};
 							controller.context.translate(element.x, element.y);
 							controller.context.rotate(element.angle || 0);
 							controller.context.scale(element.scaleX || 1, element.scaleY || 1);
+							
+							controller.context.beginPath();
+							controller.context.moveTo(-element.dx, -element.dy);
+							controller.context.lineTo(-element.dx + element.width, -element.dy);
+							controller.context.lineTo(-element.dx + element.width, -element.dy + element.height );
+							controller.context.lineTo(-element.dx, -element.dy + element.height);
+							controller.context.closePath();
+							controller.context.stroke();
+							
 							controller.context.drawImage(
 									element.temporaryRenderingContext.canvas,
 									0, 0, element.width, element.height,
@@ -292,6 +301,12 @@ var CreJs = CreJs || {};
 							controller.context.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
 							controller.context.rotate(- (element.angle || 0));
 							controller.context.translate(-element.x, - element.y);
+							
+							controller.context.beginPath();
+							controller.context.moveTo(element.x, element.y);
+							controller.context.lineTo(element.x + 50*element.vx, element.y + 50*element.vy);
+							controller.context.stroke();
+							
 						});
 					
 						isDrawing = false;
@@ -299,167 +314,6 @@ var CreJs = CreJs || {};
 					}
 				},
 				refreshTime);
-		
-		// check collision
-		setInterval(			
-				function()
-				 {
-					var toCheck = elements.filter(function(e){ return e.collidable;});					
-																	
-					toCheck.sort(function(a,b){ return a.id<b.id;}).forEach(
-						function(element)
-						{
-							
-							var rect1 = element.getClientRect();
-							
-
-							var others = toCheck.filter(function(other){ return (other.id>element.id && (other.vx || other.vy  || element.vx  || element.vy));});
-							
-							if (others.length==0)
-								return;
-							
-							others.forEach(
-								function(other)
-								{
-									var rect2 = other.getClientRect();
-									
-									var left = Math.max(rect1.left, rect2.left);
-									var right = Math.min(rect1.right, rect2.right);
-									var top = Math.max(rect1.top, rect2.top);
-									var bottom = Math.min(rect1.bottom, rect2.bottom);
-										
-									if (bottom<=top || right<=left)
-										return;
-
-									collisionContext.globalCompositeOperation='source-over';
-								
-	//								collisionContext.clearRect(0,0,canvas.width,canvas.height);
-
-									
-									collisionContext.clearRect(left,top,right-left,bottom-top);
-									
-									/*
-									collisionContext.strokeStyle="#F00";
-									collisionContext.beginPath();
-									collisionContext.moveTo(left-2,top-2);
-									collisionContext.lineTo(right+2,top-2);
-									collisionContext.lineTo(right+2,bottom+2);
-									collisionContext.lineTo(left-2,bottom+2);
-									collisionContext.closePath();
-									collisionContext.stroke();
-*/
-									collisionContext.translate(other.x, other.y);
-									collisionContext.rotate(other.angle || 0);
-									collisionContext.scale(other.scaleX || 1, other.scaleY || 1);
-									collisionContext.drawImage(
-										other.temporaryRenderingContext.canvas,
-										0, 0, other.width, other.height,
-										-other.dx, -other.dy, other.width, other.height);		
-									collisionContext.scale(1/(other.scaleX || 1), 1/(other.scaleY) || 1);
-									collisionContext.rotate(- (other.angle || 0));
-									collisionContext.translate(-other.x, - other.y);						
-									
-									// save this image
-									var imageDataBefore = collisionContext.getImageData(left,top,right-left,bottom-top).data;
-									
-									collisionContext.translate(element.x, element.y);
-									collisionContext.rotate(element.angle || 0);
-									collisionContext.scale(element.scaleX || 1, element.scaleY || 1);
-									collisionContext.globalCompositeOperation='destination-out';
-									collisionContext.drawImage(
-											element.temporaryRenderingContext.canvas,
-											0, 0, element.width, element.height,
-											-element.dx, -element.dy, element.width, element.height);
-								
-									collisionContext.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
-									collisionContext.rotate(- (element.angle || 0));
-									collisionContext.translate(-element.x, - element.y);	
-									collisionContext.globalCompositeOperation='source-over';
-			
-									var imageDataAfter = collisionContext.getImageData(left,top,right-left,bottom-top).data;
-
-									var edges=[];
-									var points=[];
-
-									for (var imageX=1;imageX<right-left-1; imageX++)
-									{
-										for (var imageY=1;imageY<bottom-top-1; imageY++)
-										{
-											// check alpha only
-											if (imageDataBefore[imageY*(right-left)*4 + imageX*4 + 3] != imageDataAfter[imageY*(right-left)*4 + imageX*4 + 3])
-											{
-												points.push({x:imageX, y:imageY}); 
-												var edge=false;
-												for (var i=-1;i<2;i++)
-												{
-													for (var j=-1;j<2;j++)
-													{
-														if (imageDataAfter[(imageY*(right-left)-i)*4 + (imageX-j)*4 + 3] > 0
-																|| imageDataBefore[(imageY*(right-left)-i)*4 + (imageX-j)*4 + 3] == 0)
-														{
-															edge = true;
-															j=2;
-															i=2;
-														}
-													}													
-												}
-												if (edge)
-												{
-													edges.push({x:imageX, y:imageY});
-												}
-											}
-										}
-									}
-
-									if (points.length == 0)
-										return;
-
-									if (edges.length == 0)
-										return;
-
-									if (edges.length == 1)
-										return;
-
-									var d,dmax = 0;
-									var theMax = {i:0, j:edges.length-1};
-									for (var i = 1; i<edges.length; i++)
-									{
-										for (var j = i+1; j<edges.length; j++)
-										{
-											var dx = edges[i].x-edges[j].x;
-											var dy = edges[i].y-edges[j].y;
-											d = Math.sqrt(dx*dx+dy*dy);
-											if (d>dmax)
-											{
-												dmax=d;
-												theMax.i = i;
-												theMax.j = j;
-											}
-										}
-									}
-																		
-									var pente = (edges[theMax.i].y -  edges[theMax.j].y)/(edges[theMax.i].x -  edges[theMax.j].x);
-
-									var imageX = (edges[theMax.i].x +  edges[theMax.j].x)/2;
-									var imageY = (edges[theMax.i].y +  edges[theMax.j].y)/2;
-
-
-									controller.context.strokeStyle="#F00";
-									controller.context.lineWidth=5;
-									controller.context.beginPath();
-									controller.context.moveTo(left+imageX,top.imageY);
-									controller.context.lineTo(left+imageX + 50, top+imageY + 50 * pente);
-									controller.context.lineTo(left+imageX - 50, top+imageY - 50 * pente);
-									controller.context.stroke();
-									
-									element.events.dispatch('collision', {element:other, contactPoint:{x:left+imageX,y:top+imageY}});
-									
-									other.events.dispatch('collision', {element:element, contactPoint:{x:left+imageX,y:top+imageY}});
-								});
-							
-					 		});
-			}
-		,80);				
 		
 			
 	
