@@ -40,7 +40,7 @@ var CreJs = CreJs || {};
 		canvas = controllerData.canvas;
 
 		var collisionCanvas = canvas.ownerDocument.createElement('canvas');		
-		canvas.ownerDocument.body.appendChild(collisionCanvas);
+		//canvas.ownerDocument.body.appendChild(collisionCanvas);
 		collisionCanvas.width = canvas.width;
 		collisionCanvas.height = canvas.height;
 		collisionContext = collisionCanvas.getContext("2d");
@@ -239,6 +239,7 @@ var CreJs = CreJs || {};
 		{
 			var element = this.addElementWithoutContext(elementData);
 
+
 			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
 			tempCanvas.width = elementData.width;
 			tempCanvas.height = elementData.height;
@@ -249,6 +250,17 @@ var CreJs = CreJs || {};
 			elementData.draw(element.temporaryRenderingContext);
 			// several image:store them here with offset
 			element.image = element.temporaryRenderingContext.getImageData(0, 0, elementData.width, elementData.height);
+
+			
+			var tempCollisionCanvas = canvas.ownerDocument.createElement('canvas');			
+			tempCollisionCanvas.width = elementData.width;
+			tempCollisionCanvas.height = elementData.height;
+			element.collisionContext = tempCollisionCanvas.getContext("2d");
+			element.collisionContext.putImageData(element.image,0,0);
+			element.collisionContext.globalCompositeOperation='source-atop';
+			element.collisionContext.fillStyle="#000";
+			element.collisionContext.fillRect(0,0,elementData.width, elementData.height);
+			element.collisionContext.globalCompositeOperation='source-over';
 
 			return element;
 		};
@@ -273,7 +285,7 @@ var CreJs = CreJs || {};
 				{
 					if (needRedraw && !isDrawing)
 					{						
-						needRedraw = false;
+						//needRedraw = false;
 						isDrawing = true;
 						
 						controller.elements
@@ -285,15 +297,7 @@ var CreJs = CreJs || {};
 							controller.context.translate(element.x, element.y);
 							controller.context.rotate(element.angle || 0);
 							controller.context.scale(element.scaleX || 1, element.scaleY || 1);
-							
-							controller.context.beginPath();
-							controller.context.moveTo(-element.dx, -element.dy);
-							controller.context.lineTo(-element.dx + element.width, -element.dy);
-							controller.context.lineTo(-element.dx + element.width, -element.dy + element.height );
-							controller.context.lineTo(-element.dx, -element.dy + element.height);
-							controller.context.closePath();
-							controller.context.stroke();
-							
+														
 							controller.context.drawImage(
 									element.temporaryRenderingContext.canvas,
 									0, 0, element.width, element.height,
@@ -301,12 +305,15 @@ var CreJs = CreJs || {};
 							controller.context.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
 							controller.context.rotate(- (element.angle || 0));
 							controller.context.translate(-element.x, - element.y);
-							
+														/*
+							var rect1 = element.getClientRect();
 							controller.context.beginPath();
-							controller.context.moveTo(element.x, element.y);
-							controller.context.lineTo(element.x + 50*element.vx, element.y + 50*element.vy);
-							controller.context.stroke();
-							
+							controller.context.moveTo(rect1.left, rect1.top);
+							controller.context.lineTo(rect1.right, rect1.top);
+							controller.context.lineTo(rect1.right, rect1.bottom);
+							controller.context.lineTo(rect1.left, rect1.bottom);
+							controller.context.closePath();
+							controller.context.stroke();*/
 						});
 					
 						isDrawing = false;

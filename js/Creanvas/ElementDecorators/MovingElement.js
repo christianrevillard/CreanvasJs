@@ -29,6 +29,9 @@ var CreJs = CreJs || {};
 						var currentTime = element.controller.getTime();
 						var dt = currentTime-lastUpdated;
 
+						if (dt<1)
+							return;
+						
 						element.controller.log('Now moving : ' + element.name + ', dt=' + dt);
 						
 						lastUpdated = currentTime;
@@ -58,11 +61,15 @@ var CreJs = CreJs || {};
 								localY = oldY;
 								element.x = Math.round(localX);
 								element.y = Math.round(localY);
-								element.angle = oldAngle;											
-								if (element.preMove && !element.preMove())
-								{
-									var whatthef=true;
-								}
+								element.angle = oldAngle;									
+								
+										
+										
+										
+						//		if (element.preMove && !element.preMove())
+						//		{
+						//			var whatthef=true;
+						//		}
 
 								
 							}
@@ -76,7 +83,7 @@ var CreJs = CreJs || {};
 						//	element.controller.log(element.name + " : Assume updated ok, no pixel change, to : " + element.x + ', ' + element.y + ', ' + element.angle);							
 					//	}
 					},
-					10);
+					40);
 		}
 	});
 }());

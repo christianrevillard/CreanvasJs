@@ -12,6 +12,12 @@ var CreJs = CreJs || {};
 		{	
 			element.collidable = true;
 			
+			if (collidableData.hasOwnProperty('collisionCoefficient'))
+					element.collisionCoefficient = collidableData.collisionCoefficient;
+			else
+				element.collisionCoefficient = 1;
+			
+			
 			element.events.addEventListener(
 					{
 						eventId:'collision',
