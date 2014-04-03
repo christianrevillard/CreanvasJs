@@ -319,52 +319,21 @@ var CreJs = CreJs || {};
 							var imageAfter = collisionContext.getImageData(left-1,top-1,imageWidth,imageHeight);
 
 							var edges=[];
-							var points=[];
 
 							for (var imageX=1;imageX<imageWidth-1; imageX++)
 							{
 								for (var imageY=1;imageY<imageHeight-1; imageY++)
 								{
 										// check alpha only
-									if (imageBefore.data[imageY*imageWidth*4 + imageX*4 + 3] - imageAfter.data[imageY*imageWidth*4 + imageX*4 + 3]>10)
+									if (imageBefore.data[imageY*imageWidth*4 + imageX*4 + 3] > 160 && imageAfter.data[imageY*imageWidth*4 + imageX*4 + 3] < 90)
 									{
-										points.push({x:imageX, y:imageY}); 
-										var edge1=false;
-										var edge2=false;
-										for (var i=-1;i<2;i++)
-										{
-											for (var j=-1;j<2;j++)
-											{
-												if (imageAfter.data[((imageY+i)*imageWidth)*4 + (imageX+j)*4 + 3] >= 128)
-												{
-													// was before, neighbour still here: edge of other
-													edge1 = true;
-												}
-												if (imageBefore.data[((imageY+i)*imageWidth)*4 + (imageX+j)*4 + 3] < 128)
-												{
-													// was before, neighbour was not: edge of element
-													edge2 = true;
-												}
-												if (edge1 && edge2)
-												{
-													j=2;
-													i=2;
-												}
-											}													
-										}
-										if (edge1 && edge2)
-										{
-											edges.push({x:imageX, y:imageY});
-										}
+										edges.push({x:imageX, y:imageY});
 									}
 								}
 							}
 
-							if (points.length < 2)
-								return;
-
 							if (edges.length < 2)
-								edges = points;
+								return;
 
 							var d,dmax = 0;
 							var theMax = {i:0, j:edges.length-1};

@@ -252,16 +252,69 @@ var CreJs = CreJs || {};
 			element.image = element.temporaryRenderingContext.getImageData(0, 0, elementData.width, elementData.height);
 
 			
-			var tempCollisionCanvas = canvas.ownerDocument.createElement('canvas');			
-			tempCollisionCanvas.width = elementData.width;
-			tempCollisionCanvas.height = elementData.height;
-			element.collisionContext = tempCollisionCanvas.getContext("2d");
-			element.collisionContext.putImageData(element.image,0,0);
-			element.collisionContext.globalCompositeOperation='source-atop';
-			element.collisionContext.fillStyle="#000";
-			element.collisionContext.fillRect(0,0,elementData.width, elementData.height);
-			element.collisionContext.globalCompositeOperation='source-over';
+			if (elementData.collidable)
+			{
+				var tempCollisionCanvas = canvas.ownerDocument.createElement('canvas');			
+				tempCollisionCanvas.width = elementData.width;
+				tempCollisionCanvas.height = elementData.height;
+				element.collisionContext = tempCollisionCanvas.getContext("2d");
+				element.collisionContext.putImageData(element.image,0,0);
+				element.collisionContext.globalCompositeOperation='source-atop';
+				element.collisionContext.fillStyle="#000";
+				element.collisionContext.fillRect(0,0,elementData.width, elementData.height);
+				element.collisionContext.globalCompositeOperation='source-over';
+	
+				var collisionImageOld = element.collisionContext.getImageData(0, 0, elementData.width, elementData.height);
+				var collisionImageNew = element.collisionContext.createImageData(elementData.width, elementData.height);
+	
+				for (var imageX=0;imageX<elementData.width; imageX++)
+				{
+					for (var imageY=0;imageY<elementData.height; imageY++)
+					{
+						if (collisionImageOld.data[imageY*elementData.width*4 + imageX*4 + 3] < 200)
+							continue;
+	
+						var edge = false;
+						
+						for (var i=-1;i<2;i++)
+						{
+							for (var j=-1;j<2;j++)
+							{
+								if (imageY+i<0 || imageX+j <0 || 
+										imageY+i>elementData.height-1 
+										|| imageX+i>elementData.width-1 ||
+										collisionImageOld.data[((imageY+i)*elementData.width)*4 + (imageX+j)*4 + 3] < 100)
+								{
+									edge = true;
+									i=2;
+									j=2;
+								}
+							}																			
+						}
+						var fillValue = 255;
+						
+						element.collisionContext.putImageData(collisionImageNew, 0, 0);
 
+						if (edge)
+						{
+							for (var i=-1;i<2;i++)
+							{
+								for (var j=-1;j<2;j++)
+								{
+									if (imageY+i<0 || imageX+j <0 || imageY+i>elementData.height-1 || imageX+j>elementData.width-1 )
+										continue;
+									
+									collisionImageNew.data[((imageY+i)*elementData.width)*4 + (imageX+j)*4]=0;
+									collisionImageNew.data[((imageY+i)*elementData.width)*4 + (imageX+j)*4+1]=0;
+									collisionImageNew.data[((imageY+i)*elementData.width)*4 + (imageX+j)*4+2]=0;
+									collisionImageNew.data[((imageY+i)*elementData.width)*4 + (imageX+j)*4+3]=fillValue;
+								}																			
+							}
+						}
+					}
+				}
+				element.collisionContext.putImageData(collisionImageNew, 0, 0);
+			}
 			return element;
 		};
 			
