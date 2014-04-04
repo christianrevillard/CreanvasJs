@@ -73,8 +73,8 @@ var onload = function ()
 	element1.name = 'O1';
 	element1.x = 200;
 	element1.y = 200;
-	element1.vx = 1;
-	element1.vy = 0;
+	element1.moving.speed.x = 1;
+	element1.moving.speed.y = 0;
 	element1.scaleX=2;
 	element1.scaleY=2;
 	
@@ -84,8 +84,8 @@ var onload = function ()
 	element2.y= 200;
 	element2.scaleX=2;
 	element2.scaleY=2;
-	element2.vx = -1;
-	element2.vy = 0;
+	element2.moving.speed.x = -1;
+	element2.moving.speed.y = 0;
 
 	
 	var element3 = controller.addElement(elementData);
@@ -93,34 +93,34 @@ var onload = function ()
 	element3.y=150;
 	element3.scaleX=0.5;
 	element3.scaleY=0.5;
-	element3.vx = 2.2;
-	element3.vy = 1.8;
+	element3.moving.speed.x = 2.2;
+	element3.moving.speed.y = 1.8;
 	element3.m=50;
 
 	var element4 = controller.addElement(elementData);
 	element4.x=500;
 	element4.y=100;
-	element4.vx = -2;
-	element4.vy = 0.8;
+	element4.moving.speed.x = -2;
+	element4.moving.speed.y = 0.8;
 
 	var element5 = controller.addElement(elementData);
 	element5.x=600;
 	element5.y=100;
-	element5.vy = 2;
+	element5.moving.speed.y = 2;
 
 	var element6 = controller.addElement(elementData);
 	element6.x=400;
 	element6.y=400;
-	element6.vy =-0.5;
+	element6.moving.speed.y =-0.5;
 
 	var element7 = controller.addElement(elementData2);
 	element7.name = 'Triangle';
-element7.vx=1;
+element7.moving.speed.x=1;
 element7.y=400;
-element7.vy=0.5;
+element7.moving.speed.y=0.5;
 //element7.scaleX = 3;
 //element7.scaleY = 0.2;
-element7.omega = 0;//Math.PI/128;
+element7.moving.rotationSpeed = Math.PI/128;
 
 	var element8 = controller.addElement(elementData);
 	element8.name = 'O1';
@@ -128,8 +128,8 @@ element7.omega = 0;//Math.PI/128;
 	element8.y = 210;
 	element8.scaleX=0.5;
 	element8.scaleY=7;
-	element8.vx = 0;
-	element8.vy = 0;
+	element8.moving.speed.x = 0;
+	element8.moving.speed.y = 0;
 	element8.m= 1;
 
 	var element9 = controller.addElement(elementData);
@@ -137,8 +137,8 @@ element7.omega = 0;//Math.PI/128;
 	element9.x=200;
 	element9.y= 100;
 	element9.scaleY=1;
-	element9.vx = 1;
-	element9.vy = 0;
+	element9.moving.speed.x = 1;
+	element9.moving.speed.y = 0;
 	element9.m= 1;
 
 	var element10 = controller.addElement(elementData);
@@ -146,8 +146,8 @@ element7.omega = 0;//Math.PI/128;
 	element10.x=100;
 	element10.y= 300;
 	element10.scaleY=4;
-	element10.vx = 1;
-	element10.vy = 0;
+	element10.moving.speed.x = 1;
+	element10.moving.speed.y = 0;
 	element10.m= 1;
 
 	var elementDataWall	= {

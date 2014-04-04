@@ -38,12 +38,6 @@ var CreJs = CreJs || {};
 		
 		controller = this;
 		canvas = controllerData.canvas;
-
-		var collisionCanvas = canvas.ownerDocument.createElement('canvas');		
-		//canvas.ownerDocument.body.appendChild(collisionCanvas);
-		collisionCanvas.width = canvas.width;
-		collisionCanvas.height = canvas.height;
-		collisionContext = collisionCanvas.getContext("2d");
 		
 		this.log = function(logData){			
 			if (controllerData.log)
@@ -85,6 +79,7 @@ var CreJs = CreJs || {};
 
 	
 		controller.context = canvas.getContext("2d");	
+		this.collisionSolver = new CreJs.Creanvas.CollisionSolver(this);
 		needRedraw = true;
 		isDrawing = false;
 		refreshTime = controllerData.refreshTime || 50; // ms	
@@ -222,6 +217,11 @@ var CreJs = CreJs || {};
 		};
 	
 		controller.elements = [];
+		
+		this.getCollidableElements = function()
+		{
+			return controller.elements.filter(function(e){ return e.collidable;});
+		};					
 
 		this.addElementWithoutContext  = function (elementData)
 		{
@@ -345,8 +345,6 @@ var CreJs = CreJs || {};
 						.sort(function(a,b){return ((a.z || 0) - (b.z || 0));})
 						.forEach(function(element)
 						{
-							//controller.log('rendering ' + element.name + ' (' + element.z+ ')');
-
 							controller.context.translate(element.x, element.y);
 							controller.context.rotate(element.angle || 0);
 							controller.context.scale(element.scaleX || 1, element.scaleY || 1);
@@ -358,15 +356,6 @@ var CreJs = CreJs || {};
 							controller.context.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
 							controller.context.rotate(- (element.angle || 0));
 							controller.context.translate(-element.x, - element.y);
-														/*
-							var rect1 = element.getClientRect();
-							controller.context.beginPath();
-							controller.context.moveTo(rect1.left, rect1.top);
-							controller.context.lineTo(rect1.right, rect1.top);
-							controller.context.lineTo(rect1.right, rect1.bottom);
-							controller.context.lineTo(rect1.left, rect1.bottom);
-							controller.context.closePath();
-							controller.context.stroke();*/
 						});
 					
 						isDrawing = false;
@@ -376,6 +365,6 @@ var CreJs = CreJs || {};
 				refreshTime);
 		
 			
-	
 	};
+
 }());
