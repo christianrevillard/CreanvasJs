@@ -14,10 +14,12 @@ var CreJs = CreJs || {};
 		collisionCanvas.width = canvas.width;
 		collisionCanvas.height = canvas.height;
 		collisionContext = collisionCanvas.getContext("2d");
-
-		this.solveCollision = function(element, toCheck)
+		
+		var findCollisionPoint = function(element, toCheck)
 		{
-			var rect1, center, others, otherCenter, hasCollided, isDrawn, rect2, left, right, top, bottom, imageWidth, imageHeight, imageBefore, imageAfter, edges;
+			var rect1, center, others, otherCenter, hasCollided, isDrawn, rect2, left, right, top, bottom, imageWidth, imageHeight, imageBefore, imageAfter, edges, collisionResult;
+
+			collisionResult = null;
 			
 			rect1 = element.getClientRect();
 
@@ -36,7 +38,7 @@ var CreJs = CreJs || {};
 			});
 			
 			if (others.length==0)
-				return true;
+				return collisionResult;
 			
 			hasCollided = false;
 			isDrawn=false;
@@ -113,6 +115,8 @@ var CreJs = CreJs || {};
 					if (edges.length < 2)
 						return;
 
+					hasCollided = true;
+
 					var d,dmax = 0;
 					var theMax = {i:0, j:edges.length-1};
 					for (var i = 1; i<edges.length; i++)
@@ -130,63 +134,68 @@ var CreJs = CreJs || {};
 							};
 						};																			
 					};
-
-					collisionContext.putImageData(imageAfter, left-1,top-1);
-
 					
-					var colVectors = CreJs.Core.getUnitVectors(edges[theMax.i].x, edges[theMax.i].y,  edges[theMax.j].x , edges[theMax.j].y);
-					 
-					var imageX = (edges[theMax.i].x +  edges[theMax.j].x)/2 + left - 1;
-					var imageY = (edges[theMax.i].y +  edges[theMax.j].y)/2 + top - 1;
-
-
-					//element.events.dispatch('collision', {element:other, contactPoint:{x:left+imageX,y:top+imageY}});									
-					//other.events.dispatch('collision', {element:element, contactPoint:{x:left+imageX,y:top+imageY}});
-					
-					var collisionPoint = {x:imageX, y:imageY};
-					// CreJs.Core.drawUnitVectors(collisionContext, collisionPoint.x, collisionPoint.y, colVectors, "#0F0");
-
-					var speedElement = new CreJs.Core.Vector(element.moving.speed.x, element.moving.speed.y);
-					var speedOther = new CreJs.Core.Vector(other.moving.speed.x, other.moving.speed.y);
-
-					var localSpeedElement = speedElement.getCoordinates(colVectors);
-					var localSpeedOther = speedOther.getCoordinates(colVectors);
-					
-					var centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.x, collisionPoint.y-element.y);								
-					var l1 = CreJs.Core.VectorProduct(centerCollisionElement, colVectors.v);		
-					var d1;
-					if (Math.abs(l1)<1)
-						d1 = Infinity;
-					else
-						d1 = l1;
-
-					var centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.x, collisionPoint.y-other.y);								
-					var l2= CreJs.Core.VectorProduct(centerCollisionOther, colVectors.v);		
-					var d2;
-					if (Math.abs(l2)<1)
-						d2 = Infinity;
-					else
-						d2 = l2;
-
-					// F selon colVectors.v
-					var F = 
-						2 / (1/other.m + 1/element.m)*
-						(localSpeedOther.v-localSpeedElement.v)
-					  + 2 * (1/other.getM() + 1/element.getM())*
-					  	(-other.moving.rotationSpeed/d2 + element.moving.rotationSpeed/d1);
-					
-					element.moving.speed.x += F/element.m*colVectors.v.x;
-					element.moving.speed.y += F/element.m*colVectors.v.y;
-					other.moving.speed.x -= F/other.m*colVectors.v.x;
-					other.moving.speed.y -= F/other.m*colVectors.v.y;
-					element.moving.rotationSpeed += 1*F * l1 / element.getM();
-					other.moving.rotationSpeed -= 1*F * l2 / other.getM();
-													
-					hasCollided = true;
-					element.controller.log('collision : ' + element.name + " and " + other.name);
+					collisionResult = {
+							x:(edges[theMax.i].x +  edges[theMax.j].x)/2 + left - 1, 
+							y:(edges[theMax.i].y +  edges[theMax.j].y)/2 + top - 1, 
+							other : other,
+							vectors: CreJs.Core.getUnitVectors(edges[theMax.i].x, edges[theMax.i].y,  edges[theMax.j].x , edges[theMax.j].y)};
 				});
 			
-			return !hasCollided;
+			return collisionResult;
+		};
+
+		this.solveCollision = function(element, toCheck)
+		{
+			var collisionPoint = findCollisionPoint(element, toCheck);
+			if (!collisionPoint)
+				return true;
+			
+			var other = collisionPoint.other;
+			var colVectors = collisionPoint.vectors;
+	
+			//element.events.dispatch('collision', {element:other, contactPoint:{x:left+imageX,y:top+imageY}});									
+			//other.events.dispatch('collision', {element:element, contactPoint:{x:left+imageX,y:top+imageY}});
+			
+			var speedElement = new CreJs.Core.Vector(element.moving.speed.x, element.moving.speed.y);
+			var speedOther = new CreJs.Core.Vector(other.moving.speed.x, other.moving.speed.y);
+
+			var localSpeedElement = speedElement.getCoordinates(colVectors);
+			var localSpeedOther = speedOther.getCoordinates(colVectors);
+			
+			var centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.x, collisionPoint.y-element.y);								
+			var l1 = CreJs.Core.VectorProduct(centerCollisionElement, colVectors.v);		
+			var d1;
+			if (Math.abs(l1)<1)
+				d1 = Infinity;
+			else
+				d1 = l1;
+
+			var centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.x, collisionPoint.y-other.y);								
+			var l2= CreJs.Core.VectorProduct(centerCollisionOther, colVectors.v);		
+			var d2;
+			if (Math.abs(l2)<1)
+				d2 = Infinity;
+			else
+				d2 = l2;
+
+			// F selon colVectors.v
+			var F = 
+				2 / (1/other.m + 1/element.m)*
+				(localSpeedOther.v-localSpeedElement.v)
+			  + 2 * (1/other.getM() + 1/element.getM())*
+			  	(-other.moving.rotationSpeed/d2 + element.moving.rotationSpeed/d1);
+			
+			element.moving.speed.x += F/element.m*colVectors.v.x;
+			element.moving.speed.y += F/element.m*colVectors.v.y;
+			other.moving.speed.x -= F/other.m*colVectors.v.x;
+			other.moving.speed.y -= F/other.m*colVectors.v.y;
+			element.moving.rotationSpeed += 1*F * l1 / element.getM();
+			other.moving.rotationSpeed -= 1*F * l2 / other.getM();
+											
+			element.controller.log('collision : ' + element.name + " and " + other.name);
+			
+			return false;
 		};
 	};
 }());
