@@ -15,171 +15,137 @@ var CreJs = CreJs || {};
 		collisionCanvas.height = canvas.height;
 		collisionContext = collisionCanvas.getContext("2d");
 		
-		var findCollisionPoint = function(element, toCheck)
+		var findCollisionPoint = function(element, other)
 		{
-			var rect1, center, others, otherCenter, hasCollided, isDrawn, rect2, left, right, top, bottom, imageWidth, imageHeight, imageBefore, imageAfter, edges, collisionResult;
-
-			collisionResult = null;
+			var clientRectElement, clientRectOther, clientRectIntersection, imageBefore, imageAfter, edges;
 			
-			rect1 = element.getClientRect();
+			clientRectElement = element.getClientRect();													
+			clientRectOther = other.getClientRect();
 
-			center = element.getCenter();
+			clientRectIntersection = {
+				left: Math.max(clientRectElement.left, clientRectOther.left)-1,
+				right: Math.min(clientRectElement.right, clientRectOther.right)+1,
+				top: Math.max(clientRectElement.top, clientRectOther.top)-1,
+				bottom: Math.min(clientRectElement.bottom, clientRectOther.bottom)+1};
 			
-			others = toCheck.filter(function(other){ 
-				if (other.id === element.id || ((!other.moving.speed.x && !other.moving.speed.y && !element.moving.speed.x && !element.moving.speed.y)))
-					return false;
+			clientRectIntersection.width = clientRectIntersection.right-clientRectIntersection.left;
+			clientRectIntersection.height = clientRectIntersection.bottom-clientRectIntersection.top;
 				
-				otherCenter = other.getCenter();
-				
-				if (Math.sqrt((center.x-otherCenter.x)*(center.x-otherCenter.x)+(center.y-otherCenter.y)*(center.y-otherCenter.y))>element.getRadius() + other.getRadius())
-					return false;
+			if (clientRectIntersection.width<=0|| clientRectIntersection.height<=0)
+				return;
+
+			collisionContext.clearRect(
+					clientRectIntersection.left,
+					clientRectIntersection.top,
+					clientRectIntersection.width,
+					clientRectIntersection.height);
 					
-				return true;								
-			});
-			
-			if (others.length==0)
-				return collisionResult;
-			
-			hasCollided = false;
-			isDrawn=false;
-			
-			others.forEach(
-				function(other)
-				{
-					if (hasCollided)
-						return; // take just the first one...
-					
-					rect2 = other.getClientRect();
-					left = Math.max(rect1.left, rect2.left);
-					right = Math.min(rect1.right, rect2.right);
-					top = Math.max(rect1.top, rect2.top);
-					bottom = Math.min(rect1.bottom, rect2.bottom);
-						
-					if (bottom<=top || right<=left)
-						return;
-
-					if (!isDrawn)
-						{
-
-						collisionContext.clearRect(left-1,top-1,right-left+2,bottom-top+2);
-					
-						collisionContext.translate(element.x, element.y);
-						collisionContext.rotate(element.angle || 0);
-						collisionContext.scale(element.scaleX || 1, element.scaleY || 1);
-						collisionContext.drawImage(
-							element.collisionContext.canvas,
-							0, 0, element.width, element.height,
-							-element.dx, -element.dy, element.width, element.height);
-				
-						collisionContext.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
-						collisionContext.rotate(- (element.angle || 0));
-						collisionContext.translate(-element.x, -element.y);	
-						isDrawn = true;
-						};
-					
-					
-					// save this image
-					imageWidth = right-left+2;
-					imageHeight = bottom-top+2;
-					imageBefore = collisionContext.getImageData(left-1,top-1,imageWidth,imageHeight);
-									
-					collisionContext.translate(other.x, other.y);
-					collisionContext.rotate(other.angle || 0);
-					collisionContext.scale(other.scaleX || 1, other.scaleY || 1);
-					collisionContext.globalCompositeOperation='destination-out';
-					collisionContext.drawImage(
-						other.collisionContext.canvas,
-						0, 0, other.width, other.height,
-						-other.dx, -other.dy, other.width, other.height);		
-					collisionContext.globalCompositeOperation='source-over';
-					collisionContext.scale(1/(other.scaleX || 1), 1/(other.scaleY) || 1);
-					collisionContext.rotate(- (other.angle || 0));
-					collisionContext.translate(-other.x, - other.y);						
-					
-					imageAfter = collisionContext.getImageData(left-1,top-1,imageWidth,imageHeight);
-
-					edges=[];
-
-					for (var imageX=1;imageX<imageWidth-1; imageX++)
-					{
-						for (var imageY=1;imageY<imageHeight-1; imageY++)
-						{
-								// check alpha only
-							if (imageBefore.data[imageY*imageWidth*4 + imageX*4 + 3] > 160 && imageAfter.data[imageY*imageWidth*4 + imageX*4 + 3] < 90)
-							{
-								edges.push({x:imageX, y:imageY});
-							}
-						}
-					}
-
-					if (edges.length < 2)
-						return;
-
-					hasCollided = true;
-
-					var d,dmax = 0;
-					var theMax = {i:0, j:edges.length-1};
-					for (var i = 1; i<edges.length; i++)
-					{
-						for (var j = i+1; j<edges.length; j++)
-						{
-							var dx = edges[i].x-edges[j].x;
-							var dy = edges[i].y-edges[j].y;
-							d = Math.sqrt(dx*dx+dy*dy);
-							if (d>dmax)
-							{
-								dmax=d;
-								theMax.i = i;
-								theMax.j = j;
-							};
-						};																			
-					};
-					
-					collisionResult = {
-							x:(edges[theMax.i].x +  edges[theMax.j].x)/2 + left - 1, 
-							y:(edges[theMax.i].y +  edges[theMax.j].y)/2 + top - 1, 
-							other : other,
-							vectors: CreJs.Core.getUnitVectors(edges[theMax.i].x, edges[theMax.i].y,  edges[theMax.j].x , edges[theMax.j].y)};
-				});
-			
-			return collisionResult;
-		};
-
-		this.solveCollision = function(element, toCheck)
-		{
-			var collisionPoint = findCollisionPoint(element, toCheck);
-			if (!collisionPoint)
-				return true;
-			
-			var other = collisionPoint.other;
-			var colVectors = collisionPoint.vectors;
+			collisionContext.translate(element.x, element.y);
+			collisionContext.rotate(element.angle || 0);
+			collisionContext.scale(element.scaleX || 1, element.scaleY || 1);
+			collisionContext.drawImage(
+				element.collisionContext.canvas,
+				0, 0, element.width, element.height,
+				-element.dx, -element.dy, element.width, element.height);
 	
-			//element.events.dispatch('collision', {element:other, contactPoint:{x:left+imageX,y:top+imageY}});									
-			//other.events.dispatch('collision', {element:element, contactPoint:{x:left+imageX,y:top+imageY}});
+			collisionContext.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
+			collisionContext.rotate(- (element.angle || 0));
+			collisionContext.translate(-element.x, -element.y);	
+										
+			imageBefore = collisionContext.getImageData(
+					clientRectIntersection.left,
+					clientRectIntersection.top,
+					clientRectIntersection.width,
+					clientRectIntersection.height);
+								
+			collisionContext.translate(other.x, other.y);
+			collisionContext.rotate(other.angle || 0);
+			collisionContext.scale(other.scaleX || 1, other.scaleY || 1);
+			collisionContext.globalCompositeOperation='destination-out';
+			collisionContext.drawImage(
+				other.collisionContext.canvas,
+				0, 0, other.width, other.height,
+				-other.dx, -other.dy, other.width, other.height);		
+			collisionContext.globalCompositeOperation='source-over';
+			collisionContext.scale(1/(other.scaleX || 1), 1/(other.scaleY) || 1);
+			collisionContext.rotate(- (other.angle || 0));
+			collisionContext.translate(-other.x, - other.y);						
 			
-			var speedElement = new CreJs.Core.Vector(element.moving.speed.x, element.moving.speed.y);
-			var speedOther = new CreJs.Core.Vector(other.moving.speed.x, other.moving.speed.y);
+			imageAfter = collisionContext.getImageData(
+					clientRectIntersection.left,
+					clientRectIntersection.top,
+					clientRectIntersection.width,
+					clientRectIntersection.height);
 
-			var localSpeedElement = speedElement.getCoordinates(colVectors);
-			var localSpeedOther = speedOther.getCoordinates(colVectors);
+			edges=[];
+
+			for (var imageX=1;imageX<clientRectIntersection.width-1; imageX++)
+			{
+				for (var imageY=1;imageY<clientRectIntersection.height-1; imageY++)
+				{
+						// check alpha only
+					if (imageBefore.data[imageY*clientRectIntersection.width*4 + imageX*4 + 3] > 160 && imageAfter.data[imageY*clientRectIntersection.width*4 + imageX*4 + 3] < 90)
+					{
+						edges.push({x:imageX, y:imageY});
+					}
+				}
+			}
+
+			if (edges.length < 2)
+				return null;
+
+			var d,dmax = 0;
+			var theMax = {i:0, j:edges.length-1};
+			for (var i = 1; i<edges.length; i++)
+			{
+				for (var j = i+1; j<edges.length; j++)
+				{
+					var dx = edges[i].x-edges[j].x;
+					var dy = edges[i].y-edges[j].y;
+					d = Math.sqrt(dx*dx+dy*dy);
+					if (d>dmax)
+					{
+						dmax=d;
+						theMax.i = i;
+						theMax.j = j;
+					};
+				};																			
+			};
 			
-			var centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.x, collisionPoint.y-element.y);								
-			var l1 = CreJs.Core.VectorProduct(centerCollisionElement, colVectors.v);		
-			var d1;
-			if (Math.abs(l1)<1)
+			return {
+				x:(edges[theMax.i].x +  edges[theMax.j].x)/2 + clientRectIntersection.left, 
+				y:(edges[theMax.i].y +  edges[theMax.j].y)/2 + clientRectIntersection.top, 
+				vectors: CreJs.Core.getUnitVectors(edges[theMax.i].x, edges[theMax.i].y,  edges[theMax.j].x , edges[theMax.j].y)};
+		};
+		
+		var updateAfterCollision = function (element, other, collisionPoint)
+		{
+			var 
+				colVectors, speedElement, speedOther, localSpeedElement, localSpeedOther, centerCollisionElement,l1,d1,
+				centerCollisionOther,l2,d2;
+			
+			colVectors = collisionPoint.vectors;
+				
+			speedElement = new CreJs.Core.Vector(element.moving.speed.x, element.moving.speed.y);
+			speedOther = new CreJs.Core.Vector(other.moving.speed.x, other.moving.speed.y);
+
+			localSpeedElement = speedElement.getCoordinates(colVectors);
+			localSpeedOther = speedOther.getCoordinates(colVectors);
+			
+			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.x, collisionPoint.y-element.y);								
+			l1 = CreJs.Core.VectorProduct(centerCollisionElement, colVectors.v);		
+			if (Math.abs(l1)<1) // for collision near the axe
 				d1 = Infinity;
 			else
 				d1 = l1;
 
-			var centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.x, collisionPoint.y-other.y);								
-			var l2= CreJs.Core.VectorProduct(centerCollisionOther, colVectors.v);		
-			var d2;
-			if (Math.abs(l2)<1)
+			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.x, collisionPoint.y-other.y);								
+			l2= CreJs.Core.VectorProduct(centerCollisionOther, colVectors.v);		
+			if (Math.abs(l2)<1) // for collision near the axe
 				d2 = Infinity;
 			else
 				d2 = l2;
 
-			// F selon colVectors.v
 			var F = 
 				2 / (1/other.m + 1/element.m)*
 				(localSpeedOther.v-localSpeedElement.v)
@@ -193,8 +159,54 @@ var CreJs = CreJs || {};
 			element.moving.rotationSpeed += 1*F * l1 / element.getM();
 			other.moving.rotationSpeed -= 1*F * l2 / other.getM();
 											
-			element.controller.log('collision : ' + element.name + " and " + other.name);
+			//element.controller.log('collision : ' + element.name + " and " + other.name);			
+		};
+
+		this.solveCollision = function(element, toCheck)
+		{
+			var others, center, collisionPoint, other;
 			
+			center = element.getCenter();
+			others = toCheck.filter(function(other){ 
+				var otherCenter;
+				if (
+					other.id === element.id || 
+					((!other.moving.speed.x && !other.moving.speed.y && !element.moving.speed.x && !element.moving.speed.y)))
+					return false;
+				
+				otherCenter = other.getCenter();
+				
+				if (Math.sqrt((center.x-otherCenter.x)*(center.x-otherCenter.x)+(center.y-otherCenter.y)*(center.y-otherCenter.y))>element.getRadius() + other.getRadius())
+					return false;
+					
+				return true;								
+			});
+			
+			if (others.length==0)
+				return true;
+			
+			collisionPoint = null;
+			
+			others.forEach(
+				function(checkCollisionWith)
+				{
+					if (collisionPoint)
+						return;
+				
+					collisionPoint = findCollisionPoint(element, checkCollisionWith);
+
+					if (collisionPoint)
+						other = checkCollisionWith;
+				});
+
+			if (!collisionPoint)
+				return true;
+			
+			updateAfterCollision(element, other, collisionPoint);
+	
+			//element.events.dispatch('collision', {element:other, contactPoint:{x:left+imageX,y:top+imageY}});									
+			//other.events.dispatch('collision', {element:element, contactPoint:{x:left+imageX,y:top+imageY}});
+
 			return false;
 		};
 	};
