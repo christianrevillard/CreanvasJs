@@ -137,7 +137,7 @@ element7.moving.rotationSpeed = Math.PI/128;
 	element9.x=200;
 	element9.y= 100;
 	element9.scaleY=1;
-	element9.moving.speed.x = 1;
+	element9.moving.speed.x = 2;
 	element9.moving.speed.y = 0;
 	element9.m= 1;
 

@@ -83,7 +83,6 @@ var CreJs = CreJs || {};
 			{
 				for (var imageY=1;imageY<clientRectIntersection.height-1; imageY++)
 				{
-						// check alpha only
 					if (imageBefore.data[imageY*clientRectIntersection.width*4 + imageX*4 + 3] > 160 && imageAfter.data[imageY*clientRectIntersection.width*4 + imageX*4 + 3] < 90)
 					{
 						edges.push({x:imageX, y:imageY});
@@ -126,39 +125,43 @@ var CreJs = CreJs || {};
 			
 			colVectors = collisionPoint.vectors;
 				
-			speedElement = new CreJs.Core.Vector(element.moving.speed.x, element.moving.speed.y);
-			speedOther = new CreJs.Core.Vector(other.moving.speed.x, other.moving.speed.y);
+
+			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.x, collisionPoint.y-element.y);								
+			l1 = CreJs.Core.VectorProduct(centerCollisionElement, colVectors.v).z;		
+
+			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.x, collisionPoint.y-other.y);								
+			l2= CreJs.Core.VectorProduct(centerCollisionOther, colVectors.v).z;		
+
+			var elementRot = CreJs.Core.VectorProduct(
+					centerCollisionElement,
+					colVectors.v);	
+
+			var otherRot = CreJs.Core.VectorProduct(
+					centerCollisionOther,
+					colVectors.v);	
+
+			speedElement = new CreJs.Core.Vector(
+					element.moving.speed.x, 
+					element.moving.speed.y);
+			
+			speedOther = new CreJs.Core.Vector(
+					other.moving.speed.x, 
+					other.moving.speed.y);
 
 			localSpeedElement = speedElement.getCoordinates(colVectors);
 			localSpeedOther = speedOther.getCoordinates(colVectors);
 			
-			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.x, collisionPoint.y-element.y);								
-			l1 = CreJs.Core.VectorProduct(centerCollisionElement, colVectors.v);		
-			if (Math.abs(l1)<1) // for collision near the axe
-				d1 = Infinity;
-			else
-				d1 = l1;
-
-			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.x, collisionPoint.y-other.y);								
-			l2= CreJs.Core.VectorProduct(centerCollisionOther, colVectors.v);		
-			if (Math.abs(l2)<1) // for collision near the axe
-				d2 = Infinity;
-			else
-				d2 = l2;
-
-			var F = 
-				2 / (1/other.m + 1/element.m)*
-				(localSpeedOther.v-localSpeedElement.v)
-			  + 2 * (1/other.getM() + 1/element.getM())*
-			  	(-other.moving.rotationSpeed/d2 + element.moving.rotationSpeed/d1);
-			
+			var F = 2*
+				(localSpeedOther.v - localSpeedElement.v + other.moving.rotationSpeed * otherRot.z - element.moving.rotationSpeed * elementRot.z)
+				/( 1/other.m + 1/element.m + otherRot.z*otherRot.z/other.getM() + elementRot.z*elementRot.z/element.getM() );
+					
 			element.moving.speed.x += F/element.m*colVectors.v.x;
 			element.moving.speed.y += F/element.m*colVectors.v.y;
 			other.moving.speed.x -= F/other.m*colVectors.v.x;
 			other.moving.speed.y -= F/other.m*colVectors.v.y;
-			element.moving.rotationSpeed += 1*F * l1 / element.getM();
-			other.moving.rotationSpeed -= 1*F * l2 / other.getM();
-											
+			element.moving.rotationSpeed += F * l1 / element.getM();
+			other.moving.rotationSpeed -= F * l2 / other.getM();
+						
 			//element.controller.log('collision : ' + element.name + " and " + other.name);			
 		};
 

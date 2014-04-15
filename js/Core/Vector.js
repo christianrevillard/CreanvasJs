@@ -4,11 +4,12 @@ var CreJs = CreJs || {};
 {
 	var core = CreJs.Core = CreJs.Core|| {};
 	
-	core.Vector = function(x,y)
+	core.Vector = function(x,y,z)
 	{
 		var vector = this;
 		this.x = x;
-		this.y = y;		
+		this.y = y;
+		this.z = z || 0;
 		
 		this.draw = function(context, x, y, color)
 		{
@@ -26,14 +27,17 @@ var CreJs = CreJs || {};
 		{
 			return {
 				u: core.scalarProduct(vector,unitVectors.u),
-				v: core.scalarProduct(vector,unitVectors.v)
+				v: core.scalarProduct(vector,unitVectors.v),
+				w: core.scalarProduct(vector,unitVectors.w),
 			};
 		};
 
-		this.setCoordinates = function(unitVectors, u, v)
+		this.setCoordinates = function(unitVectors, u, v, w)
 		{
-			vector.x = u*unitVectors.u.x + v*unitVectors.v.x;
-			vector.y = u*unitVectors.u.y + v*unitVectors.v.y;
+			w = w || 0;
+			vector.x = u*unitVectors.u.x + v*unitVectors.v.x + w*unitVectors.w.x;
+			vector.y = u*unitVectors.u.y + v*unitVectors.v.y + w*unitVectors.w.y;
+			vector.z = u*unitVectors.u.z + v*unitVectors.v.z + w*unitVectors.w.z;
 		};
 
 	};	
@@ -45,7 +49,8 @@ var CreJs = CreJs || {};
 		var longueur = Math.sqrt(dx*dx + dy*dy);
 		return {
 			u:new core.Vector(dx/longueur, dy/longueur),
-			v:new core.Vector(-dy/longueur, dx/longueur)				
+			v:new core.Vector(-dy/longueur, dx/longueur),
+			w:0
 		};
 	};
 	
@@ -84,7 +89,10 @@ var CreJs = CreJs || {};
 	
 	core.VectorProduct = function(v1,v2)
 	{
-		return v1.x * v2.y - v1.y * v2.x;
+		return new core.Vector(
+				v1.y * v2.z - v1.z * v2.y,				
+				v1.z * v2.x - v1.x * v2.z,	
+				v1.x * v2.y - v1.y * v2.x);
 	};
-	
+		
 })();
