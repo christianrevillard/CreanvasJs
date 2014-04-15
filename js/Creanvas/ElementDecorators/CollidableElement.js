@@ -29,7 +29,8 @@ var CreJs = CreJs || {};
 				eventId:'collision',
 				handleEvent:function(collisionEvent)
 			{
-					// can do something if I want
+				if (collidableData.onCollision)
+					collidableData.onCollision.call(element, collisionEvent);						
 			}});
 			
 			

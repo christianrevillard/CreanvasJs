@@ -69,6 +69,64 @@ var onload = function ()
 				context.stroke();
 			}};
 
+	
+	var bumperData	= {
+			name:'bumper',
+			collidable:{
+				collisionCoefficient:1,
+				onCollision: function(e)
+				{
+					if (this.scaleSpeed && this.scaleSpeed.x>0)
+						this.scaleSpeed = new CreJs.Core.Vector(-this.scaleSpeed.x, -this.scaleSpeed.y);
+				}
+				},
+			clickable:{
+				onclick: function(e)
+				{
+					var scaleSpeed = 0.05;
+					var scaleLimit = 2;
+					var scaleInitialX = 1;
+					var scaleInitialY = 1;
+					this.scaleSpeed = new CreJs.Core.Vector(scaleSpeed, scaleSpeed)
+					var that = this;
+					
+					this.scaleUpdate = window.setInterval(function() {
+						if (that.scaleX>scaleLimit)
+							that.scaleSpeed = new CreJs.Core.Vector(-scaleSpeed, -scaleSpeed)
+													
+						if (that.scaleX< scaleInitialX)
+						{
+							that.scaleSpeed = null;
+							window.clearInterval(that.scaleUpdate);
+							that.scaleX = scaleInitialX;
+							that.scaleY = scaleInitialY;
+						}
+					},5);
+
+				}
+			},
+			moving:true,
+			width:50,
+			height:50,
+			x: 75,
+			y: 325,
+			scaleX:1,
+			scaleY:1,
+			draw: function (context) 
+			{
+				var color1, color2;
+				color1 =  "#F00";
+				color2= "#FF0";
+
+				context.arc(0,0,20,0,2*Math.PI);
+				var gradient = context.createRadialGradient(0,0,50,50,-5,3);
+				gradient.addColorStop(0.0,color1);
+				gradient.addColorStop(1.0,color2);
+				context.fillStyle = gradient;
+				context.fill();
+			}};
+
+	/*
 	var element1 = controller.addElement(elementData);
 	element1.name = 'O1';
 	element1.x = 200;
@@ -130,29 +188,56 @@ element7.moving.rotationSpeed = Math.PI/128;
 	element8.scaleY=7;
 	element8.moving.speed.x = 0;
 	element8.moving.speed.y = 0;
-	element8.m= 1;
+	element8.m= 1;*/
 
-	var element9 = controller.addElement(elementData);
-	element9.name = 'O2';
+	var element9 = controller.addElement(bumperData);
+	element9.name = 'Bumper';
 	element9.x=200;
-	element9.y= 100;
+	element9.y= 200;
 	element9.scaleY=1;
-	element9.moving.speed.x = 2;
+	element9.moving.speed.x = 0;
 	element9.moving.speed.y = 0;
-	element9.m= 1;
+	element9.m= Infinity;
+
+	var element91 = controller.addElement(bumperData);
+	element91.name = 'Bumper';
+	element91.x=500;
+	element91.y= 200;
+	element91.scaleY=1;
+	element91.moving.speed.x = 0;
+	element91.moving.speed.y = 0;
+	element91.m= Infinity;
+
+	var element92 = controller.addElement(bumperData);
+	element92.name = 'Bumper';
+	element92.x=300;
+	element92.y= 100;
+	element92.scaleY=1;
+	element92.moving.speed.x = 0;
+	element92.moving.speed.y = 0;
+	element92.m= Infinity;
+
+	var element93 = controller.addElement(bumperData);
+	element93.name = 'Bumper';
+	element93.x=300;
+	element93.y= 400;
+	element93.scaleY=1;
+	element93.moving.speed.x = 0;
+	element93.moving.speed.y = 0;
+	element93.m= Infinity;
 
 	var element10 = controller.addElement(elementData);
 	element10.name = 'O2';
-	element10.x=100;
-	element10.y= 300;
+	element10.x=250;
+	element10.y= 250;
 	element10.scaleY=4;
-	element10.moving.speed.x = 1;
+	element10.moving.speed.x = 0;
 	element10.moving.speed.y = 0;
 	element10.m= 1;
 
 	var elementDataWall	= {
 			name:'wall',
-			collidable:true,
+			collidable:{collisionCoefficient:0.8},
 			width:10,
 			height:500,
 			translate:{dx:0,dy:0},

@@ -148,10 +148,23 @@ var CreJs = CreJs || {};
 					other.moving.speed.x, 
 					other.moving.speed.y);
 
+			if (element.scaleSpeed)
+			{
+				speedElement.x += centerCollisionElement.x*element.scaleSpeed.x;
+				speedElement.y += centerCollisionElement.y*element.scaleSpeed.y;
+			};
+
+			if (other.scaleSpeed)
+			{
+				speedOther.x += centerCollisionOther.x*other.scaleSpeed.x;
+				speedOther.y += centerCollisionOther.y*other.scaleSpeed.y;
+			};
+
 			localSpeedElement = speedElement.getCoordinates(colVectors);
 			localSpeedOther = speedOther.getCoordinates(colVectors);
-			
-			var F = 2*
+
+
+			var F = element.collidable.coefficient * other.collidable.coefficient * 2 *
 				(localSpeedOther.v - localSpeedElement.v + other.moving.rotationSpeed * otherRot.z - element.moving.rotationSpeed * elementRot.z)
 				/( 1/other.m + 1/element.m + otherRot.z*otherRot.z/other.getM() + elementRot.z*elementRot.z/element.getM() );
 					
@@ -174,7 +187,9 @@ var CreJs = CreJs || {};
 				var otherCenter;
 				if (
 					other.id === element.id || 
-					((!other.moving.speed.x && !other.moving.speed.y && !element.moving.speed.x && !element.moving.speed.y)))
+					((!other.moving.speed.x && !other.moving.speed.y && !element.moving.speed.x && !element.moving.speed.y
+						&& !other.scaleSpeed && !element.scaleSpeed	
+					)))
 					return false;
 				
 				otherCenter = other.getCenter();
@@ -207,8 +222,8 @@ var CreJs = CreJs || {};
 			
 			updateAfterCollision(element, other, collisionPoint);
 	
-			//element.events.dispatch('collision', {element:other, contactPoint:{x:left+imageX,y:top+imageY}});									
-			//other.events.dispatch('collision', {element:element, contactPoint:{x:left+imageX,y:top+imageY}});
+			element.events.dispatch('collision', {element:other, collisionPoint:collisionPoint});									
+			other.events.dispatch('collision', {element:element, collisionPoint:collisionPoint});
 
 			return false;
 		};

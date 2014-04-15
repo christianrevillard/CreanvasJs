@@ -40,12 +40,21 @@ var CreJs = CreJs || {};
 				element.moving.speed.x += element.moving.acceleration.x * dt;
 				element.moving.speed.y += element.moving.acceleration.y * dt;
 
-				rollbackData = {x:element.x, y:element.y, angle:element.angle};
+				rollbackData = {
+						x:element.x, 
+						y:element.y, 
+						angle:element.angle,
+						scaleX:element.scaleX,
+						scaleY:element.scaleY};
 
 				element.x += element.moving.speed.x * dt;
-				element.y += element.moving.speed.y * dt;
+				element.y += element.moving.speed.y * dt;				
 				element.angle += element.moving.rotationSpeed * dt;
-
+				if (element.scaleSpeed)
+				{
+					element.scaleX += element.scaleSpeed.x * dt;	
+					element.scaleY += element.scaleSpeed.y * dt;	
+				}
 				var preMoveOk = true;
 
 				if (element.preMove)
@@ -68,6 +77,8 @@ var CreJs = CreJs || {};
 					element.x = rollbackData.x;
 					element.y = rollbackData.y;
 					element.angle = rollbackData.angle;						
+					element.scaleX = rollbackData.scaleX;	
+					element.scaleY = rollbackData.scaleY;
 				} else {
 					//element.controller.log(element.name + " : Updated ok to : " + element.x + ', ' + element.y + ', ' + element.angle);
 				}
