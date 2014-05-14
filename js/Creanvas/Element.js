@@ -158,12 +158,19 @@ var CreJs = CreJs || {};
 		};	
 		
 		
-		// move to element
 		this.getCanvasXY=function(imageX, imageY)
 		{
 			return {
 				x: Math.round(element.x + imageX*element.scaleX*Math.cos(element.angle) - imageY*element.scaleY*Math.sin(element.angle)),
 				y: Math.round(element.y + imageX*element.scaleX*Math.sin(element.angle) + imageY*element.scaleY*Math.cos(element.angle))
+			};
+		};
+
+		this.getCanvasXYNoRounding=function(imageX, imageY)
+		{
+			return {
+				x: element.x + imageX*element.scaleX*Math.cos(element.angle) - imageY*element.scaleY*Math.sin(element.angle),
+				y: element.y + imageX*element.scaleX*Math.sin(element.angle) + imageY*element.scaleY*Math.cos(element.angle)
 			};
 		};
 

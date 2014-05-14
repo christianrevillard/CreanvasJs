@@ -126,7 +126,6 @@ var onload = function ()
 				context.fill();
 			}};
 
-	/*
 	var element1 = controller.addElement(elementData);
 	element1.name = 'O1';
 	element1.x = 200;
@@ -144,7 +143,6 @@ var onload = function ()
 	element2.scaleY=2;
 	element2.moving.speed.x = -1;
 	element2.moving.speed.y = 0;
-
 	
 	var element3 = controller.addElement(elementData);
 	element3.x=150;
@@ -186,10 +184,11 @@ element7.moving.rotationSpeed = Math.PI/128;
 	element8.y = 210;
 	element8.scaleX=0.5;
 	element8.scaleY=7;
-	element8.moving.speed.x = 0;
-	element8.moving.speed.y = 0;
-	element8.m= 1;*/
-
+	element8.moving.speed.x = 1;
+	element8.moving.speed.y = 1;
+	element8.moving.rotationSpeed = 0.01;
+	element8.m= 1;
+/*
 	var element9 = controller.addElement(bumperData);
 	element9.name = 'Bumper';
 	element9.x=200;
@@ -234,10 +233,10 @@ element7.moving.rotationSpeed = Math.PI/128;
 	element10.moving.speed.x = 0;
 	element10.moving.speed.y = 0;
 	element10.m= 1;
-
+*/
 	var elementDataWall	= {
 			name:'wall',
-			collidable:{collisionCoefficient:0.8},
+			collidable:{collisionCoefficient:1},
 			width:10,
 			height:500,
 			translate:{dx:0,dy:0},
