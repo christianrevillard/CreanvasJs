@@ -1,12 +1,3 @@
-// Clean code... again
-
-// Collision between elements. Can be checkec on worker, xoring a 1/0 image
-//Decorator: selfMoving, Solid(collision), Massive (mass, gravity)
-
-// is Hit through image correct.
-// collision?
-
-var a;
 
 var CreJs = CreJs || {};
 
@@ -14,11 +5,18 @@ var CreJs = CreJs || {};
 	CreJs.Creanvas = CreJs.Creanvas || {};		
 		
 	CreJs.Creanvas.Controller = function(controllerData) {
-		var canvas, needRedraw, refreshTime, controller;
+		var 
+			canvas, 
+			needRedraw, 
+			refreshTime, 
+			controller,
+			time,
+			timeStart,
+			timeScale;
 
-		var time;
-		var timeStart;
-		var timeScale = controllerData.timeScale || 1;
+		controller = this;
+		canvas = controllerData.canvas;
+		timeScale = controllerData.timeScale || 1;
 
 		if (controllerData.realTime)
 		{	
@@ -36,8 +34,6 @@ var CreJs = CreJs || {};
 			this.getTime = function(){return time;};
 		}
 		
-		controller = this;
-		canvas = controllerData.canvas;
 		
 		this.log = function(logData){			
 			if (controllerData.log)
@@ -76,7 +72,6 @@ var CreJs = CreJs || {};
 		this.log('Starting controller');
 	
 		controller.context = canvas.getContext("2d");	
-		this.collisionSolver = new CreJs.Creanvas.CollisionSolver(this);
 		needRedraw = true;
 		isDrawing = false;
 		refreshTime = controllerData.refreshTime || 50; // ms	- TODO constant default refresh time
@@ -213,11 +208,6 @@ var CreJs = CreJs || {};
 	
 		controller.elements = [];
 		
-		this.getCollidableElements = function()
-		{
-			return controller.elements.filter(function(e){ return e.collidable;});
-		};					
-
 		this.addElement  = function (elementData)
 		{
 			elementData.controller = controller;
@@ -264,7 +254,8 @@ var CreJs = CreJs || {};
 							controller.context.drawImage(
 									element.temporaryRenderingContext.canvas,
 									0, 0, element.width, element.height,
-									-element.dx, -element.dy, element.width, element.height);	//width height will be transformed!				
+									-element.dx, -element.dy, element.width, element.height);
+							
 							controller.context.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
 							controller.context.rotate(- (element.angle || 0));
 							controller.context.translate(-element.x, - element.y);

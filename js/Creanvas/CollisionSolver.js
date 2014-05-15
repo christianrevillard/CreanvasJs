@@ -162,8 +162,15 @@ var CreJs = CreJs || {};
 			//element.controller.log('collision : ' + element.name + " and " + other.name);			
 		};
 
-		this.solveCollision = function(element, toCheck)
+		var getCollidableElements = function()
 		{
+			return controller.elements.filter(function(e){ return e.collidable;});
+		};					
+
+		this.solveCollision = function(element)
+		{			
+			var toCheck = getCollidableElements();
+			
 			var others, center, collisionPoint, other;
 			
 			center = element.getCenter();

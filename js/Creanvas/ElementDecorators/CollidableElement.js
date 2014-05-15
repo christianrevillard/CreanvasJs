@@ -12,6 +12,8 @@ var CreJs = CreJs || {};
 		{	
 			element.collidable = {};
 			
+			element.controller.collisionSolver = element.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(element.controller);
+			
 			if (collidableData.hasOwnProperty('collisionCoefficient'))
 				element.collidable.coefficient = collidableData.collisionCoefficient;
 			else
@@ -38,7 +40,7 @@ var CreJs = CreJs || {};
 			
 			element.preMove.push(function()
 			 {			
-				return (element.controller.collisionSolver.solveCollision(element, element.controller.getCollidableElements()));
+				return (element.controller.collisionSolver.solveCollision(element));
 			 });			
 			
 			var canvas = element.controller.context.canvas;
