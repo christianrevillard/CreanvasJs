@@ -24,7 +24,6 @@ var CreJs = CreJs || {};
 		this.z = elementData.z || 0;
 		this.id = CreJs.CreHelpers.GetGuid();	
 		this.name = elementData.name;	
-		this.image = elementData.image; // need to be property?
 		this.width = elementData.width;
 		this.height = elementData.height;
 		this.angle = elementData.angle || 0;
@@ -34,6 +33,33 @@ var CreJs = CreJs || {};
 		
 		var draw = elementData.draw;	
 
+		var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2};			
+		this.dx = translate.dx;
+		this.dy = translate.dy;
+
+		if (elementData.image)
+		{
+			this.image = elementData.image;
+		}
+		else
+		{
+			var canvas = this.controller.context.canvas;
+			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
+			tempCanvas.width = elementData.width;
+			tempCanvas.height = elementData.height;
+			this.temporaryRenderingContext = tempCanvas.getContext("2d");
+			this.temporaryRenderingContext.beginPath();
+			
+			this.temporaryRenderingContext.translate(this.dx, this.dy);
+			elementData.draw(this.temporaryRenderingContext);
+			// several image:store them here with offset
+			this.image = this.temporaryRenderingContext.getImageData(0, 0, elementData.width, elementData.height);
+		}
+		
+		
+		
+		
+		
 		this.getM = function()
 		{				
 			return element.m / 12 * (element.width*element.scaleX * element.width*element.scaleX + element.height*element.scaleY * element.height*element.scaleY); // square...};
@@ -56,9 +82,6 @@ var CreJs = CreJs || {};
 			return value;
 		};
 				
-		var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2};			
-		this.dx = translate.dx;
-		this.dy = translate.dy;
 		var element = this;
 		
 		if (elementData.rules)
@@ -113,9 +136,10 @@ var CreJs = CreJs || {};
 
 		this.clone = function()
 		{
+			elementData.image = element.image;
 			var newElement = element.controller.addElementWithoutContext(elementData);
-			newElement.temporaryRenderingContext = element.temporaryRenderingContext;
-			newElement.image = element.image;
+//			newElement.temporaryRenderingContext = element.temporaryRenderingContext;
+//			newElement.image = element.image;
 			return newElement;
 		};
 	

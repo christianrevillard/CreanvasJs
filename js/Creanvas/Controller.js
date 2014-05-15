@@ -44,7 +44,7 @@ var CreJs = CreJs || {};
 				controllerData.log(logData);
 		};
 
-			//for heavy load stuff that can be handled by a worker / WebSocket
+		//for heavy load stuff that can be handled by a worker / WebSocket
 		var asynchronousController;
 		if (window.Worker && (!controllerData.noWorker))
 		{			
@@ -70,20 +70,16 @@ var CreJs = CreJs || {};
 		{
 			asynchronousController.receiveMessage(message);
 		};
-	
-		
-		this.sendMessage("Test heavy load");
-		
 			
+		this.sendMessage("Test heavy load");
+					
 		this.log('Starting controller');
-
 	
 		controller.context = canvas.getContext("2d");	
 		this.collisionSolver = new CreJs.Creanvas.CollisionSolver(this);
 		needRedraw = true;
 		isDrawing = false;
-		refreshTime = controllerData.refreshTime || 50; // ms	
-
+		refreshTime = controllerData.refreshTime || 50; // ms	- TODO constant default refresh time
 		
 		this.triggerPointedElementEvent = function(eventId, event)
 		{
@@ -185,7 +181,6 @@ var CreJs = CreJs || {};
 		
 		this.events = new CreJs.Creevents.EventContainer();		
 		this.registerCanvasPointerEvent('click', 'click');
-		// create two handlers... wrong
 
 		this.registerCanvasPointerEvent('mousedown','pointerDown');
 		this.registerCanvasPointerEvent('touchstart','pointerDown');
@@ -239,7 +234,7 @@ var CreJs = CreJs || {};
 		{
 			var element = this.addElementWithoutContext(elementData);
 
-
+/*
 			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
 			tempCanvas.width = elementData.width;
 			tempCanvas.height = elementData.height;
@@ -250,8 +245,8 @@ var CreJs = CreJs || {};
 			elementData.draw(element.temporaryRenderingContext);
 			// several image:store them here with offset
 			element.image = element.temporaryRenderingContext.getImageData(0, 0, elementData.width, elementData.height);
-
-			
+*/
+/*			
 			if (elementData.collidable)
 			{
 				var tempCollisionCanvas = canvas.ownerDocument.createElement('canvas');			
@@ -262,18 +257,15 @@ var CreJs = CreJs || {};
 				tempCollisionCanvas.width = tempCollidedCanvas.width = elementData.width;
 				tempCollisionCanvas.height = tempCollidedCanvas.height = elementData.height;				
 
-				element.collisionContext = tempCollisionCanvas.getContext("2d");				
-				element.collisionContext.putImageData(element.image,0,0);
-				element.collisionContext.globalCompositeOperation='source-atop';
-				element.collisionContext.fillStyle="#000";
-				element.collisionContext.fillRect(0,0,elementData.width, elementData.height);
-				element.collisionContext.globalCompositeOperation='source-over';
-
 				element.collidedContext = tempCollidedCanvas.getContext("2d");				
 				element.collidedContext.putImageData(element.image,0,0);
 				element.collidedContext.globalCompositeOperation='source-atop';
 				element.collidedContext.fillStyle="#000";
 				element.collidedContext.fillRect(0,0,elementData.width, elementData.height);
+
+				element.collisionContext = tempCollisionCanvas.getContext("2d");				
+				element.collisionContext.globalCompositeOperation='source-over';
+				element.collisionContext.drawImage(element.collidedContext.canvas,0, 0);
 
 				var collisionImageOld = element.collisionContext.getImageData(0, 0, elementData.width, elementData.height);
 				var collisionImageNew = element.collisionContext.createImageData(elementData.width, elementData.height);
@@ -320,7 +312,9 @@ var CreJs = CreJs || {};
 					}
 				}
 				element.collisionContext.putImageData(collisionImageNew, 0, 0);
-			}
+				
+				element.collisionContext.translate(element.dx, element.dy);
+			}*/
 			return element;
 		};
 			

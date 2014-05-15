@@ -4,11 +4,7 @@ var CreJs = CreJs || {};
 	CreJs.Creanvas = CreJs.Creanvas || {};		
 	
 	CreJs.Creanvas.CollisionSolver = function(controller)
-	{
-		var canvas;
-
-		canvas = controller.context.canvas;
-				
+	{				
 		var findCollisionPoint = function(element, other)
 		{
 			var clientRectElement, clientRectOther, clientRectIntersection, imageAfter, edges;
@@ -30,7 +26,6 @@ var CreJs = CreJs || {};
 			
 			var collisionImage = element.collisionContext.getImageData(0, 0, element.width, element.height);
 
-			element.collisionContext.translate(element.dx, element.dy);
 			element.collisionContext.scale(1 / (element.scaleX || 1), 1 / (element.scaleY || 1));
 			element.collisionContext.rotate( - (element.angle || 0));
 			element.collisionContext.translate(other.x - element.x, other.y - element.y);
@@ -49,7 +44,6 @@ var CreJs = CreJs || {};
 			element.collisionContext.translate(-other.x + element.x, -other.y + element.y);
 			element.collisionContext.rotate( element.angle || 0);
 			element.collisionContext.scale(element.scaleX || 1, element.scaleY || 1);
-			element.collisionContext.translate( - element.dx, - element.dy);
 
 			 imageAfter =element.collisionContext.getImageData(
 					0,
@@ -97,7 +91,9 @@ var CreJs = CreJs || {};
 			var point2 = element.getCanvasXY(edges[theMax.j].x - element.dx, edges[theMax.j].y - element.dy);
 			
 			if (point1.x == point2.x && point1.y == point2.y)
+			{
 				return null;
+			}
 			
 			return {
 				x:Math.round((point1.x + point2.x)/2), 

@@ -1,4 +1,4 @@
-	//doing the job, synchronous or in worker thread.
+//doing the job, synchronous or in worker thread.
 
 var CreJs = CreJs || {};
 
