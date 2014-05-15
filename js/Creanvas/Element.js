@@ -137,7 +137,7 @@ var CreJs = CreJs || {};
 		this.clone = function()
 		{
 			elementData.image = element.image;
-			var newElement = element.controller.addElementWithoutContext(elementData);
+			var newElement = element.controller.addElement(elementData);
 //			newElement.temporaryRenderingContext = element.temporaryRenderingContext;
 //			newElement.image = element.image;
 			return newElement;

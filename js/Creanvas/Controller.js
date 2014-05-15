@@ -218,7 +218,7 @@ var CreJs = CreJs || {};
 			return controller.elements.filter(function(e){ return e.collidable;});
 		};					
 
-		this.addElementWithoutContext  = function (elementData)
+		this.addElement  = function (elementData)
 		{
 			elementData.controller = controller;
 
@@ -228,94 +228,6 @@ var CreJs = CreJs || {};
 			controller.elements.push(element);
 			return element;
 			
-		};
-
-		this.addElement  = function (elementData)
-		{
-			var element = this.addElementWithoutContext(elementData);
-
-/*
-			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
-			tempCanvas.width = elementData.width;
-			tempCanvas.height = elementData.height;
-			element.temporaryRenderingContext = tempCanvas.getContext("2d");
-			element.temporaryRenderingContext.beginPath();
-			
-			element.temporaryRenderingContext.translate(element.dx, element.dy);
-			elementData.draw(element.temporaryRenderingContext);
-			// several image:store them here with offset
-			element.image = element.temporaryRenderingContext.getImageData(0, 0, elementData.width, elementData.height);
-*/
-/*			
-			if (elementData.collidable)
-			{
-				var tempCollisionCanvas = canvas.ownerDocument.createElement('canvas');			
-//				canvas.ownerDocument.body.appendChild(tempCollisionCanvas);
-				var tempCollidedCanvas = canvas.ownerDocument.createElement('canvas');			
-//				canvas.ownerDocument.body.appendChild(tempCollidedCanvas);
-				
-				tempCollisionCanvas.width = tempCollidedCanvas.width = elementData.width;
-				tempCollisionCanvas.height = tempCollidedCanvas.height = elementData.height;				
-
-				element.collidedContext = tempCollidedCanvas.getContext("2d");				
-				element.collidedContext.putImageData(element.image,0,0);
-				element.collidedContext.globalCompositeOperation='source-atop';
-				element.collidedContext.fillStyle="#000";
-				element.collidedContext.fillRect(0,0,elementData.width, elementData.height);
-
-				element.collisionContext = tempCollisionCanvas.getContext("2d");				
-				element.collisionContext.globalCompositeOperation='source-over';
-				element.collisionContext.drawImage(element.collidedContext.canvas,0, 0);
-
-				var collisionImageOld = element.collisionContext.getImageData(0, 0, elementData.width, elementData.height);
-				var collisionImageNew = element.collisionContext.createImageData(elementData.width, elementData.height);
-	
-				element.edges = [];
-				
-				for (var imageX=0;imageX<elementData.width; imageX++)
-				{
-					for (var imageY=0;imageY<elementData.height; imageY++)
-					{
-						if (collisionImageOld.data[imageY*elementData.width*4 + imageX*4 + 3] < 200)
-							continue;
-	
-						var edge = false;
-						
-						for (var i=-1;i<2;i++)
-						{
-							for (var j=-1;j<2;j++)
-							{
-								if (imageY+i<0 || imageX+j <0 || 
-										imageY+i>elementData.height-1 
-										|| imageX+i>elementData.width-1 ||
-										collisionImageOld.data[((imageY+i)*elementData.width)*4 + (imageX+j)*4 + 3] < 100)
-								{
-									edge = true;
-									i=2;
-									j=2;
-								}
-							}																			
-						}
-						var fillValue = 255;
-						
-						element.collisionContext.putImageData(collisionImageNew, 0, 0);
-
-						if (edge)
-						{
-							element.edges.push({x:imageX, y:imageY});
-														
-							collisionImageNew.data[((imageY)*elementData.width)*4 + (imageX)*4]=0;
-							collisionImageNew.data[((imageY)*elementData.width)*4 + (imageX)*4+1]=0;
-							collisionImageNew.data[((imageY)*elementData.width)*4 + (imageX)*4+2]=0;
-							collisionImageNew.data[((imageY)*elementData.width)*4 + (imageX)*4+3]=fillValue;
-						}
-					}
-				}
-				element.collisionContext.putImageData(collisionImageNew, 0, 0);
-				
-				element.collisionContext.translate(element.dx, element.dy);
-			}*/
-			return element;
 		};
 			
 		//background
