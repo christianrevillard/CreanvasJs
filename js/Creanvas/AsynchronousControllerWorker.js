@@ -1,4 +1,5 @@
-importScripts("HeavyLoadController.js");
+/* Not used for the moment
+ * importScripts("HeavyLoadController.js");
 
 var controller = new CreJs.Creanvas.HeavyLoadController();
 
@@ -12,4 +13,4 @@ controller.sendMessage = function(data)
 {
 	postMessage("Asynchronous response: " + data);
 	postMessage(data);
-}; 
+};*/ 

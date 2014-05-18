@@ -1,4 +1,3 @@
-
 var CreJs = CreJs || {};
 
 (function(){
@@ -40,6 +39,7 @@ var CreJs = CreJs || {};
 				controllerData.log(logData);
 		};
 
+		/* Not used for the moment
 		//for heavy load stuff that can be handled by a worker / WebSocket
 		var asynchronousController;
 		if (window.Worker && (!controllerData.noWorker))
@@ -68,7 +68,7 @@ var CreJs = CreJs || {};
 		};
 			
 		this.sendMessage("Test heavy load");
-					
+					*/
 		this.log('Starting controller');
 	
 		controller.context = canvas.getContext("2d");	

@@ -28,7 +28,7 @@ var CreJs = CreJs || {};
 			return {
 				u: core.scalarProduct(vector,unitVectors.u),
 				v: core.scalarProduct(vector,unitVectors.v),
-				w: core.scalarProduct(vector,unitVectors.w),
+				w: core.scalarProduct(vector,unitVectors.w)
 			};
 		};
 

@@ -1,5 +1,5 @@
 //doing the job, synchronous or in worker thread.
-
+/* Not used for the moment
 var CreJs = CreJs || {};
 
 (function(){
@@ -17,3 +17,4 @@ var CreJs = CreJs || {};
 		};
 	};
 }());
+*/
