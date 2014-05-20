@@ -40,6 +40,16 @@ var CreJs = CreJs || {};
 				element.moving.speed.x += element.moving.acceleration.x * dt;
 				element.moving.speed.y += element.moving.acceleration.y * dt;
 
+				if (element.moving.speed.x == 0 &&
+						element.moving.speed.y == 0 &&
+						element.moving.rotationSpeed == 0 &&
+						(!element.scaleSpeed ||(
+						element.scaleSpeed.x == 0 && element.scaleSpeed.y==0						
+						)))
+				{
+					return;
+				}
+				
 				rollbackData = {
 						x:element.x, 
 						y:element.y, 
@@ -55,6 +65,7 @@ var CreJs = CreJs || {};
 					element.scaleX += element.scaleSpeed.x * dt;	
 					element.scaleY += element.scaleSpeed.y * dt;	
 				}
+				
 				var preMoveOk = true;
 
 				if (element.preMove)
