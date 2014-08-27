@@ -250,7 +250,7 @@ var CreJs = CreJs || {};
 							controller.context.translate(element.x, element.y);
 							controller.context.rotate(element.angle || 0);
 							controller.context.scale(element.scaleX || 1, element.scaleY || 1);
-														
+																		
 							controller.context.drawImage(
 									element.temporaryRenderingContext.canvas,
 									0, 0, element.width, element.height,

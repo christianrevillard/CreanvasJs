@@ -9,4 +9,4 @@ java ^
 --js_output_file out/CreanvasDebug.js ^
 --define TEST=false ^
 --define DEBUG=true ^
---compilation_level SIMPLE_OPTIMIZATIONS
+--compilation_level WHITESPACE_ONLY

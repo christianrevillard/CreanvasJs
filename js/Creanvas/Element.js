@@ -40,6 +40,11 @@ var CreJs = CreJs || {};
 		if (elementData.image)
 		{
 			this.image = elementData.image;
+
+			var canvas = this.controller.context.canvas;
+			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
+			this.temporaryRenderingContext = tempCanvas.getContext("2d");
+			this.temporaryRenderingContext.putImageData(this.image,0,0);
 		}
 		else
 		{
@@ -47,6 +52,7 @@ var CreJs = CreJs || {};
 			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
 			tempCanvas.width = elementData.width;
 			tempCanvas.height = elementData.height;
+			
 			this.temporaryRenderingContext = tempCanvas.getContext("2d");
 			this.temporaryRenderingContext.beginPath();
 			
@@ -138,8 +144,7 @@ var CreJs = CreJs || {};
 		{
 			elementData.image = element.image;
 			var newElement = element.controller.addElement(elementData);
-//			newElement.temporaryRenderingContext = element.temporaryRenderingContext;
-//			newElement.image = element.image;
+						
 			return newElement;
 		};
 	
