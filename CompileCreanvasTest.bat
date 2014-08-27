@@ -6,7 +6,7 @@ java ^
 	./js/Creanvas/ElementDecorators/*.js ^
 	./js/Creevents/*.js ./js/CreHelpers/*.js ^
 	./js/Crelog/*.js ^
---js_output_file js/CreanvasTest.js ^
+--js_output_file out/CreanvasTest.js ^
 --define TEST=true ^
 --define DEBUG=false ^
 --compilation_level SIMPLE_OPTIMIZATIONS
