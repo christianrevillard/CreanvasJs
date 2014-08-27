@@ -10,3 +10,5 @@ java ^
 --define TEST=false ^
 --define DEBUG=false ^
 --compilation_level ADVANCED_OPTIMIZATIONS
+
+copy out\CreanvasProd.js C:\Users\Christian\Development\WebApps\lib\CreanvasProd.js

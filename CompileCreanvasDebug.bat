@@ -10,3 +10,5 @@ java ^
 --define TEST=false ^
 --define DEBUG=true ^
 --compilation_level WHITESPACE_ONLY
+
+copy out\CreanvasDebug.js C:\Users\Christian\Development\WebApps\lib\CreanvasDebug.js

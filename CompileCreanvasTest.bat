@@ -10,3 +10,5 @@ java ^
 --define TEST=true ^
 --define DEBUG=false ^
 --compilation_level SIMPLE_OPTIMIZATIONS
+
+copy out\CreanvasTest.js C:\Users\Christian\Development\WebApps\lib\CreanvasTest.js
