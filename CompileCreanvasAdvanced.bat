@@ -6,9 +6,9 @@ java ^
 	./js/Creanvas/ElementDecorators/*.js ^
 	./js/Creevents/*.js ./js/CreHelpers/*.js ^
 	./js/Crelog/*.js ^
---js_output_file out/CreanvasProd.js ^
+--js_output_file out/Creanvas.js ^
 --define TEST=false ^
 --define DEBUG=false ^
---compilation_level ADVANCED_OPTIMIZATIONS
+--compilation_level SIMPLE_OPTIMIZATIONS
 
-copy out\CreanvasProd.js C:\Users\Christian\Development\WebApps\lib\CreanvasProd.js
+copy out\Creanvas.js C:\Users\Christian\Development\WebApps\lib\Creanvas.js

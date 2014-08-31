@@ -5,9 +5,8 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.push(
+	CreJs.Creanvas.elementDecorators.dropzone =
 	{
-		type: 'dropzone',
 		applyTo: function(element, dropzoneData)
 		{
 			var availableSpots = dropzoneData.availableSpots;
@@ -21,7 +20,10 @@ var CreJs = CreJs || {};
 				if (availableSpots <= 0)
 					return
 									
-				element.controller.log('drop event on dropzone ' + element.id + ', dropped ' + e.droppedElement.id);
+				if (DEBUG)
+				{
+					element.controller.log('drop event on dropzone ' + element.id + ', dropped ' + e.droppedElement.id);
+				}
 
 				availableSpots--;
 				e.droppedElement.x = dropX || element.x;
@@ -41,8 +43,11 @@ var CreJs = CreJs || {};
 	
 			element.drag = function(draggedElement) {
 	
-				element.controller.log('dragging from dropzone ' + element.id + ', dragged ' + draggedElement.id);
-
+				if (DEBUG)
+				{
+					element.controller.log('dragging from dropzone ' + element.id + ', dragged ' + draggedElement.id);
+				}
+				
 				draggedElement.dropZone = null;
 				availableSpots++;
 				element.droppedElements.splice(
@@ -51,5 +56,5 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};
 		}
-	});
+	};
 }());

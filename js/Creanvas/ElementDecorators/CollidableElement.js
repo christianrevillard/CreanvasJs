@@ -5,11 +5,12 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.push(
+	CreJs.Creanvas.elementDecorators.collidable=
 	{
-		type: 'collidable',
 		applyTo: function(element, collidableData)
 		{	
+			var cachedResults = [];
+
 			element.collidable = {};
 			
 			element.controller.collisionSolver = element.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(element.controller);
@@ -43,6 +44,28 @@ var CreJs = CreJs || {};
 				return (element.controller.collisionSolver.solveCollision(element));
 			 });			
 			
+			element.getM = function()
+			{				
+				return element.m / 12 * (element.width*element.scaleX * element.width*element.scaleX + element.height*element.scaleY * element.height*element.scaleY); // square...};
+			};
+			
+			element.geRadiusCache = function()
+			{				
+				return Math.sqrt(element.width*element.width*element.scaleX*element.scaleX + element.height*element.height*element.scaleY*element.scaleY)/2;
+			};
+
+			element.getRadius = function()
+			{				
+				var key = element.width + '' + element.height + '' + element.scaleX+ '' + element.scaleY ;
+				if (cachedResults['getRadius'] && cachedResults['getRadius'].key == key)
+				{
+					return cachedResults['getRadius'].value;
+				}
+				var value = element.geRadiusCache();
+				cachedResults['geRadius'] = {key:key, value:value};
+				return value;
+			};
+
 			var canvas = element.controller.context.canvas;
 			
 			var tempCollisionCanvas = canvas.ownerDocument.createElement('canvas');			
@@ -111,5 +134,5 @@ var CreJs = CreJs || {};
 			
 			element.collisionContext.translate(element.dx, element.dy);
 		}
-	});
+	};
 }());

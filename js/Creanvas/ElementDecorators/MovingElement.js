@@ -5,19 +5,27 @@ var CreJs = CreJs || {};
 
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 
-	CreJs.Creanvas.elementDecorators.push({
+	CreJs.Creanvas.elementDecorators.moving = {
 		type : 'moving',
 		applyTo : function(element, movingData) 
 		{
+
+			if (DEBUG)
+			{
+				element.controller.log('Applying moving decorator to ' + element.name + '-' + element.id);
+			}
+			
 			var lastUpdated, currentTime, dt, rollbackData;
 			
 			element.moving = element.moving || {};
 
-			element.moving.speed = new CreJs.Core.Vector(
+			element.moving.speed =
+				new CreJs.Core.Vector(
 					movingData.vx || 0,
 					movingData.vy || 0);
 			
-			element.moving.acceleration = new CreJs.Core.Vector(
+			element.moving.acceleration = 
+				 new CreJs.Core.Vector(
 					movingData.ax || 0, 
 					movingData.ay || 0);
 			
@@ -95,5 +103,5 @@ var CreJs = CreJs || {};
 				}
 			}, 20);
 		}
-	});
+	};	
 }());

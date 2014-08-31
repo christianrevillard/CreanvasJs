@@ -1,5 +1,3 @@
-var CreJs = CreJs || {};
-
 (function(){
 	var creevents = CreJs.Creevents = CreJs.Creevents || {};		
 	

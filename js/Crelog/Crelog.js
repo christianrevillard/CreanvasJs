@@ -1,10 +1,7 @@
 // TODO, log levels, other logging output.
-
-var CreJs = CreJs || {};
-
 (function()
 {
-	var isLogging = false; // on/off, to improve...
+	var isLogging = true; // on/off, to improve... Or just test DEBUG? to see...
 	
 	var log = CreJs.Crelog = CreJs.Crelog || {};
 	

@@ -5,9 +5,8 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.push(
+	CreJs.Creanvas.elementDecorators.clickable = 
 	{
-		type: 'clickable',
 		applyTo: function(element, clickData)
 		{	
 			element.onClick = function(event)
@@ -23,5 +22,5 @@ var CreJs = CreJs || {};
 				handleEvent:element.onClick
 			});
 		}
-	});
+	};
 }());

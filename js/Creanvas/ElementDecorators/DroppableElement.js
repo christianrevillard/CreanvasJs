@@ -5,14 +5,16 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.push(
+	CreJs.Creanvas.elementDecorators.droppable =
 	{
-		type: 'droppable',
 		applyTo: function(element, droppableData)
 		{
 			element.isDroppable = true;
 			element.dropZone = droppableData.dropZone;
-			element.controller.log('Now droppable: ' + element.id);
+			if (DEBUG)
+			{
+				element.controller.log('Now droppable: ' + element.id);
+			}
 		}
-	});
+	};
 }());

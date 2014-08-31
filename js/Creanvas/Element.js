@@ -1,45 +1,48 @@
-var CreJs = CreJs || {};
+// Basic Element
+// Define position, drawing info
 
 (function(){
-	var creanvas = CreJs.Creanvas = CreJs.Creanvas || {};		
-	
-	creanvas.Element = function(elementData){
-	
-		if (!elementData.hasOwnProperty('controller'))
-		{
-			return; // TODO error throw / handling
-		};
-	
-		if (!elementData.hasOwnProperty('draw'))
-		{
-			return; // TODO error throw / handling
-		};
-		
+	var creanvas = CreJs.Creanvas;
+
+	// decorators as additional arguments.
+	creanvas.Element = function(
+		controller, 
+		elementDefinition){
+
+		var decoratorArguments = [].slice.apply(arguments).slice(2);
+
 		var cachedResults = [];
 
 		// generic stuff		
-		this.controller = elementData.controller;
-		this.x = elementData.x || 0;
-		this.y = elementData.y || 0;
-		this.z = elementData.z || 0;
+		this.controller = controller;
+		this.name = elementDefinition.name;	
 		this.id = CreJs.CreHelpers.GetGuid();	
-		this.name = elementData.name;	
-		this.width = elementData.width;
-		this.height = elementData.height;
-		this.angle = elementData.angle || 0;
-		this.scaleX = elementData.scaleX || 1;
-		this.scaleY = elementData.scaleY || 1;
+
+		// box property, including dx		
+		this.width = elementDefinition.image.width;
+		this.height = elementDefinition.image.height;
+
+		// position prop
+		this.x = elementDefinition.position.x || 0;
+		this.y = elementDefinition.position.y || 0;
+		this.z = elementDefinition.position.z || 0;
+		this.angle = elementDefinition.position.angle || 0;
+		
+		// scaling decorator ?? => should be
+		this.scaleX = elementDefinition.image.scaleX || 1;
+		this.scaleY = elementDefinition.image.scaleY || 1;
 		this.m = 1;
 		
-		var draw = elementData.draw;	
+		var draw = elementDefinition.image.draw;	
 
-		var translate = elementData.translate || {dx:elementData.width/2, dy:elementData.height/2};			
+		// rename cleary, center or something
+		var translate = elementDefinition.image.translate || {dx:elementDefinition.image.width/2, dy:elementDefinition.image.height/2};			
 		this.dx = translate.dx;
 		this.dy = translate.dy;
 
-		if (elementData.image)
+		if (elementDefinition.image.image)
 		{
-			this.image = elementData.image;
+			this.image = elementDefinition.image.image;
 
 			var canvas = this.controller.context.canvas;
 			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
@@ -50,50 +53,34 @@ var CreJs = CreJs || {};
 		{
 			var canvas = this.controller.context.canvas;
 			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
-			tempCanvas.width = elementData.width;
-			tempCanvas.height = elementData.height;
+			tempCanvas.width = elementDefinition.image.width;
+			tempCanvas.height = elementDefinition.image.height;
 			
 			this.temporaryRenderingContext = tempCanvas.getContext("2d");
 			this.temporaryRenderingContext.beginPath();
 			
 			this.temporaryRenderingContext.translate(this.dx, this.dy);
-			elementData.draw(this.temporaryRenderingContext);
+			elementDefinition.image.draw(this.temporaryRenderingContext);
 			// several image:store them here with offset
-			this.image = this.temporaryRenderingContext.getImageData(0, 0, elementData.width, elementData.height);
+			this.image = this.temporaryRenderingContext.getImageData(0, 0, elementDefinition.image.width, elementDefinition.image.height);
 		}
-		
-		
-		
-		
-		
-		this.getM = function()
-		{				
-			return element.m / 12 * (element.width*element.scaleX * element.width*element.scaleX + element.height*element.scaleY * element.height*element.scaleY); // square...};
-		};
-		
-		this.geRadiusCache = function()
-		{				
-			return Math.sqrt(element.width*element.width*element.scaleX*element.scaleX + element.height*element.height*element.scaleY*element.scaleY)/2;
-		};
-
-		this.getRadius = function()
-		{				
-			var key = element.width + '' + element.height + '' + element.scaleX+ '' + element.scaleY ;
-			if (cachedResults['getRadius'] && cachedResults['getRadius'].key == key)
-			{
-				return cachedResults['getRadius'].value;
-			}
-			var value = element.geRadiusCache();
-			cachedResults['geRadius'] = {key:key, value:value};
-			return value;
-		};
-				
+						
 		var element = this;
 		
-		if (elementData.rules)
+		if (DEBUG)
+		{
+			element.debug = function(source, message)
+			{
+					element.controller.log(
+							"Element." + source + ": " + message + ". Element: " + element.name + "/" + element.id);
+			};
+		}
+		
+		// decorator stuff ?
+		if (elementDefinition.rules)
 		{
 			element.rules = [];
-			elementData.rules.forEach(function(rule)
+			elementDefinition.rules.forEach(function(rule)
 			{
 				var  ruleId = element.rules.length;
 				element.rules.push(rule);
@@ -116,16 +103,13 @@ var CreJs = CreJs || {};
 			return element.controller.noDrawContext.isPointInPath(element, draw, canvasXY);
 		};
 
-		if (CreJs.Creanvas.elementDecorators)
+		if (decoratorArguments.length > 0 && CreJs.Creanvas.elementDecorators)
 		{
-			for(var decoratorId=0; decoratorId<creanvas.elementDecorators.length; decoratorId++)
+			if (DEBUG)
 			{
-				var decorator = CreJs.Creanvas.elementDecorators[decoratorId];
-				if (elementData.hasOwnProperty(decorator.type) && elementData[decorator.type])
-				{
-					decorator.applyTo(element, elementData[decorator.type]);
-				}
+				controller.log("New element " + elementDefinition.name + " : apply " + decoratorArguments.length + " decorators");
 			}
+			element.applyDecorators(decoratorArguments);
 		}
 		
 		this.hit = function(pointerX,pointerY)
@@ -139,25 +123,32 @@ var CreJs = CreJs || {};
 			imageY <= element.height && 
 			element.image.data[4*imageY*element.width + 4*imageX + 3]>0;
 		};
-
+		
 		this.clone = function()
 		{
-			elementData.image = element.image;
-			var newElement = element.controller.addElement(elementData);
-						
+			elementDefinition.image.image = element.image;
+			
+			if (DEBUG)
+			{
+				controller.log("cloning with elementdefinition: " + elementDefinition);
+			}
+			var newElement = element.controller.addElement(
+					elementDefinition);
+			
+			if (DEBUG)
+			{
+				controller.log("Cloning " + newElement.name + " : apply " + decoratorArguments.length + " decorators");
+			}
+			newElement.applyDecorators.apply(newElement, decoratorArguments);
+			
 			return newElement;
-		};
-	
-		this.applyDecorator = function(decorator, decoratorData)
-		{
-			decorator.applyTo(element, decoratorData);
 		};
 		
 		this.removeDecorator = function (decoratorType)
 		{
 			element.events.removeEventListener(
 					{eventGroupType:decoratorType,
-						listenerId:element.id});
+						listenerId:element.id});					
 		};
 		
 		this.canHandle = function(eventId)
@@ -180,13 +171,11 @@ var CreJs = CreJs || {};
 			handleEvent: function(e) { element.deactivate(); }
 		});
 
-
 		this.triggerRedraw = function()
 		{
 			element.controller.redraw();
 		};	
-		
-		
+				
 		this.getCanvasXY=function(imageX, imageY)
 		{
 			return {
@@ -210,8 +199,7 @@ var CreJs = CreJs || {};
 				y: Math.round(((canvasY- element.y)*Math.cos(element.angle)-(canvasX-element.x)*Math.sin(element.angle))/element.scaleY)
 			};
 		};
-		
-		
+				
 		this.getCenter = function()
 		{
 			return element.getCanvasXY(-element.dx + element.width/2, -element.dy + element.height/2);
@@ -263,6 +251,41 @@ var CreJs = CreJs || {};
 			cachedResults['getClientRect'] = {key:key, value:value};
 			return value;
 		};		
-	};
+			
+		this.applyDecorators = function()
+		{
+			var element = this;
 
+			if(DEBUG) element.debug("applyDecorators","Applying " + arguments.length + " new decorators");
+
+			decoratorArguments = decoratorArguments.concat([].slice.apply(arguments));
+
+			if(DEBUG) element.debug("applyDecorators","Applying " + decoratorArguments.length + " decorators");
+
+			decoratorArguments.forEach(
+			function(decoratorArgument)
+			{
+				element.applyDecorator(decoratorArgument[0], decoratorArgument[1]);
+			});
+		};
+
+		this.applyDecorator = function(decoratorType, decoratorSettings)
+		{
+			var element = this;
+			
+			if(DEBUG) element.debug("applyDecorator", "Applying decorator " + decoratorType);			
+
+			var decorator = CreJs.Creanvas.elementDecorators[decoratorType];
+
+			if (decorator)
+			{
+				decorator.applyTo(element, decoratorSettings);
+			}
+			else
+			{
+				if(DEBUG) element.debug("applyDecorator","Decorator not found: " + decoratorType);
+			}
+		};
+
+	};
 }());

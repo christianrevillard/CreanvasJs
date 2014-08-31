@@ -1,4 +1,3 @@
-var CreJs = CreJs || {};
 
 (function(){
 	
@@ -20,7 +19,7 @@ var CreJs = CreJs || {};
 			var myDispatch = helpers.GetGuid();
 			
 			var count = eventHandlers.length;
-			if (eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
+			if (DEBUG && eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
 				logger.log("Dispatching " + count + " " + eventData.eventId + ". (" + myDispatch + ")");			
 			
 			eventHandlers.forEach(function(handler){ 
@@ -28,7 +27,7 @@ var CreJs = CreJs || {};
 				setTimeout(
 						function()
 						{
-							if (eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
+							if (DEBUG && eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
 								logger.log("Actually handling " + eventData.eventId + ". (" + myDispatch + ")");			
 							handler.handleEvent(eventData);
 							count--;
@@ -70,4 +69,7 @@ var CreJs = CreJs || {};
 						});
 		};
 	};
+	
+	//Prevent external API from Optimization
+	CreJs['Creevents'] = CreJs.Creevents;
 })();

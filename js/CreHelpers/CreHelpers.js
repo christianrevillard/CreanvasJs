@@ -1,5 +1,3 @@
-var CreJs = CreJs || {};
-
 (function()
 {
 	var helpers = CreJs.CreHelpers = CreJs.CreHelpers|| {};
@@ -24,4 +22,7 @@ var CreJs = CreJs || {};
 		
 		return s + helpers.repeatString(s, n-1);
 	};
+	
+	//Prevent external API from Optimization
+	CreJs['CreHelpers'] = CreJs.CreHelpers;
 })();

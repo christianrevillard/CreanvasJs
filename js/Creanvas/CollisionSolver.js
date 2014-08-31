@@ -1,8 +1,4 @@
-var CreJs = CreJs || {};
-
 (function(){
-	CreJs.Creanvas = CreJs.Creanvas || {};		
-	
 	CreJs.Creanvas.CollisionSolver = function(controller)
 	{				
 		var findCollisionPoint = function(element, other)

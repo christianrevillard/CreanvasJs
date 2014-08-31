@@ -1,8 +1,4 @@
-var CreJs = CreJs || {};
-
 (function(){
-	CreJs.Creanvas = CreJs.Creanvas || {};		
-		
 	CreJs.Creanvas.Controller = function(controllerData) {
 		var 
 			canvas, 
@@ -12,7 +8,7 @@ var CreJs = CreJs || {};
 			time,
 			timeStart,
 			timeScale;
-
+			
 		controller = this;
 		canvas = controllerData.canvas;
 		timeScale = controllerData.timeScale || 1;
@@ -33,12 +29,11 @@ var CreJs = CreJs || {};
 			this.getTime = function(){return time;};
 		}
 		
-		
-		this.log = function(logData){			
+		this.log = function(logData){
 			if (controllerData.log)
 				controllerData.log(logData);
 		};
-
+				
 		/* Not used for the moment
 		//for heavy load stuff that can be handled by a worker / WebSocket
 		var asynchronousController;
@@ -69,8 +64,11 @@ var CreJs = CreJs || {};
 			
 		this.sendMessage("Test heavy load");
 					*/
-		this.log('Starting controller');
-	
+		if (DEBUG)
+		{
+			this.log('Starting controller');
+		}
+		
 		controller.context = canvas.getContext("2d");	
 		needRedraw = true;
 		isDrawing = false;
@@ -121,7 +119,10 @@ var CreJs = CreJs || {};
 					{	
 						var triggerEvent = function(clientXY, touchIdentifier)
 						{							
-							controller.log("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+							if (DEBUG)
+							{
+								controller.log("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+							}
 							var eventData = controller.getCanvasXYFromClientXY(clientXY);
 							eventData.touchIdentifier = touchIdentifier;
 							controller.triggerPointedElementEvent(customEventId, eventData);
@@ -152,7 +153,10 @@ var CreJs = CreJs || {};
 					{	
 						var triggerEvent = function(clientXY, touchIdentifier)
 						{							
-							controller.log("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+							if (DEBUG)
+							{
+								controller.log("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+							}
 							var eventData = controller.getCanvasXYFromClientXY(clientXY);
 							eventData.touchIdentifier = touchIdentifier;
 							controller.triggerElementEventByIdentifier(customEventId, eventData);
@@ -208,32 +212,66 @@ var CreJs = CreJs || {};
 	
 		controller.elements = [];
 		
-		this.addElement  = function (elementData)
+		this.addElement  = function ()
 		{
-			elementData.controller = controller;
+			if (DEBUG)
+			{
+				controller.log("Controller.addElement: Adding element - args:" + arguments.length );
+			}
+			var args = [].slice.call(arguments);
 
-			var element = new CreJs.Creanvas.Element(elementData);
+			var element = new CreJs.Creanvas.Element(
+					controller,
+					args[0]);			
 
+			if (DEBUG)
+			{
+				controller.log("Controller.addElement: Created element: " + element.name + "-" + element.id );
+			}
 
+			if (args.length>1)
+			{
+				if (DEBUG)
+				{
+					controller.log("Controller.addElement: Applying " + (args.length - 1) + " decorators");
+				}
+					
+				element.applyDecorators.apply(element, args.slice(1));
+			}
+			else
+			{
+				if (DEBUG)
+				{
+					controller.log("Controller.addElement: No decorator to apply");
+				}
+			}
+			
 			controller.elements.push(element);
 			return element;
-			
 		};
 			
 		//background
-		this.addElement({
-			name:'background',
-			width:canvas.width,
-			height:canvas.height,
-			translate:{dx:0, dy:0},
-			draw: 
-				controllerData.drawBackground ||  
-				function (context) 
+		controller.log('Adding background');
+		this.addElement(
+			{
+				"name":'background',
+				"image":
 				{
-					context.fillStyle = controllerData.backgroundStyle || "#FFF";
-					context.fillRect(0,0,this.width,this.height);
+					"width":canvas.width,
+					"height":canvas.height,
+					"translate":{dx:0, dy:0},
+					"draw": 
+						controllerData.drawBackground ||  
+						function (context) 
+						{
+							context.fillStyle = controllerData.backgroundStyle || "#FFF";
+							context.fillRect(0,0,this.width,this.height);
+						}				
 				},
-			z: -Infinity});
+				"position":{
+					"z": -Infinity	
+				}
+			});
 		
 		setInterval(
 				function()
@@ -265,9 +303,6 @@ var CreJs = CreJs || {};
 												
 					}
 				},
-				refreshTime);
-		
-			
+				refreshTime);	
 	};
-
 }());

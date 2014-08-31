@@ -9,9 +9,8 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.push(
+	CreJs.Creanvas.elementDecorators.duplicable =
 	{
-		type : 'duplicable',
 		applyTo : function(element, duplicableData) {
 			
 			var isBlocked = duplicableData.isBlocked;
@@ -19,6 +18,8 @@ var CreJs = CreJs || {};
 			var generatorCount = duplicableData
 					.hasOwnProperty('generatorCount') ? duplicableData.generatorCount
 					: Infinity;
+			
+			duplicableData.generatorCount=0;
 
 			var requiresTouch = false;
 			
@@ -39,8 +40,11 @@ var CreJs = CreJs || {};
 				if (generatorCount<=0) 
 					return;
 				
-				element.controller.log('pointereDown event on duplicable ' + element.id + ', count id  ' + generatorCount);
-
+				if (DEBUG)
+				{
+					element.controller.log('pointereDown event on duplicable ' + element.id + ', count id  ' + generatorCount);
+				}
+				
 				generatorCount--;
 
 				var copy = element.clone();
@@ -48,11 +52,11 @@ var CreJs = CreJs || {};
 
 				copy.removeDecorator('duplicable');
 
-				copy.applyDecorator(
-						CreJs.Creanvas.getElementDecorator('movable'),
+				copy.applyDecorators(
+						["movable",
 						{
 							isBlocked : duplicableData.isBlocked
-						});
+						}]);
 
 				copy.startMoving(e);
 
@@ -67,5 +71,5 @@ var CreJs = CreJs || {};
 						handleEvent:makeCopy,
 						listenerId:element.id});			
 		}
-	});
+	};
 }());

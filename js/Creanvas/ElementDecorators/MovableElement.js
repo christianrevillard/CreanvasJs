@@ -9,9 +9,8 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.push(
+	CreJs.Creanvas.elementDecorators.movable =
 	{
-		type: 'movable',
 		applyTo: function(element, movableData)
 		{
 			var isMoving = false;
@@ -22,7 +21,10 @@ var CreJs = CreJs || {};
 			
 			element.startMoving = function(e)
 			{				
-				element.controller.log('Starting moving - identifier: ' + e.touchIdentifier);
+				if (DEBUG)
+				{
+					element.controller.log('Starting moving - identifier: ' + e.touchIdentifier);
+				}
 				isMoving = true;
 				element.touchIdentifier = e.touchIdentifier;
 				movingFrom = {x:e.x, y:e.y};	
@@ -35,12 +37,19 @@ var CreJs = CreJs || {};
 	
 			element.moveCompleted = function(e)
 			{
-				element.controller.log('Completed move - identifier: ' + e.touchIdentifier);
+				if (DEBUG)
+				{
+					element.controller.log('Completed move - identifier: ' + e.touchIdentifier);
+				}
 				isMoving = false;
 				movingFrom = null;
 				if (element.isDroppable)
 				{
-					element.controller.log('Trigger drop - identifier: ' + e.touchIdentifier);
+					if (DEBUG)
+					{
+						element.controller.log('Trigger drop - identifier: ' + e.touchIdentifier);
+					}
+					
 					element.controller.triggerPointedElementEvent(
 							'drop', 
 							{
@@ -78,7 +87,10 @@ var CreJs = CreJs || {};
 				if (!isMovingLogged)
 				{
 					isMovingLogged = true;
-					element.controller.log('pointereMove event on movable ' + element.id + " (" + element.touchIdentifier + ")");
+					if (DEBUG)
+					{
+						element.controller.log('pointereMove event on movable ' + element.id + " (" + element.touchIdentifier + ")");
+					}
 				}
 
 				element.x += e.x-movingFrom.x;
@@ -100,7 +112,11 @@ var CreJs = CreJs || {};
 				if (isBlocked && isBlocked()) 
 					return;
 
-				element.controller.log('End detected for touch ' + element.touchIdentifier);
+				if (DEBUG)
+				{
+					element.controller.log('End detected for touch ' + element.touchIdentifier);
+				}
+				
 				var canvasXY = element.controller.getCanvasXYFromClientXY(e);	
 				element.x += e.x-movingFrom.x;
 				element.y += e.y-movingFrom.y;
@@ -116,5 +132,5 @@ var CreJs = CreJs || {};
 					handleEvent:moveend,
 					listenerId:element.id});
 		}
-	});
+	};
 }());
