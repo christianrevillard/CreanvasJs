@@ -9,21 +9,23 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.movable =
+	CreJs.Creanvas.elementDecorators["movable"] =
 	{
 		applyTo: function(element, movableData)
 		{
+			// Externally usable - handle ADVANCED_OPTIMIZATION
+			// movableData.isBlocked = movableData.isBlocked || movableData["isBlocked"];
+
 			var isMoving = false;
 			this.touchIdentifier = null;	
 			var movingFrom = null;
 			var isBlocked = movableData.isBlocked;			
-
 			
 			element.startMoving = function(e)
 			{				
 				if (DEBUG)
 				{
-					element.controller.log('Starting moving - identifier: ' + e.touchIdentifier);
+					element.controller.logMessage('Starting moving - identifier: ' + e.touchIdentifier);
 				}
 				isMoving = true;
 				element.touchIdentifier = e.touchIdentifier;
@@ -39,7 +41,7 @@ var CreJs = CreJs || {};
 			{
 				if (DEBUG)
 				{
-					element.controller.log('Completed move - identifier: ' + e.touchIdentifier);
+					element.controller.logMessage('Completed move - identifier: ' + e.touchIdentifier);
 				}
 				isMoving = false;
 				movingFrom = null;
@@ -47,7 +49,7 @@ var CreJs = CreJs || {};
 				{
 					if (DEBUG)
 					{
-						element.controller.log('Trigger drop - identifier: ' + e.touchIdentifier);
+						element.controller.logMessage('Trigger drop - identifier: ' + e.touchIdentifier);
 					}
 					
 					element.controller.triggerPointedElementEvent(
@@ -69,11 +71,11 @@ var CreJs = CreJs || {};
 				element.startMoving(e);
 			};
 			
-			element.events.addEventListener(
+			element.elementEvents.addEventListenerX(
 					{eventGroupType:'movable',
 					eventId:'pointerDown', 
 					handleEvent:beginMove,
-					listenerId:element.id});
+					listenerId:element.elementId});
 
 			var isMovingLogged = false;
 			
@@ -89,21 +91,21 @@ var CreJs = CreJs || {};
 					isMovingLogged = true;
 					if (DEBUG)
 					{
-						element.controller.log('pointereMove event on movable ' + element.id + " (" + element.touchIdentifier + ")");
+						element.controller.logMessage('pointereMove event on movable ' + element.elementId + " (" + element.touchIdentifier + ")");
 					}
 				}
 
-				element.x += e.x-movingFrom.x;
-				element.y += e.y-movingFrom.y;
+				element.elementX += e.x-movingFrom.x;
+				element.elementY += e.y-movingFrom.y;
 				movingFrom = {x:e.x, y:e.y};	
 				element.triggerRedraw();
 			};	
 	
-			element.events.addEventListener(
+			element.elementEvents.addEventListenerX(
 				{eventGroupType:'movable',
 				eventId:'pointerMove', 
 				handleEvent:move,
-				listenerId:element.id});
+				listenerId:element.elementId});
 	
 			var moveend = function(e) {
 				if(!isMoving)
@@ -114,23 +116,23 @@ var CreJs = CreJs || {};
 
 				if (DEBUG)
 				{
-					element.controller.log('End detected for touch ' + element.touchIdentifier);
+					element.controller.logMessage('End detected for touch ' + element.touchIdentifier);
 				}
 				
 				var canvasXY = element.controller.getCanvasXYFromClientXY(e);	
-				element.x += e.x-movingFrom.x;
-				element.y += e.y-movingFrom.y;
+				element.elementX += e.x-movingFrom.x;
+				element.elementY += e.y-movingFrom.y;
 				element.moveCompleted(e);	
 				element.touchIdentifier = null;
 				isMovingLogged = false;
 				element.triggerRedraw();
 			};
 	
-			element.events.addEventListener(
+			element.elementEvents.addEventListenerX(
 					{eventGroupType:'movable',
 					eventId:'pointerUp', 
 					handleEvent:moveend,
-					listenerId:element.id});
+					listenerId:element.elementId});
 		}
 	};
 }());

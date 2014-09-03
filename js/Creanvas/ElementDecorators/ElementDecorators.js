@@ -12,5 +12,7 @@
 		
 		return match[0];
 	};*/
+	
+	CreJs.Creanvas["elementDecorators"] = CreJs.Creanvas.elementDecorators;
 }());
 

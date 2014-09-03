@@ -9,6 +9,7 @@ java ^
 --js_output_file out/CreanvasTest.js ^
 --define TEST=true ^
 --define DEBUG=false ^
+--formatting=pretty_print ^
 --compilation_level SIMPLE_OPTIMIZATIONS
 
 copy out\CreanvasTest.js C:\Users\Christian\Development\WebApps\lib\CreanvasTest.js

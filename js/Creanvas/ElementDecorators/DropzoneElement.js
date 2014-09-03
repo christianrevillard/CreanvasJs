@@ -5,15 +5,16 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.dropzone =
+	CreJs.Creanvas.elementDecorators["dropzone"] =
 	{
 		applyTo: function(element, dropzoneData)
 		{
-			var availableSpots = dropzoneData.availableSpots;
-			var dropX = dropzoneData.dropX;
-			var dropY = dropzoneData.dropY;
+			// Externally usable - handle ADVANCED_OPTIMIZATION
+			var availableSpots = dropzoneData["availableSpots"];
+			var dropX = dropzoneData["dropX"];
+			var dropY = dropzoneData["dropY"];
 			
-			element.droppedElements = [];
+			element.droppedElementsList = [];
 			
 			var drop = function(e) {
 				
@@ -22,39 +23,41 @@ var CreJs = CreJs || {};
 									
 				if (DEBUG)
 				{
-					element.controller.log('drop event on dropzone ' + element.id + ', dropped ' + e.droppedElement.id);
+					element.controller.logMessage('drop event on dropzone ' + element.elementId + ', dropped ' + e.droppedElement.id);
 				}
 
 				availableSpots--;
-				e.droppedElement.x = dropX || element.x;
-				e.droppedElement.y = dropY || element.y;
+				e.droppedElement.x = dropX || element.elementX;
+				e.droppedElement.y = dropY || element.elementY;
 				e.droppedElement.dropZone = element;
-				element.droppedElements.push(e.droppedElement);
-				e.droppedElement.events.dispatch('dropped', {dropZone:element, droppedElement:e.droppedElement});
-				element.events.dispatch('droppedIn', {dropZone:element, droppedElement:e.droppedElement});
+				element.droppedElementsList.push(e.droppedElement);
+				e.droppedElement.elementEvents.dispatch('dropped', {dropZone:element, droppedElement:e.droppedElement});
+				element.elementEvents.dispatch('droppedIn', {dropZone:element, droppedElement:e.droppedElement});
 				element.triggerRedraw();
 			};
 	
-			element.events.addEventListener({
+			element.elementEvents.addEventListenerX({
 				eventGroupType:'dropzone',
 				eventId:'drop', 
 				handleEvent:drop,
-				listenerId:element.id});
+				listenerId:element.elementId});
 	
 			element.drag = function(draggedElement) {
 	
 				if (DEBUG)
 				{
-					element.controller.log('dragging from dropzone ' + element.id + ', dragged ' + draggedElement.id);
+					element.controller.logMessage('dragging from dropzone ' + element.elementId + ', dragged ' + draggedElement.id);
 				}
 				
 				draggedElement.dropZone = null;
 				availableSpots++;
-				element.droppedElements.splice(
-						element.droppedElements.indexOf(draggedElement),1);	
+				element.droppedElementsList.splice(
+						element.droppedElementsList.indexOf(draggedElement),1);	
 
 				element.triggerRedraw();
 			};
+			
+			Object.defineProperty(element, "droppedElements", { get: function() {return this.droppedElementsList; }});
 		}
 	};
 }());

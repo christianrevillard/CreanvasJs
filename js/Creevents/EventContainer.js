@@ -18,13 +18,15 @@
 			events[eventId] = new creevents.Event(eventId);											
 		};
 		
-		this.addEventListener = function(listenerData)
+		this.addEventListenerX = function(listenerData)
 		{
-			if (!events[listenerData.eventId])
+			var eventId = listenerData.eventId || listenerData["eventId"];
+			
+			if (!events[eventId])
 			{
-				addEvent(listenerData.eventId);
+				addEvent(eventId);
 			}
-			return events[listenerData.eventId].addEventListener(listenerData);
+			return events[eventId].addEventListenerX(listenerData);
 		};
 						
 		this.dispatch = function(eventId, eventData, callback)
@@ -57,7 +59,7 @@
 				addEvent(customEventId);
 			}
 
-			control.addEventListener(
+			control.addEventListenerX(
 					controlEventId,
 				function(event)
 				{
@@ -69,5 +71,10 @@
 					0);
 				});
 		};
-	};
+
+		this['addEventListener'] = this.addEventListenerX;
+};
+
+	// Available after ADVANCED_OPTIMIZATION 
+	creevents['EventContainer'] = creevents.EventContainer;
 }());

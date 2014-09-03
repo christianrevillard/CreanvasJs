@@ -24,7 +24,7 @@
 				context.lineWidth=2;
 				
 				context.beginPath();
-				context.arc(this.x,this.y,5,0,2*Math.PI);
+				context.arc(this.elementX,this.elementY,5,0,2*Math.PI);
 				context.stroke();
 			}});
 
@@ -38,14 +38,14 @@
 			context.lineWidth=2;
 				
 			//context.beginPath(); // forgotten, should not mess evrything up - done
-			context.arc(this.x,this.y,10,0,2*Math.PI);
+			context.arc(this.elementX,this.elementY,10,0,2*Math.PI);
 			context.stroke();
 			}});
 
 	controller.addElement({
 			x: 200,
 			y: 350,
-			onclick: function(){ //alert(this.x + ',' + this.y)
+			onclick: function(){ //alert(this.elementX + ',' + this.elementY)
 				},			
 			draw: function (context) 
 			{
@@ -53,7 +53,7 @@
 				context.lineWidth=2;
 				
 				context.beginPath();
-				context.arc(this.x,this.y,50,0,2*Math.PI);
+				context.arc(this.elementX,this.elementY,50,0,2*Math.PI);
 				context.stroke();
 			}});
 
@@ -68,7 +68,7 @@
 			context.lineWidth=5;
 				
 			context.beginPath();
-			context.arc(this.x,this.y,15,0,2*Math.PI);
+			context.arc(this.elementX,this.elementY,15,0,2*Math.PI);
 			context.stroke();
 			}});
 
@@ -86,13 +86,13 @@
 			context.beginPath();
 			context.strokeStyle = "#Ff0";
 			context.lineWidth=2;
-			context.arc(this.x,this.y,20,0,Math.PI);
+			context.arc(this.elementX,this.elementY,20,0,Math.PI);
 			context.stroke();
 				
 			context.beginPath();
 			context.strokeStyle = "#0FF";
 			context.lineWidth=5;
-			context.arc(this.x,this.y,20,Math.PI,2*Math.PI);
+			context.arc(this.elementX,this.elementY,20,Math.PI,2*Math.PI);
 			context.stroke();
 			}});
 	

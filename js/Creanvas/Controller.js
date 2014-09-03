@@ -29,9 +29,9 @@
 			this.getTime = function(){return time;};
 		}
 		
-		this.log = function(logData){
-			if (controllerData.log)
-				controllerData.log(logData);
+		this.logMessage = function(logData){
+			if (controllerData['log'])
+				controllerData['log'](logData);
 		};
 				
 		/* Not used for the moment
@@ -54,7 +54,7 @@
 		
 		this.receiveMessage = function(message)
 		{
-			this.log("HeavyLoad: " + message);
+			this.logMessage("HeavyLoad: " + message);
 		};
 		
 		this.sendMessage = function(message)
@@ -64,10 +64,7 @@
 			
 		this.sendMessage("Test heavy load");
 					*/
-		if (DEBUG)
-		{
-			this.log('Starting controller');
-		}
+		if (DEBUG) this.logMessage('Starting controller');
 		
 		controller.context = canvas.getContext("2d");	
 		needRedraw = true;
@@ -79,7 +76,7 @@
 			var hit = false;
 			controller.elements
 			.filter(function(e){return e.canHandle(eventId);})
-			.sort(function(a,b){return (b.z || 0 - a.z || 0);})
+			.sort(function(a,b){return (b.elementZ || 0 - a.elementZ || 0);})
 			.forEach(
 					function(element)
 					{
@@ -87,9 +84,9 @@
 						if (hit)
 							return;
 						
-						if (element.hit(event.x, event.y))
+						if (element.hit(event["x"], event["y"]))
 						{
-							element.events.dispatch(eventId, event);
+							element.elementEvents.dispatch(eventId, event);
 							hit = true;
 						}
 					}
@@ -104,7 +101,7 @@
 					{							
 						if (element.touchIdentifier == event.touchIdentifier)
 						{
-							element.events.dispatch(eventId, event);
+							element.elementEvents.dispatch(eventId, event);
 						}
 					}
 				);
@@ -121,7 +118,7 @@
 						{							
 							if (DEBUG)
 							{
-								controller.log("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+								controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
 							}
 							var eventData = controller.getCanvasXYFromClientXY(clientXY);
 							eventData.touchIdentifier = touchIdentifier;
@@ -155,7 +152,7 @@
 						{							
 							if (DEBUG)
 							{
-								controller.log("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+								controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
 							}
 							var eventData = controller.getCanvasXYFromClientXY(clientXY);
 							eventData.touchIdentifier = touchIdentifier;
@@ -178,7 +175,7 @@
 				});
 		};
 		
-		this.events = new CreJs.Creevents.EventContainer();		
+		this.elementEvents = new CreJs.Creevents.EventContainer();		
 		this.registerCanvasPointerEvent('click', 'click');
 
 		this.registerCanvasPointerEvent('mousedown','pointerDown');
@@ -190,14 +187,14 @@
 		this.registerTouchIdentifierEvent('mouseup','pointerUp');
 		this.registerTouchIdentifierEvent('touchend','pointerUp');
 				
-		this.stop = function()
+		this.stopController = function()
 		{
-			controller.events.dispatch('deactivate');
+			controller.elementEvents.dispatch('deactivate');
 			controller.elements = [];
 		};
 	
-		this.redraw = function()
-		{
+		this.triggerRedraw = function()
+		{		
 			needRedraw = true;
 		};	
 	
@@ -206,17 +203,17 @@
 			// what about rotations here?
 			var boundings = canvas.getBoundingClientRect();
 			return { 
-				x: Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width),
-				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};		
+				"x": Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width),
+				"y": Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};		
 		};
 	
 		controller.elements = [];
 		
-		this.addElement  = function ()
+		this.add  = function ()
 		{
 			if (DEBUG)
 			{
-				controller.log("Controller.addElement: Adding element - args:" + arguments.length );
+				controller.logMessage("Controller.addElement: Adding element - args:" + arguments.length );
 			}
 			var args = [].slice.call(arguments);
 
@@ -226,23 +223,23 @@
 
 			if (DEBUG)
 			{
-				controller.log("Controller.addElement: Created element: " + element.name + "-" + element.id );
+				controller.logMessage("Controller.addElement: Created element: " + element.elementName + "-" + element.elementId );
 			}
 
 			if (args.length>1)
 			{
 				if (DEBUG)
 				{
-					controller.log("Controller.addElement: Applying " + (args.length - 1) + " decorators");
+					controller.logMessage("Controller.addElement: Applying " + (args.length - 1) + " decorators");
 				}
 					
-				element.applyDecorators.apply(element, args.slice(1));
+				element.applyElementDecorators.apply(element, args.slice(1));
 			}
 			else
 			{
 				if (DEBUG)
 				{
-					controller.log("Controller.addElement: No decorator to apply");
+					controller.logMessage("Controller.addElement: No decorator to apply");
 				}
 			}
 			
@@ -251,25 +248,25 @@
 		};
 			
 		//background
-		controller.log('Adding background');
-		this.addElement(
+		controller.logMessage('Adding background');
+		this.add(
 			{
-				"name":'background',
-				"image":
+				elementName:'background',
+				elementImage:
 				{
-					"width":canvas.width,
-					"height":canvas.height,
-					"translate":{dx:0, dy:0},
-					"draw": 
-						controllerData.drawBackground ||  
+					imageWidth:canvas.width,
+					imageHeight:canvas.height,
+					imageTranslate:{translateDx:0, translateDy:0},
+					imageDraw: 
+						controllerData["drawBackground"] ||  
 						function (context) 
 						{
 							context.fillStyle = controllerData.backgroundStyle || "#FFF";
-							context.fillRect(0,0,this.width,this.height);
+							context.fillRect(0,0,this.elementWidth,this.elementHeight);
 						}				
 				},
-				"position":{
-					"z": -Infinity	
+				elementPosition:{
+					positionZ: -Infinity	
 				}
 			});
 		
@@ -282,27 +279,40 @@
 						isDrawing = true;
 						
 						controller.elements
-						.sort(function(a,b){return ((a.z || 0) - (b.z || 0));})
+						.sort(function(a,b){return ((a.elementZ || 0) - (b.elementZ || 0));})
 						.forEach(function(element)
 						{
-							controller.context.translate(element.x, element.y);
-							controller.context.rotate(element.angle || 0);
-							controller.context.scale(element.scaleX || 1, element.scaleY || 1);
+//							controller.logMessage ("Redraw " + element.elementName + "/" + element.elementId);
+							
+							controller.context.translate(element.elementX, element.elementY);
+							controller.context.rotate(element.elementAngle || 0);
+							controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
 																		
 							controller.context.drawImage(
 									element.temporaryRenderingContext.canvas,
-									0, 0, element.width, element.height,
-									-element.dx, -element.dy, element.width, element.height);
+									0, 0, element.elementWidth, element.elementHeight,
+									-element.dx, -element.dy, element.elementWidth, element.elementHeight);
 							
-							controller.context.scale(1/(element.scaleX || 1), 1/(element.scaleY) || 1);
-							controller.context.rotate(- (element.angle || 0));
-							controller.context.translate(-element.x, - element.y);
+							controller.context.scale(1/(element.elementScaleX || 1), 1/(element.elementScaleY) || 1);
+							controller.context.rotate(- (element.elementAngle || 0));
+							controller.context.translate(-element.elementX, - element.elementY);
 						});
 					
 						isDrawing = false;
 												
 					}
+					else
+					{
+						controller.logMessage ("No redraw");
+					}
 				},
 				refreshTime);	
+		
+		this["addElement"] = this.add;
+		this["redraw"] = this.triggerRedraw;
+		this["stop"] = this.stopController;
 	};
+
+	// Available after ADVANCED_OPTIMIZATION 
+	CreJs.Creanvas["Controller"] = CreJs.Creanvas.Controller;
 }());

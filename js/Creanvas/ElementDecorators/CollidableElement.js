@@ -5,7 +5,7 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.collidable=
+	CreJs.Creanvas.elementDecorators["collidable"]=
 	{
 		applyTo: function(element, collidableData)
 		{	
@@ -13,27 +13,28 @@ var CreJs = CreJs || {};
 
 			element.collidable = {};
 			
-			element.controller.collisionSolver = element.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(element.controller);
+			var onCollision = collidableData["onCollision"];			
+			var collisionCoefficient = collidableData["coefficient"];
+
+			element.controller.collisionSolver = 
+				element.controller.collisionSolver || 
+				new CreJs.Creanvas.CollisionSolver(element.controller);
 			
-			if (collidableData.hasOwnProperty('collisionCoefficient'))
-				element.collidable.coefficient = collidableData.collisionCoefficient;
-			else
-				element.collidable.coefficient = 1;
+			element.collidable.coefficient = (!collisionCoefficient && collisionCoefficient !==0)? 1 : collisionCoefficient;
 			
-			element.moving = element.moving || 
+			element.elementMoving = element.elementMoving || 
 			{
-				speed: new CreJs.Core.Vector(0,0), 
-				acceleration: new CreJs.Core.Vector(0,0), 
-				rotationSpeed:0
+				movingSpeed: new CreJs.Core.Vector(0,0), 
+				movingAcceleration: new CreJs.Core.Vector(0,0), 
+				omega:0
 			};
 			
-			element.events.addEventListener(
+			element.elementEvents.addEventListenerX(
 			{
 				eventId:'collision',
 				handleEvent:function(collisionEvent)
 			{
-				if (collidableData.onCollision)
-					collidableData.onCollision.call(element, collisionEvent);						
+				if (onCollision) onCollision.call(element, collisionEvent);						
 			}});
 			
 			
@@ -41,28 +42,28 @@ var CreJs = CreJs || {};
 			
 			element.preMove.push(function()
 			 {			
-				return (element.controller.collisionSolver.solveCollision(element));
+				return (element.controller.collisionSolver.solveCollision_(element));
 			 });			
 			
-			element.getM = function()
+			element.getMomentOfInertia = function()
 			{				
-				return element.m / 12 * (element.width*element.scaleX * element.width*element.scaleX + element.height*element.scaleY * element.height*element.scaleY); // square...};
+				return element.m / 12 * (element.elementWidth*element.elementScaleX * element.elementWidth*element.elementScaleX + element.elementHeight*element.elementScaleY * element.elementHeight*element.elementScaleY); // square...};
 			};
 			
 			element.geRadiusCache = function()
 			{				
-				return Math.sqrt(element.width*element.width*element.scaleX*element.scaleX + element.height*element.height*element.scaleY*element.scaleY)/2;
+				return Math.sqrt(element.elementWidth*element.elementWidth*element.elementScaleX*element.elementScaleX + element.elementHeight*element.elementHeight*element.elementScaleY*element.elementScaleY)/2;
 			};
 
 			element.getRadius = function()
 			{				
-				var key = element.width + '' + element.height + '' + element.scaleX+ '' + element.scaleY ;
+				var key = element.elementWidth + '' + element.elementHeight + '' + element.elementScaleX + '' + element.elementScaleY ;
 				if (cachedResults['getRadius'] && cachedResults['getRadius'].key == key)
 				{
-					return cachedResults['getRadius'].value;
+					return cachedResults['getRadius'].value_;
 				}
 				var value = element.geRadiusCache();
-				cachedResults['geRadius'] = {key:key, value:value};
+				cachedResults['geRadius'] = {keyCoordinate:key, value_:value};
 				return value;
 			};
 
@@ -73,29 +74,29 @@ var CreJs = CreJs || {};
 			var tempCollidedCanvas = canvas.ownerDocument.createElement('canvas');			
 //				canvas.ownerDocument.body.appendChild(tempCollidedCanvas);
 			
-			tempCollisionCanvas.width = tempCollidedCanvas.width = element.width;
-			tempCollisionCanvas.height = tempCollidedCanvas.height = element.height;				
+			tempCollisionCanvas.width = tempCollidedCanvas.width = element.elementWidth;
+			tempCollisionCanvas.height = tempCollidedCanvas.height = element.elementHeight;				
 
 			element.collidedContext = tempCollidedCanvas.getContext("2d");				
-			element.collidedContext.putImageData(element.image,0,0);
+			element.collidedContext.putImageData(element.elementImage_,0,0);
 			element.collidedContext.globalCompositeOperation='source-atop';
 			element.collidedContext.fillStyle="#000";
-			element.collidedContext.fillRect(0,0,element.width, element.height);
+			element.collidedContext.fillRect(0,0,element.elementWidth, element.elementHeight);
 
 			element.collisionContext = tempCollisionCanvas.getContext("2d");				
 			element.collisionContext.globalCompositeOperation='source-over';
 			element.collisionContext.drawImage(element.collidedContext.canvas,0, 0);
 
-			var collisionImageOld = element.collisionContext.getImageData(0, 0, element.width, element.height);
-			var collisionImageNew = element.collisionContext.createImageData(element.width, element.height);
+			var collisionImageOld = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
+			var collisionImageNew = element.collisionContext.createImageData(element.elementWidth, element.elementHeight);
 
-			element.edges = [];
+			element.edges_ = [];
 			
-			for (var imageX=0;imageX<element.width; imageX++)
+			for (var imageX=0;imageX<element.elementWidth; imageX++)
 			{
-				for (var imageY=0;imageY<element.height; imageY++)
+				for (var imageY=0;imageY<element.elementHeight; imageY++)
 				{
-					if (collisionImageOld.data[imageY*element.width*4 + imageX*4 + 3] < 200)
+					if (collisionImageOld.data[imageY*element.elementWidth*4 + imageX*4 + 3] < 200)
 						continue;
 
 					var edge = false;
@@ -105,9 +106,9 @@ var CreJs = CreJs || {};
 						for (var j=-1;j<2;j++)
 						{
 							if (imageY+i<0 || imageX+j <0 || 
-									imageY+i>element.height-1 
-									|| imageX+i>element.width-1 ||
-									collisionImageOld.data[((imageY+i)*element.width)*4 + (imageX+j)*4 + 3] < 100)
+									imageY+i>element.elementHeight-1 
+									|| imageX+i>element.elementWidth-1 ||
+									collisionImageOld.data[((imageY+i)*element.elementWidth)*4 + (imageX+j)*4 + 3] < 100)
 							{
 								edge = true;
 								i=2;
@@ -121,12 +122,12 @@ var CreJs = CreJs || {};
 
 					if (edge)
 					{
-						element.edges.push({x:imageX, y:imageY});
+						element.edges_.push({x:imageX, y:imageY});
 													
-						collisionImageNew.data[((imageY)*element.width)*4 + (imageX)*4]=0;
-						collisionImageNew.data[((imageY)*element.width)*4 + (imageX)*4+1]=0;
-						collisionImageNew.data[((imageY)*element.width)*4 + (imageX)*4+2]=0;
-						collisionImageNew.data[((imageY)*element.width)*4 + (imageX)*4+3]=fillValue;
+						collisionImageNew.data[((imageY)*element.elementWidth)*4 + (imageX)*4]=0;
+						collisionImageNew.data[((imageY)*element.elementWidth)*4 + (imageX)*4+1]=0;
+						collisionImageNew.data[((imageY)*element.elementWidth)*4 + (imageX)*4+2]=0;
+						collisionImageNew.data[((imageY)*element.elementWidth)*4 + (imageX)*4+3]=fillValue;
 					}
 				}
 			}

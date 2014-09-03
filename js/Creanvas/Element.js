@@ -8,61 +8,77 @@
 	creanvas.Element = function(
 		controller, 
 		elementDefinition){
+		
+		this.elementName = elementDefinition.elementName || elementDefinition["name"];
+		var image = elementDefinition.elementImage || elementDefinition["image"] || {};
+		image.imageWidth = image.imageWidth || image["width"]; 
+		image.imageHeight = image.imageHeight || image["height"]; 
+		var draw = image.imageDraw || image["draw"];
+		image.imageTranslate = image.imageTranslate || image["translate"];
+		if(image["translate"])
+		{
+			image.imageTranslate.translateDx = image.imageTranslate["dx"] || 0;
+			image.imageTranslate.translateDy = image.imageTranslate["dy"] || 0;
+		}
 
+		var position = elementDefinition.elementPosition || elementDefinition["position"];
+		position.positionX = position.positionX || position["x"];
+		position.positionY = position.positionY || position["y"];
+		position.positionZ = position.positionZ || position["z"];		
+		
+		var rules = elementDefinition["rules"];
+		
 		var decoratorArguments = [].slice.apply(arguments).slice(2);
 
 		var cachedResults = [];
 
 		// generic stuff		
 		this.controller = controller;
-		this.name = elementDefinition.name;	
-		this.id = CreJs.CreHelpers.GetGuid();	
+		this.elementId = CreJs.CreHelpers.GetGuid();	
 
 		// box property, including dx		
-		this.width = elementDefinition.image.width;
-		this.height = elementDefinition.image.height;
+		this.elementWidth = image.imageWidth;
+		this.elementHeight = image.imageHeight;
 
 		// position prop
-		this.x = elementDefinition.position.x || 0;
-		this.y = elementDefinition.position.y || 0;
-		this.z = elementDefinition.position.z || 0;
-		this.angle = elementDefinition.position.angle || 0;
+		this.elementX = position.positionX || 0;
+		this.elementY = position.positionY || 0;
+		this.elementZ = position.positionZ || 0;
+		this.elementAngle = position.positionAngle || 0;
 		
 		// scaling decorator ?? => should be
-		this.scaleX = elementDefinition.image.scaleX || 1;
-		this.scaleY = elementDefinition.image.scaleY || 1;
-		this.m = 1;
-		
-		var draw = elementDefinition.image.draw;	
-
+		this.elementScaleX = image.imageScaleX || 1;
+		this.elementScaleY = image.imageScaleY || 1;
+		this.elementMass = 1;
+	
 		// rename cleary, center or something
-		var translate = elementDefinition.image.translate || {dx:elementDefinition.image.width/2, dy:elementDefinition.image.height/2};			
-		this.dx = translate.dx;
-		this.dy = translate.dy;
+		var translate = image.imageTranslate || {translateDx:image.imageWidth/2, translateDy:image.imageHeight/2};			
+		this.dx = translate.translateDx;
+		this.dy = translate.translateDy;
 
-		if (elementDefinition.image.image)
+		if (image.rawImage)
 		{
-			this.image = elementDefinition.image.image;
+			this.elementImage = image.rawImage;
 
 			var canvas = this.controller.context.canvas;
 			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
 			this.temporaryRenderingContext = tempCanvas.getContext("2d");
-			this.temporaryRenderingContext.putImageData(this.image,0,0);
+			this.temporaryRenderingContext.putImageData(this.elementImage,0,0);
 		}
 		else
 		{
 			var canvas = this.controller.context.canvas;
 			var tempCanvas = canvas.ownerDocument.createElement('canvas');			
-			tempCanvas.width = elementDefinition.image.width;
-			tempCanvas.height = elementDefinition.image.height;
+			tempCanvas.width = image.imageWidth;
+			tempCanvas.height = image.imageHeight;
 			
 			this.temporaryRenderingContext = tempCanvas.getContext("2d");
 			this.temporaryRenderingContext.beginPath();
 			
 			this.temporaryRenderingContext.translate(this.dx, this.dy);
-			elementDefinition.image.draw(this.temporaryRenderingContext);
+			draw(this.temporaryRenderingContext);
 			// several image:store them here with offset
-			this.image = this.temporaryRenderingContext.getImageData(0, 0, elementDefinition.image.width, elementDefinition.image.height);
+			this.elementImage = this.temporaryRenderingContext.getImageData(0, 0, image.imageWidth, image.imageHeight);
 		}
 						
 		var element = this;
@@ -71,30 +87,30 @@
 		{
 			element.debug = function(source, message)
 			{
-					element.controller.log(
-							"Element." + source + ": " + message + ". Element: " + element.name + "/" + element.id);
+					element.controller.logMessage(
+							"Element." + source + ": " + message + ". Element: " + element.elementName + "/" + element.elementId);
 			};
 		}
 		
 		// decorator stuff ?
-		if (elementDefinition.rules)
+		if (rules)
 		{
 			element.rules = [];
-			elementDefinition.rules.forEach(function(rule)
+			rules.forEach(function(rule)
 			{
 				var  ruleId = element.rules.length;
 				element.rules.push(rule);
 				setInterval(
 						function()
 						{
-							element.rules[ruleId].rule.call(element);					
+							element.rules[ruleId]["rule"].call(element);					
 							element.triggerRedraw();
 						},
-						rule.checkTime);
+						rule["checkTime"]);
 			});
 		};
 							
-		this.events = new CreJs.Creevents.EventContainer();			
+		this.elementEvents = new CreJs.Creevents.EventContainer();			
 			
 		this.isPointInPath = function(clientXY){
 
@@ -107,109 +123,124 @@
 		{
 			if (DEBUG)
 			{
-				controller.log("New element " + elementDefinition.name + " : apply " + decoratorArguments.length + " decorators");
+				controller.logMessage("New element " + elementName + " : apply " + decoratorArguments.length + " decorators");
 			}
-			element.applyDecorators(decoratorArguments);
+			element.applyElementDecorators(decoratorArguments);
 		}
 		
 		this.hit = function(pointerX,pointerY)
 		{
-			var imageX = Math.round(pointerX - element.x + element.dx);
-			var imageY = Math.round(pointerY - element.y + element.dy);
-			
-			return imageX >= 0 && 
-			imageX <= element.width &&
+			var imageX = Math.round(pointerX - element.elementX + element.dx);
+			var imageY = Math.round(pointerY - element.elementY + element.dy);
+		
+			var xx = imageX >= 0 && 
+			imageX <= element.elementWidth &&
 			imageY >= 0 &&
-			imageY <= element.height && 
-			element.image.data[4*imageY*element.width + 4*imageX + 3]>0;
+			imageY <= element.elementHeight && 
+			element.elementImage.data[4*imageY*element.elementWidth + 4*imageX + 3]>0;
+			
+			if(DEBUG) element.debug("hit",xx?"hit":"no hit");
+
+			return xx;
+
 		};
 		
-		this.clone = function()
+		this.cloneElement = function(ignoreDecorators)
 		{
-			elementDefinition.image.image = element.image;
+			image.image = element.elementImage;
 			
-			if (DEBUG)
-			{
-				controller.log("cloning with elementdefinition: " + elementDefinition);
-			}
-			var newElement = element.controller.addElement(
-					elementDefinition);
-			
-			if (DEBUG)
-			{
-				controller.log("Cloning " + newElement.name + " : apply " + decoratorArguments.length + " decorators");
-			}
-			newElement.applyDecorators.apply(newElement, decoratorArguments);
+			if (DEBUG) element.debug("cloneElement","start cloning");
+
+			var newElement = element.controller.add(elementDefinition);
+									
+			var decoratorsToApply = 
+				ignoreDecorators ? 
+					decoratorArguments.filter(function(d){
+				return ignoreDecorators.every(function(toIgnore){ return toIgnore != d[0];});				
+			}):decoratorArguments;
+
+			if (DEBUG) element.debug("cloneElement","apply " + decoratorsToApply.length + " decorators");
+
+			newElement.applyElementDecorators.apply(newElement, decoratorsToApply);
 			
 			return newElement;
 		};
 		
-		this.removeDecorator = function (decoratorType)
-		{
-			element.events.removeEventListener(
-					{eventGroupType:decoratorType,
-						listenerId:element.id});					
+		this.removeElementDecorator = function (decoratorType)
+		{			
+			if(DEBUG) element.debug("removeElementDecorator", decoratorType);			
+
+			var decorator = CreJs.Creanvas.elementDecorators[decoratorType];
+
+			if (decorator && decorator.removeFrom)
+			{
+				decorator.removeFrom(element);
+			}
+			else
+			{
+				if(DEBUG) element.debug("removeElementDecorator","Cannot remove: " + decoratorType);
+			}		
 		};
 		
 		this.canHandle = function(eventId)
 		{
 			// click, pointerDown, always stopped by top element, even if not handled
 			return eventId == 'click' || eventId == 'pointerDown' || 
-			element.events.hasEvent(eventId);
+			element.elementEvents.hasEvent(eventId);
 		};
 		
 		this.deactivate = function ()
 		{
-			element.controller.events.removeEventListener({listenerId:element.id});
+			element.controller.elementEvents.removeEventListener({listenerId:element.elementId});
 			element.temporaryRenderingContext = null;
 		};
 		
-		element.controller.events.addEventListener(
+		element.controller.elementEvents.addEventListenerX(
 		{
-			eventId: 'deactivate', 
-			listenerId:element.id,
-			handleEvent: function(e) { element.deactivate(); }
+			"eventId": 'deactivate', 
+			"listenerId":element.elementId,
+			"handleEvent": function(e) { element.deactivate(); }
 		});
 
 		this.triggerRedraw = function()
 		{
-			element.controller.redraw();
+			element.controller.triggerRedraw();
 		};	
 				
 		this.getCanvasXY=function(imageX, imageY)
 		{
 			return {
-				x: Math.round(element.x + imageX*element.scaleX*Math.cos(element.angle) - imageY*element.scaleY*Math.sin(element.angle)),
-				y: Math.round(element.y + imageX*element.scaleX*Math.sin(element.angle) + imageY*element.scaleY*Math.cos(element.angle))
+				x: Math.round(element.elementX + imageX*element.elementScaleX*Math.cos(element.elementAngle) - imageY*element.elementScaleY*Math.sin(element.elementAngle)),
+				y: Math.round(element.elementY + imageX*element.elementScaleX*Math.sin(element.elementAngle) + imageY*element.elementScaleY*Math.cos(element.elementAngle))
 			};
 		};
 
 		this.getCanvasXYNoRounding=function(imageX, imageY)
 		{
 			return {
-				x: element.x + imageX*element.scaleX*Math.cos(element.angle) - imageY*element.scaleY*Math.sin(element.angle),
-				y: element.y + imageX*element.scaleX*Math.sin(element.angle) + imageY*element.scaleY*Math.cos(element.angle)
+				x: element.elementX + imageX*element.elementScaleX*Math.cos(element.elementAngle) - imageY*element.elementScaleY*Math.sin(element.elementAngle),
+				y: element.elementY + imageX*element.elementScaleX*Math.sin(element.elementAngle) + imageY*element.elementScaleY*Math.cos(element.elementAngle)
 			};
 		};
 
 		this.getElementXY=function(canvasX, canvasY)
 		{
 			return {
-				x: Math.round(((canvasX- element.x)*Math.cos(element.angle) + (canvasY-element.y)*Math.sin(element.angle))/element.scaleX),
-				y: Math.round(((canvasY- element.y)*Math.cos(element.angle)-(canvasX-element.x)*Math.sin(element.angle))/element.scaleY)
+				x: Math.round(((canvasX- element.elementX)*Math.cos(element.elementAngle) + (canvasY-element.elementY)*Math.sin(element.elementAngle))/element.elementScaleX),
+				y: Math.round(((canvasY- element.elementY)*Math.cos(element.elementAngle)-(canvasX-element.elementX)*Math.sin(element.elementAngle))/element.elementScaleY)
 			};
 		};
 				
 		this.getCenter = function()
 		{
-			return element.getCanvasXY(-element.dx + element.width/2, -element.dy + element.height/2);
+			return element.getCanvasXY(-element.dx + element.elementWidth/2, -element.dy + element.elementHeight/2);
 		};
 		
 		var corners=[];
 		corners.push({x:- element.dx, y: -element.dy});
-		corners.push({x:- element.dx + element.width, y:-element.dy});
-		corners.push({x:- element.dx + element.width, y:-element.dy + element.height});
-		corners.push({x:- element.dx, y:-element.dy + element.height});
+		corners.push({x:- element.dx + element.elementWidth, y:-element.dy});
+		corners.push({x:- element.dx + element.elementWidth, y:-element.dy + element.elementHeight});
+		corners.push({x:- element.dx, y:-element.dy + element.elementHeight});
 
 		this.getClientCornersCache = function()
 		{				
@@ -218,7 +249,7 @@
 
 		this.getClientCorners = function()
 		{				
-			var key = element.x + '' + element.y + '' + element.angle + '' + element.scaleX + '' + element.scaleX;
+			var key = element.elementX + '' + element.elementY + '' + element.elementAngle + '' + element.elementScaleX + '' + element.elementScaleX;
 			if (cachedResults['getClientCorners'] && cachedResults['getClientCorners'].key == key)
 			{
 				return cachedResults['getClientCorners'].value;
@@ -242,7 +273,7 @@
 
 		this.getClientRect = function()
 		{			
-			var key = element.x + '' + element.y + '' + element.angle + '' + element.scaleX + '' + element.scaleX;
+			var key = element.elementX + '' + element.elementY + '' + element.elementAngle + '' + element.elementScaleX + '' + element.elementScaleX;
 			if (cachedResults['getClientRect'] && cachedResults['getClientRect'].key == key)
 			{
 				return cachedResults['getClientRect'].value;
@@ -252,28 +283,26 @@
 			return value;
 		};		
 			
-		this.applyDecorators = function()
-		{
-			var element = this;
-
-			if(DEBUG) element.debug("applyDecorators","Applying " + arguments.length + " new decorators");
-
-			decoratorArguments = decoratorArguments.concat([].slice.apply(arguments));
-
-			if(DEBUG) element.debug("applyDecorators","Applying " + decoratorArguments.length + " decorators");
-
-			decoratorArguments.forEach(
-			function(decoratorArgument)
-			{
-				element.applyDecorator(decoratorArgument[0], decoratorArgument[1]);
-			});
-		};
-
-		this.applyDecorator = function(decoratorType, decoratorSettings)
+		this.applyElementDecorators = function()
 		{
 			var element = this;
 			
-			if(DEBUG) element.debug("applyDecorator", "Applying decorator " + decoratorType);			
+			var newDecorators = [].slice.apply(arguments);
+
+			decoratorArguments = decoratorArguments.concat(newDecorators);
+
+			newDecorators.forEach(
+			function(decoratorArgument)
+			{
+				element.applyElementDecorator(decoratorArgument[0], decoratorArgument[1]);
+			});
+		};
+
+		this.applyElementDecorator = function(decoratorType, decoratorSettings)
+		{
+			var element = this;
+			
+			if(DEBUG) element.debug("applyElementDecorator", decoratorType);			
 
 			var decorator = CreJs.Creanvas.elementDecorators[decoratorType];
 
@@ -283,9 +312,30 @@
 			}
 			else
 			{
-				if(DEBUG) element.debug("applyDecorator","Decorator not found: " + decoratorType);
+				if(DEBUG) element.debug("applyElementDecorator","Not found: " + decoratorType);
 			}
 		};
 
+		// Export interface 
+		
+		Object.defineProperty(element, "name", { get: function() {return this.elementName; }, set: function(y) { this.elementName = y; }});
+		Object.defineProperty(element, "width", { get: function() {return this.elementWidth; }, set: function(y) { this.elementWidth = y; }});
+		Object.defineProperty(element, "height", { get: function() {return this.elementHeight; }, set: function(y) { this.elementHeight = y; }});
+		Object.defineProperty(element, "scaleX", { get: function() {return this.elementScaleX; }, set: function(y) { this.elementScaleX = y; }});
+		Object.defineProperty(element, "scaleY", { get: function() {return this.elementScaleY; }, set: function(y) { this.elementScaleY = y; }});
+		Object.defineProperty(element, "x", { get: function() {return this.elementX; }, set: function(y) { this.elementX = y; }});
+		Object.defineProperty(element, "y", { get: function() {return this.elementY; }, set: function(y) { this.elementY = y; }});
+		Object.defineProperty(element, "z", { get: function() {return this.elementZ; }, set: function(y) { this.elementZ = y; }});
+		Object.defineProperty(element, "angle", { get: function() {return this.elementAngle; }, set: function(y) { this.elementAngle = y; }});
+		Object.defineProperty(element, "mass", { get: function() {return this.elementMass; }, set: function(y) { this.elementMass = y; }});
+
+		Object.defineProperty(element, "id", { get: function() {return this.elementId; }});
+		Object.defineProperty(element, "image", { get: function() {return this.elementImage; }});
+		Object.defineProperty(element, "events", { get: function() {return this.elementEvents; }});
+
+		element["clone"] = element.cloneElement;
+		element["applyDecorator"] = element.applyElementDecorator;
+		element["applyDecorators"] = element.applyElementDecorators;
+		element["removeDecorator"] = element.removeElementDecorator;
 	};
 }());

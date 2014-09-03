@@ -9,10 +9,10 @@
 			clientRectOther = other.getClientRect();
 
 			clientRectIntersection = {
-				left: Math.max(clientRectElement.left, clientRectOther.left)-1,
-				right: Math.min(clientRectElement.right, clientRectOther.right)+1,
-				top: Math.max(clientRectElement.top, clientRectOther.top)-1,
-				bottom: Math.min(clientRectElement.bottom, clientRectOther.bottom)+1};
+				"left": Math.max(clientRectElement.left, clientRectOther.left)-1,
+				"right": Math.min(clientRectElement.right, clientRectOther.right)+1,
+				"top": Math.max(clientRectElement.top, clientRectOther.top)-1,
+				"bottom": Math.min(clientRectElement.bottom, clientRectOther.bottom)+1};
 			
 			clientRectIntersection.width = clientRectIntersection.right-clientRectIntersection.left;
 			clientRectIntersection.height = clientRectIntersection.bottom-clientRectIntersection.top;
@@ -20,11 +20,11 @@
 			if (clientRectIntersection.width<=0|| clientRectIntersection.height<=0)
 				return;
 			
-			var collisionImage = element.collisionContext.getImageData(0, 0, element.width, element.height);
+			var collisionImage = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
 
-			element.collisionContext.scale(1 / (element.scaleX || 1), 1 / (element.scaleY || 1));
-			element.collisionContext.rotate( - (element.angle || 0));
-			element.collisionContext.translate(other.x - element.x, other.y - element.y);
+			element.collisionContext.scale(1 / (element.elementScaleX || 1), 1 / (element.elementScaleY || 1));
+			element.collisionContext.rotate( - (element.elementAngle || 0));
+			element.collisionContext.translate(other.elementX - element.elementX, other.elementY - element.elementY);
 			element.collisionContext.rotate(other.angle || 0 );
 			element.collisionContext.scale(other.scaleX || 1, other.scaleY || 1);
 
@@ -32,20 +32,20 @@
 
 			element.collisionContext.drawImage(
 				other.collidedContext.canvas,
-				0, 0, other.width, other.height,
-				 - other.dx , - other.dy, other.width, other.height);
+				0, 0, other.elementWidth, other.elementHeight,
+				 - other.dx , - other.dy, other.elementWidth, other.elementHeight);
 	
 			element.collisionContext.scale(1/(other.scaleX || 1), 1/(other.scaleY || 1));
 			element.collisionContext.rotate( - other.angle || 0 );
-			element.collisionContext.translate(-other.x + element.x, -other.y + element.y);
-			element.collisionContext.rotate( element.angle || 0);
-			element.collisionContext.scale(element.scaleX || 1, element.scaleY || 1);
+			element.collisionContext.translate(-other.elementX + element.elementX, -other.elementY + element.elementY);
+			element.collisionContext.rotate( element.elementAngle || 0);
+			element.collisionContext.scale(element.elementScaleX || 1, element.elementScaleY || 1);
 
 			 imageAfter =element.collisionContext.getImageData(
 					0,
 					0,
-					element.width,
-					element.height);
+					element.elementWidth,
+					element.elementHeight);
 
 				element.collisionContext.globalCompositeOperation='source-over';
 
@@ -56,7 +56,7 @@
 			element.edges.forEach(
 					function(edgePoint)
 					{
-						if (imageAfter.data[(edgePoint.y)*element.width*4 + (edgePoint.x)*4 + 3] < 90)
+						if (imageAfter.data[(edgePoint.y)*element.elementWidth*4 + (edgePoint.x)*4 + 3] < 90)
 						{
 							edges.push(edgePoint);						
 						}
@@ -92,9 +92,9 @@
 			}
 			
 			return {
-				x:Math.round((point1.x + point2.x)/2), 
-				y:Math.round((point1.y + point2.y)/2), 
-				vectors: CreJs.Core.getUnitVectors(point1.x, point1.y,  point2.x , point2.y)};			
+				"x":Math.round((point1.x + point2.x)/2), 
+				"y":Math.round((point1.y + point2.y)/2), 
+				"vectors": CreJs.Core.getUnitVectors(point1.x, point1.y,  point2.x , point2.y)};			
 		};
 		
 		var updateAfterCollision = function (element, other, collisionPoint)
@@ -106,27 +106,27 @@
 			colVectors = collisionPoint.vectors;
 				
 
-			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.x, collisionPoint.y-element.y);								
-			l1 = CreJs.Core.VectorProduct(centerCollisionElement, colVectors.v).z;		
+			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.elementX, collisionPoint.y-element.elementY);								
+			l1 = CreJs.Core.vectorProduct(centerCollisionElement, colVectors.v).z;		
 
-			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.x, collisionPoint.y-other.y);								
-			l2= CreJs.Core.VectorProduct(centerCollisionOther, colVectors.v).z;		
+			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.elementX, collisionPoint.y-other.elementY);								
+			l2= CreJs.Core.vectorProduct(centerCollisionOther, colVectors.v).z;		
 
-			var elementRot = CreJs.Core.VectorProduct(
+			var elementRot = CreJs.Core.vectorProduct(
 					centerCollisionElement,
 					colVectors.v);	
 
-			var otherRot = CreJs.Core.VectorProduct(
+			var otherRot = CreJs.Core.vectorProduct(
 					centerCollisionOther,
 					colVectors.v);	
 
 			speedElement = new CreJs.Core.Vector(
-					element.moving.speed.x, 
-					element.moving.speed.y);
+					element.elementMoving.movingSpeed.x, 
+					element.elementMoving.movingSpeed.y);
 			
 			speedOther = new CreJs.Core.Vector(
-					other.moving.speed.x, 
-					other.moving.speed.y);
+					other.elementMoving.movingSpeed.x, 
+					other.elementMoving.movingSpeed.y);
 
 			if (element.scaleSpeed)
 			{
@@ -145,17 +145,17 @@
 
 
 			var F = element.collidable.coefficient * other.collidable.coefficient * 2 *
-				(localSpeedOther.v - localSpeedElement.v + other.moving.rotationSpeed * otherRot.z - element.moving.rotationSpeed * elementRot.z)
-				/( 1/other.m + 1/element.m + otherRot.z*otherRot.z/other.getM() + elementRot.z*elementRot.z/element.getM() );
+				(localSpeedOther.v - localSpeedElement.v + other.elementMoving.movingRotationSpeed * otherRot.z - element.elementMoving.movingRotationSpeed * elementRot.z)
+				/( 1/other.elementMass + 1/element.elementMass + otherRot.z*otherRot.z/other.getMomentOfInertia() + elementRot.z*elementRot.z/element.getMomentOfInertia() );
 					
-			element.moving.speed.x += F/element.m*colVectors.v.x;
-			element.moving.speed.y += F/element.m*colVectors.v.y;
-			other.moving.speed.x -= F/other.m*colVectors.v.x;
-			other.moving.speed.y -= F/other.m*colVectors.v.y;
-			element.moving.rotationSpeed += F * l1 / element.getM();
-			other.moving.rotationSpeed -= F * l2 / other.getM();
+			element.elementMoving.movingSpeed.x += F/element.elementMass*colVectors.v.x;
+			element.elementMoving.movingSpeed.y += F/element.elementMass*colVectors.v.y;
+			other.elementMoving.movingSpeed.x -= F/other.elementMass*colVectors.v.x;
+			other.elementMoving.movingSpeed.y -= F/other.elementMass*colVectors.v.y;
+			element.elementMoving.movingRotationSpeed += F * l1 / element.getMomentOfInertia();
+			other.elementMoving.movingRotationSpeed -= F * l2 / other.getMomentOfInertia();
 						
-			//element.controller.log('collision : ' + element.name + " and " + other.name);			
+			//element.controller.logMessage('collision : ' + element.elementName + " and " + other.elementName);			
 		};
 
 		var getCollidableElements = function()
@@ -173,8 +173,8 @@
 			others = toCheck.filter(function(other){ 
 				var otherCenter;
 				if (
-					other.id === element.id || 
-					((!other.moving.speed.x && !other.moving.speed.y && !element.moving.speed.x && !element.moving.speed.y
+					other.elementId === element.elementId || 
+					((!other.elementMoving.movingSpeed.x && !other.elementMoving.movingSpeed.y && !element.elementMoving.movingSpeed.x && !element.elementMoving.movingSpeed.y
 						&& !other.scaleSpeed && !element.scaleSpeed	
 					)))
 					return false;
@@ -209,8 +209,8 @@
 						
 			updateAfterCollision(element, other, collisionPoint);
 	
-			element.events.dispatch('collision', {element:other, collisionPoint:collisionPoint});									
-			other.events.dispatch('collision', {element:element, collisionPoint:collisionPoint});
+			element.elementEvents.dispatch('collision', {"element":other, "collisionPoint":collisionPoint});									
+			other.elementEvents.dispatch('collision', {"element":element, "collisionPoint":collisionPoint});
 
 			return false;
 		};

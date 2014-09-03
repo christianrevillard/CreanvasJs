@@ -23,6 +23,6 @@
 		return s + helpers.repeatString(s, n-1);
 	};
 	
-	//Prevent external API from Optimization
-	CreJs['CreHelpers'] = CreJs.CreHelpers;
+	// Available after ADVANCED_OPTIMIZATION 
+	//CreJs['CreHelpers'] = CreJs.CreHelpers;
 })();

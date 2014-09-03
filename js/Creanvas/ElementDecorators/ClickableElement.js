@@ -5,18 +5,22 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.clickable = 
+	CreJs.Creanvas.elementDecorators["clickable"] = 
 	{
 		applyTo: function(element, clickData)
 		{	
+			var onclick  = clickData["onclick"];
+			
 			element.onClick = function(event)
 			{
-				clickData.onclick.call(element, event);						
+				if(DEBUG) element.debug("onClick", onclick );
+
+				onclick.call(element, event);						
 
 				element.triggerRedraw();
 			};
 			
-			element.events.addEventListener(
+			element.elementEvents.addEventListenerX(
 			{
 				eventId:'click', 
 				handleEvent:element.onClick

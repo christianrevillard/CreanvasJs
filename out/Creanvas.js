@@ -1,42 +1,655 @@
-var TEST=!1,DEBUG=!1,CreJs=CreJs||{};CreJs.Creanvas=CreJs.Creanvas||{};(function(){var a=CreJs.Core=CreJs.Core||{};a.Vector=function(d,e,g){var f=this;this.x=d;this.y=e;this.z=g||0;this.draw=function(a,b,d,h){a.lineWidth=5;a.strokeStyle=h;a.beginPath();a.moveTo(b,d);a.lineTo(b+100*f.x,d+100*f.y);a.stroke();a.lineWidth=1;a.strokeStyle="#000"};this.getCoordinates=function(c){return{u:a.scalarProduct(f,c.u),v:a.scalarProduct(f,c.v),w:a.scalarProduct(f,c.w)}};this.setCoordinates=function(a,b,d,h){h=h||0;f.x=b*a.u.x+d*a.v.x+h*a.w.x;f.y=b*a.u.y+d*a.v.y+h*a.w.y;f.z=b*a.u.z+
-d*a.v.z+h*a.w.z}};a.getUnitVectors=function(d,e,g,f){d=g-d;e=f-e;f=Math.sqrt(d*d+e*e);return{u:new a.Vector(d/f,e/f),v:new a.Vector(-e/f,d/f),w:0}};a.drawUnitVectors=function(a,e,g,f,c){a.lineWidth=5;a.strokeStyle=c;a.beginPath();a.moveTo(e,g);a.lineTo(e+100*f.u.x,g+100*f.u.y);a.moveTo(e,g);a.lineTo(e+50*f.v.x,g+50*f.v.y);a.stroke();a.lineWidth=1;a.strokeStyle="#000"};a.drawCoordinateVector=function(a,e,g,f,c,b,l){a.lineWidth=5;a.strokeStyle=l;a.beginPath();a.moveTo(e,g);a.lineTo(e+100*c*f.u.x,g+
-100*c*f.u.y);a.lineTo(e+100*c*f.u.x+100*b*f.v.x,g+100*c*f.u.y+100*b*f.v.y);a.stroke();a.lineWidth=1;a.strokeStyle="#000"};a.scalarProduct=function(a,e){return a.x*e.x+a.y*e.y};a.VectorProduct=function(d,e){return new a.Vector(d.y*e.z-d.z*e.y,d.z*e.x-d.x*e.z,d.x*e.y-d.y*e.x)}})();if(TEST){var CreJsTest=CreJsTest||{};(function(){(CreJsTest.Core=CreJs.Core||{}).test_Vector_constructor=function(){var a=new CreJs.Core.Vector(1,2,3);return 1!=a.x?"FAILED! vector.x: Expected 1, was "+a.x:2!=a.y?"FAILED! vector.y: Expected 2, was "+a.y:3!=a.z?"FAILED! vector.z: Expected 3, was "+a.z:"OK"}})()};(function(){CreJs.Creanvas.CollisionSolver=function(a){var d=function(a,c){var b,d,h,k,e,g,m;k=a.getClientRect();e=c.getClientRect();b=Math.max(k.left,e.left)-1;d=Math.min(k.right,e.right)+1;h=Math.max(k.top,e.top)-1;k=Math.min(k.bottom,e.bottom)+1;if(!(0>=d-b||0>=k-h)){b=a.collisionContext.getImageData(0,0,a.width,a.height);a.collisionContext.scale(1/(a.scaleX||1),1/(a.scaleY||1));a.collisionContext.rotate(-(a.angle||0));a.collisionContext.translate(c.x-a.x,c.y-a.y);a.collisionContext.rotate(c.angle||
-0);a.collisionContext.scale(c.scaleX||1,c.scaleY||1);a.collisionContext.globalCompositeOperation="destination-out";a.collisionContext.drawImage(c.collidedContext.canvas,0,0,c.width,c.height,-c.dx,-c.dy,c.width,c.height);a.collisionContext.scale(1/(c.scaleX||1),1/(c.scaleY||1));a.collisionContext.rotate(-c.angle||0);a.collisionContext.translate(-c.x+a.x,-c.y+a.y);a.collisionContext.rotate(a.angle||0);a.collisionContext.scale(a.scaleX||1,a.scaleY||1);g=a.collisionContext.getImageData(0,0,a.width,a.height);
-a.collisionContext.globalCompositeOperation="source-over";a.collisionContext.putImageData(b,0,0);m=[];a.edges.forEach(function(b){90>g.data[b.y*a.width*4+4*b.x+3]&&m.push(b)});if(2>m.length)return null;var n;h=d=0;b=m.length-1;for(k=1;k<m.length;k++)for(e=k+1;e<m.length;e++){n=m[k].x-m[e].x;var p=m[k].y-m[e].y;n=Math.sqrt(n*n+p*p);n>d&&(d=n,h=k,b=e)}d=a.getCanvasXY(m[h].x-a.dx,m[h].y-a.dy);b=a.getCanvasXY(m[b].x-a.dx,m[b].y-a.dy);return d.x==b.x&&d.y==b.y?null:{x:Math.round((d.x+b.x)/2),y:Math.round((d.y+
-b.y)/2),vectors:CreJs.Core.getUnitVectors(d.x,d.y,b.x,b.y)}}},e=function(a,c,b){var d,h,k,e,g,m;d=b.vectors;e=new CreJs.Core.Vector(b.x-a.x,b.y-a.y);g=CreJs.Core.VectorProduct(e,d.v).z;m=new CreJs.Core.Vector(b.x-c.x,b.y-c.y);b=CreJs.Core.VectorProduct(m,d.v).z;var n=CreJs.Core.VectorProduct(e,d.v),p=CreJs.Core.VectorProduct(m,d.v);h=new CreJs.Core.Vector(a.moving.speed.x,a.moving.speed.y);k=new CreJs.Core.Vector(c.moving.speed.x,c.moving.speed.y);a.scaleSpeed&&(h.x+=e.x*a.scaleSpeed.x,h.y+=e.y*a.scaleSpeed.y);
-c.scaleSpeed&&(k.x+=m.x*c.scaleSpeed.x,k.y+=m.y*c.scaleSpeed.y);e=h.getCoordinates(d);k=k.getCoordinates(d);n=a.collidable.coefficient*c.collidable.coefficient*2*(k.v-e.v+c.moving.rotationSpeed*p.z-a.moving.rotationSpeed*n.z)/(1/c.m+1/a.m+p.z*p.z/c.getM()+n.z*n.z/a.getM());a.moving.speed.x+=n/a.m*d.v.x;a.moving.speed.y+=n/a.m*d.v.y;c.moving.speed.x-=n/c.m*d.v.x;c.moving.speed.y-=n/c.m*d.v.y;a.moving.rotationSpeed+=n*g/a.getM();c.moving.rotationSpeed-=n*b/c.getM()},g=function(){return a.elements.filter(function(a){return a.collidable})};
-this.solveCollision=function(a){var c=g(),b,l,h;b=a.getCenter();c=c.filter(function(h){var c;if(h.id===a.id||!(h.moving.speed.x||h.moving.speed.y||a.moving.speed.x||a.moving.speed.y||h.scaleSpeed||a.scaleSpeed))return!1;c=h.getCenter();return Math.sqrt((b.x-c.x)*(b.x-c.x)+(b.y-c.y)*(b.y-c.y))>a.getRadius()+h.getRadius()?!1:!0});if(0==c.length)return!0;l=null;c.forEach(function(b){l||(l=d(a,b))&&(h=b)});if(!l)return!0;e(a,h,l);a.events.dispatch("collision",{element:h,collisionPoint:l});h.events.dispatch("collision",
-{element:a,collisionPoint:l});return!1}}})();(function(){CreJs.Creanvas.Controller=function(a){var d,e,g,f,c,b,l;f=this;d=a.canvas;l=a.timeScale||1;a.realTime?(b=Date.now(),this.getTime=function(){return(Date.now()-b)*l}):(c=0,setInterval(function(){c+=10*l},10),this.getTime=function(){return c});this.log=function(b){a.log&&a.log(b)};DEBUG&&this.log("Starting controller");f.context=d.getContext("2d");e=!0;isDrawing=!1;g=a.refreshTime||50;this.triggerPointedElementEvent=function(a,b){var c=!1;f.elements.filter(function(b){return b.canHandle(a)}).sort(function(a,
-b){return b.z||0-a.z||0}).forEach(function(d){!c&&d.hit(b.x,b.y)&&(d.events.dispatch(a,b),c=!0)})};this.triggerElementEventByIdentifier=function(a,b){f.elements.forEach(function(c){c.touchIdentifier==b.touchIdentifier&&c.events.dispatch(a,b)})};this.registerCanvasPointerEvent=function(a,b){d.addEventListener(a,function(c){setTimeout(function(){var d=function(c,d){DEBUG&&f.log("Canvas event "+a+" with touchIdentifier "+d);var e=f.getCanvasXYFromClientXY(c);e.touchIdentifier=d;f.triggerPointedElementEvent(b,
-e)};if(c.changedTouches)for(var e=0;e<c.changedTouches.length;e++)d(c.changedTouches[e],c.changedTouches[e].identifier);else d(c,-1)})})};this.registerTouchIdentifierEvent=function(a,b){d.addEventListener(a,function(c){setTimeout(function(){var d=function(c,d){DEBUG&&f.log("Canvas event "+a+" with touchIdentifier "+d);var e=f.getCanvasXYFromClientXY(c);e.touchIdentifier=d;f.triggerElementEventByIdentifier(b,e)};if(c.changedTouches)for(var e=0;e<c.changedTouches.length;e++)d(c.changedTouches[e],c.changedTouches[e].identifier);
-else d(c,-1)})})};this.events=new CreJs.Creevents.EventContainer;this.registerCanvasPointerEvent("click","click");this.registerCanvasPointerEvent("mousedown","pointerDown");this.registerCanvasPointerEvent("touchstart","pointerDown");this.registerTouchIdentifierEvent("mousemove","pointerMove");this.registerTouchIdentifierEvent("touchmove","pointerMove");this.registerTouchIdentifierEvent("mouseup","pointerUp");this.registerTouchIdentifierEvent("touchend","pointerUp");this.stop=function(){f.events.dispatch("deactivate");
-f.elements=[]};this.redraw=function(){e=!0};this.getCanvasXYFromClientXY=function(a){var b=d.getBoundingClientRect();return{x:Math.round((a.clientX-b.left)*d.width/b.width),y:Math.round((a.clientY-b.top)*d.height/b.height)}};f.elements=[];this.addElement=function(){DEBUG&&f.log("Controller.addElement: Adding element - args:"+arguments.length);var a=[].slice.call(arguments),b=new CreJs.Creanvas.Element(f,a[0]);DEBUG&&f.log("Controller.addElement: Created element: "+b.name+"-"+b.id);1<a.length?(DEBUG&&
-f.log("Controller.addElement: Applying "+(a.length-1)+" decorators"),b.applyDecorators.apply(b,a.slice(1))):DEBUG&&f.log("Controller.addElement: No decorator to apply");f.elements.push(b);return b};f.log("Adding background");this.addElement({name:"background",image:{width:d.width,height:d.height,translate:{dx:0,dy:0},draw:a.drawBackground||function(b){b.fillStyle=a.backgroundStyle||"#FFF";b.fillRect(0,0,this.width,this.height)}},position:{z:-Infinity}});setInterval(function(){e&&!isDrawing&&(isDrawing=
-!0,f.elements.sort(function(a,b){return(a.z||0)-(b.z||0)}).forEach(function(a){f.context.translate(a.x,a.y);f.context.rotate(a.angle||0);f.context.scale(a.scaleX||1,a.scaleY||1);f.context.drawImage(a.temporaryRenderingContext.canvas,0,0,a.width,a.height,-a.dx,-a.dy,a.width,a.height);f.context.scale(1/(a.scaleX||1),1/a.scaleY||1);f.context.rotate(-(a.angle||0));f.context.translate(-a.x,-a.y)}),isDrawing=!1)},g)}})();(function(){CreJs.Creanvas.Element=function(a,d){var e=[].slice.apply(arguments).slice(2),g=[];this.controller=a;this.name=d.name;this.id=CreJs.CreHelpers.GetGuid();this.width=d.image.width;this.height=d.image.height;this.x=d.position.x||0;this.y=d.position.y||0;this.z=d.position.z||0;this.angle=d.position.angle||0;this.scaleX=d.image.scaleX||1;this.scaleY=d.image.scaleY||1;this.m=1;var f=d.image.draw,c=d.image.translate||{dx:d.image.width/2,dy:d.image.height/2};this.dx=c.dx;this.dy=c.dy;d.image.image?
-(this.image=d.image.image,c=this.controller.context.canvas,c=c.ownerDocument.createElement("canvas"),this.temporaryRenderingContext=c.getContext("2d"),this.temporaryRenderingContext.putImageData(this.image,0,0)):(c=this.controller.context.canvas,c=c.ownerDocument.createElement("canvas"),c.width=d.image.width,c.height=d.image.height,this.temporaryRenderingContext=c.getContext("2d"),this.temporaryRenderingContext.beginPath(),this.temporaryRenderingContext.translate(this.dx,this.dy),d.image.draw(this.temporaryRenderingContext),
-this.image=this.temporaryRenderingContext.getImageData(0,0,d.image.width,d.image.height));var b=this;DEBUG&&(b.debug=function(a,c){b.controller.log("Element."+a+": "+c+". Element: "+b.name+"/"+b.id)});d.rules&&(b.rules=[],d.rules.forEach(function(a){var c=b.rules.length;b.rules.push(a);setInterval(function(){b.rules[c].rule.call(b);b.triggerRedraw()},a.checkTime)}));this.events=new CreJs.Creevents.EventContainer;this.isPointInPath=function(a){a=b.controller.getCanvasXYFromClientXY(a);return b.controller.noDrawContext.isPointInPath(b,
-f,a)};0<e.length&&CreJs.Creanvas.elementDecorators&&(DEBUG&&a.log("New element "+d.name+" : apply "+e.length+" decorators"),b.applyDecorators(e));this.hit=function(a,c){var d=Math.round(a-b.x+b.dx),e=Math.round(c-b.y+b.dy);return 0<=d&&d<=b.width&&0<=e&&e<=b.height&&0<b.image.data[4*e*b.width+4*d+3]};this.clone=function(){d.image.image=b.image;DEBUG&&a.log("cloning with elementdefinition: "+d);var c=b.controller.addElement(d);DEBUG&&a.log("Cloning "+c.name+" : apply "+e.length+" decorators");c.applyDecorators.apply(c,
-e);return c};this.removeDecorator=function(a){b.events.removeEventListener({eventGroupType:a,listenerId:b.id})};this.canHandle=function(a){return"click"==a||"pointerDown"==a||b.events.hasEvent(a)};this.deactivate=function(){b.controller.events.removeEventListener({listenerId:b.id});b.temporaryRenderingContext=null};b.controller.events.addEventListener({eventId:"deactivate",listenerId:b.id,handleEvent:function(a){b.deactivate()}});this.triggerRedraw=function(){b.controller.redraw()};this.getCanvasXY=
-function(a,c){return{x:Math.round(b.x+a*b.scaleX*Math.cos(b.angle)-c*b.scaleY*Math.sin(b.angle)),y:Math.round(b.y+a*b.scaleX*Math.sin(b.angle)+c*b.scaleY*Math.cos(b.angle))}};this.getCanvasXYNoRounding=function(a,c){return{x:b.x+a*b.scaleX*Math.cos(b.angle)-c*b.scaleY*Math.sin(b.angle),y:b.y+a*b.scaleX*Math.sin(b.angle)+c*b.scaleY*Math.cos(b.angle)}};this.getElementXY=function(a,c){return{x:Math.round(((a-b.x)*Math.cos(b.angle)+(c-b.y)*Math.sin(b.angle))/b.scaleX),y:Math.round(((c-b.y)*Math.cos(b.angle)-
-(a-b.x)*Math.sin(b.angle))/b.scaleY)}};this.getCenter=function(){return b.getCanvasXY(-b.dx+b.width/2,-b.dy+b.height/2)};var l=[];l.push({x:-b.dx,y:-b.dy});l.push({x:-b.dx+b.width,y:-b.dy});l.push({x:-b.dx+b.width,y:-b.dy+b.height});l.push({x:-b.dx,y:-b.dy+b.height});this.getClientCornersCache=function(){return l.map(function(a){return b.getCanvasXY(a.x,a.y)})};this.getClientCorners=function(){var a=b.x+""+b.y+""+b.angle+""+b.scaleX+""+b.scaleX;if(g.getClientCorners&&g.getClientCorners.key==a)return g.getClientCorners.value;
-var c=b.getClientCornersCache();g.getClientCorners={key:a,value:c};return c};this.getClientRectCache=function(){var a=b.getClientCorners();return{top:a.reduce(function(a,b){return Math.min(a,b.y)},Infinity),bottom:a.reduce(function(a,b){return Math.max(a,b.y)},-Infinity),left:a.reduce(function(a,b){return Math.min(a,b.x)},Infinity),right:a.reduce(function(a,b){return Math.max(a,b.x)},-Infinity)}};this.getClientRect=function(){var a=b.x+""+b.y+""+b.angle+""+b.scaleX+""+b.scaleX;if(g.getClientRect&&
-g.getClientRect.key==a)return g.getClientRect.value;var c=b.getClientRectCache();g.getClientRect={key:a,value:c};return c};this.applyDecorators=function(){var a=this;DEBUG&&a.debug("applyDecorators","Applying "+arguments.length+" new decorators");e=e.concat([].slice.apply(arguments));DEBUG&&a.debug("applyDecorators","Applying "+e.length+" decorators");e.forEach(function(b){a.applyDecorator(b[0],b[1])})};this.applyDecorator=function(a,b){DEBUG&&this.debug("applyDecorator","Applying decorator "+a);
-var c=CreJs.Creanvas.elementDecorators[a];c?c.applyTo(this,b):DEBUG&&this.debug("applyDecorator","Decorator not found: "+a)}}})();CreJs=CreJs||{};(function(){CreJs.Creanvas=CreJs.Creanvas||{};CreJs.Creanvas.elementDecorators=CreJs.Creanvas.elementDecorators||[];CreJs.Creanvas.elementDecorators.clickable={applyTo:function(a,d){a.onClick=function(e){d.onclick.call(a,e);a.triggerRedraw()};a.events.addEventListener({eventId:"click",handleEvent:a.onClick})}}})();CreJs=CreJs||{};
-(function(){CreJs.Creanvas=CreJs.Creanvas||{};CreJs.Creanvas.elementDecorators=CreJs.Creanvas.elementDecorators||[];CreJs.Creanvas.elementDecorators.collidable={applyTo:function(a,d){var e=[];a.collidable={};a.controller.collisionSolver=a.controller.collisionSolver||new CreJs.Creanvas.CollisionSolver(a.controller);d.hasOwnProperty("collisionCoefficient")?a.collidable.coefficient=d.collisionCoefficient:a.collidable.coefficient=1;a.moving=a.moving||{speed:new CreJs.Core.Vector(0,0),acceleration:new CreJs.Core.Vector(0,
-0),rotationSpeed:0};a.events.addEventListener({eventId:"collision",handleEvent:function(b){d.onCollision&&d.onCollision.call(a,b)}});a.preMove=this.preMove||[];a.preMove.push(function(){return a.controller.collisionSolver.solveCollision(a)});a.getM=function(){return a.m/12*(a.width*a.scaleX*a.width*a.scaleX+a.height*a.scaleY*a.height*a.scaleY)};a.geRadiusCache=function(){return Math.sqrt(a.width*a.width*a.scaleX*a.scaleX+a.height*a.height*a.scaleY*a.scaleY)/2};a.getRadius=function(){var b=a.width+
-""+a.height+""+a.scaleX+""+a.scaleY;if(e.getRadius&&e.getRadius.key==b)return e.getRadius.value;var c=a.geRadiusCache();e.geRadius={key:b,value:c};return c};var g=a.controller.context.canvas,f=g.ownerDocument.createElement("canvas"),g=g.ownerDocument.createElement("canvas");f.width=g.width=a.width;f.height=g.height=a.height;a.collidedContext=g.getContext("2d");a.collidedContext.putImageData(a.image,0,0);a.collidedContext.globalCompositeOperation="source-atop";a.collidedContext.fillStyle="#000";a.collidedContext.fillRect(0,
-0,a.width,a.height);a.collisionContext=f.getContext("2d");a.collisionContext.globalCompositeOperation="source-over";a.collisionContext.drawImage(a.collidedContext.canvas,0,0);f=a.collisionContext.getImageData(0,0,a.width,a.height);g=a.collisionContext.createImageData(a.width,a.height);a.edges=[];for(var c=0;c<a.width;c++)for(var b=0;b<a.height;b++)if(!(200>f.data[b*a.width*4+4*c+3])){for(var l=!1,h=-1;2>h;h++)for(var k=-1;2>k;k++)if(0>b+h||0>c+k||b+h>a.height-1||c+h>a.width-1||100>f.data[(b+h)*a.width*
-4+4*(c+k)+3])l=!0,k=h=2;a.collisionContext.putImageData(g,0,0);l&&(a.edges.push({x:c,y:b}),g.data[b*a.width*4+4*c]=0,g.data[b*a.width*4+4*c+1]=0,g.data[b*a.width*4+4*c+2]=0,g.data[b*a.width*4+4*c+3]=255)}a.collisionContext.putImageData(g,0,0);a.collisionContext.translate(a.dx,a.dy)}}})();CreJs=CreJs||{};(function(){CreJs.Creanvas=CreJs.Creanvas||{};CreJs.Creanvas.elementDecorators=CreJs.Creanvas.elementDecorators||[];CreJs.Creanvas.elementDecorators.droppable={applyTo:function(a,d){a.isDroppable=!0;a.dropZone=d.dropZone;DEBUG&&a.controller.log("Now droppable: "+a.id)}}})();CreJs=CreJs||{};
-(function(){CreJs.Creanvas=CreJs.Creanvas||{};CreJs.Creanvas.elementDecorators=CreJs.Creanvas.elementDecorators||[];CreJs.Creanvas.elementDecorators.dropzone={applyTo:function(a,d){var e=d.availableSpots,g=d.dropX,f=d.dropY;a.droppedElements=[];a.events.addEventListener({eventGroupType:"dropzone",eventId:"drop",handleEvent:function(c){0>=e||(DEBUG&&a.controller.log("drop event on dropzone "+a.id+", dropped "+c.droppedElement.id),e--,c.droppedElement.x=g||a.x,c.droppedElement.y=f||a.y,c.droppedElement.dropZone=
-a,a.droppedElements.push(c.droppedElement),c.droppedElement.events.dispatch("dropped",{dropZone:a,droppedElement:c.droppedElement}),a.events.dispatch("droppedIn",{dropZone:a,droppedElement:c.droppedElement}),a.triggerRedraw())},listenerId:a.id});a.drag=function(c){DEBUG&&a.controller.log("dragging from dropzone "+a.id+", dragged "+c.id);c.dropZone=null;e++;a.droppedElements.splice(a.droppedElements.indexOf(c),1);a.triggerRedraw()}}}})();CreJs=CreJs||{};
-(function(){CreJs.Creanvas=CreJs.Creanvas||{};CreJs.Creanvas.elementDecorators=CreJs.Creanvas.elementDecorators||[];CreJs.Creanvas.elementDecorators.duplicable={applyTo:function(a,d){var e=d.isBlocked,g=d.hasOwnProperty("generatorCount")?d.generatorCount:Infinity;d.generatorCount=0;var f=!1;a.events.addEventListener({eventGroupType:"duplicable",eventId:"pointerDown",handleEvent:function(c){0<=c.touchIdentifier&&(f=!0);if(!(f&&0>c.touchIdentifier||e&&e()||0>=g)){DEBUG&&a.controller.log("pointereDown event on duplicable "+a.id+
-", count id  "+g);g--;var b=a.clone();b.name+=" (duplicate)";b.removeDecorator("duplicable");b.applyDecorators(["movable",{isBlocked:d.isBlocked}]);b.startMoving(c);a.triggerRedraw()}},listenerId:a.id})}}})();(function(){CreJs.Creanvas.elementDecorators=CreJs.Creanvas.elementDecorators||[]})();CreJs=CreJs||{};
-(function(){CreJs.Creanvas=CreJs.Creanvas||{};CreJs.Creanvas.elementDecorators=CreJs.Creanvas.elementDecorators||[];CreJs.Creanvas.elementDecorators.movable={applyTo:function(a,d){var e=!1,g=this.touchIdentifier=null,f=d.isBlocked;a.startMoving=function(b){DEBUG&&a.controller.log("Starting moving - identifier: "+b.touchIdentifier);e=!0;a.touchIdentifier=b.touchIdentifier;g={x:b.x,y:b.y};a.dropZone&&(a.dropZone.drag(a),a.dropZone=null)};a.moveCompleted=function(b){DEBUG&&a.controller.log("Completed move - identifier: "+b.touchIdentifier);
-e=!1;g=null;a.isDroppable&&(DEBUG&&a.controller.log("Trigger drop - identifier: "+b.touchIdentifier),a.controller.triggerPointedElementEvent("drop",{x:b.x,y:b.y,droppedElement:a}))};a.events.addEventListener({eventGroupType:"movable",eventId:"pointerDown",handleEvent:function(b){f&&f()||a.startMoving(b)},listenerId:a.id});var c=!1;a.events.addEventListener({eventGroupType:"movable",eventId:"pointerMove",handleEvent:function(b){!e||f&&f()||(c||(c=!0,DEBUG&&a.controller.log("pointereMove event on movable "+
-a.id+" ("+a.touchIdentifier+")")),a.x+=b.x-g.x,a.y+=b.y-g.y,g={x:b.x,y:b.y},a.triggerRedraw())},listenerId:a.id});a.events.addEventListener({eventGroupType:"movable",eventId:"pointerUp",handleEvent:function(b){!e||f&&f()||(DEBUG&&a.controller.log("End detected for touch "+a.touchIdentifier),a.controller.getCanvasXYFromClientXY(b),a.x+=b.x-g.x,a.y+=b.y-g.y,a.moveCompleted(b),a.touchIdentifier=null,c=!1,a.triggerRedraw())},listenerId:a.id})}}})();CreJs=CreJs||{};
-(function(){CreJs.Creanvas=CreJs.Creanvas||{};CreJs.Creanvas.elementDecorators=CreJs.Creanvas.elementDecorators||[];CreJs.Creanvas.elementDecorators.moving={type:"moving",applyTo:function(a,d){var e,g,f,c,b;DEBUG&&a.controller.log("Applying moving decorator to "+a.name+"-"+a.id);var l,h,k;a.moving=a.moving||{};a.moving.speed=new CreJs.Core.Vector(d.vx||0,d.vy||0);a.moving.acceleration=new CreJs.Core.Vector(d.ax||0,d.ay||0);a.moving.rotationSpeed=d.omega||0;l=a.controller.getTime();setInterval(function(){h=
-a.controller.getTime();k=h-l;if(!(1>k)&&(l=h,a.moving.speed.x+=a.moving.acceleration.x*k,a.moving.speed.y+=a.moving.acceleration.y*k,0!=a.moving.speed.x||0!=a.moving.speed.y||0!=a.moving.rotationSpeed||a.scaleSpeed&&(0!=a.scaleSpeed.x||0!=a.scaleSpeed.y))){e=a.x;g=a.y;f=a.angle;c=a.scaleX;b=a.scaleY;a.x+=a.moving.speed.x*k;a.y+=a.moving.speed.y*k;a.angle+=a.moving.rotationSpeed*k;a.scaleSpeed&&(a.scaleX+=a.scaleSpeed.x*k,a.scaleY+=a.scaleSpeed.y*k);var d=!0;a.preMove&&a.preMove.forEach(function(b){d&&
-(b.call(a)||(d=!1))});d||(a.x=e,a.y=g,a.angle=f,a.scaleX=c,a.scaleY=b)}},20)}}})();(function(){var a;(CreJs.Creevents=CreJs.Creevents||{}).Event=function(d){this.eventId=d;a=CreJs.CreHelpers;var e=[],g=new CreJs.Crelog.Logger;this.dispatch=function(f,c){var b=a.GetGuid(),l=e.length;DEBUG&&f&&"pointerMove"!=f.eventId&&"drag"!=f.eventId&&"drop"!=f.eventId&&g.log("Dispatching "+l+" "+f.eventId+". ("+b+")");e.forEach(function(a){a.debugEvent=d;setTimeout(function(){DEBUG&&f&&"pointerMove"!=f.eventId&&"drag"!=f.eventId&&"drop"!=f.eventId&&g.log("Actually handling "+f.eventId+". ("+b+
-")");a.handleEvent(f);l--;0==l&&c&&c()})})};this.addEventListener=function(d){var c=a.GetGuid();e.push({handlerGuid:c,handleEvent:d.handleEvent,rank:d.rank,listenerId:d.listenerId,eventGroupType:d.eventGroupType});e=e.sort(function(a,c){return(a.rank||Infinity)-(c.rank||Infinity)});return c};this.removeEventListener=function(a){e=e.filter(function(c){return Boolean(a.handlerGuid)&&c.handlerGuid!=a.handlerGuid||Boolean(a.listenerId)&&c.listenerId!=a.listenerId||Boolean(a.eventGroupType)&&c.eventGroupType!=
-a.eventGroupType})}};CreJs.Creevents=CreJs.Creevents})();(function(){var a=CreJs.Creevents=CreJs.Creevents||{};a.EventContainer=function(){var d=this,e={},g=[];this.hasEvent=function(a){return void 0!=e[a]};var f=function(c){g.push(c);e[c]=new a.Event(c)};this.addEventListener=function(a){e[a.eventId]||f(a.eventId);return e[a.eventId].addEventListener(a)};this.dispatch=function(a,b,d){e[a]&&(b&&(b.eventId=a),e[a].dispatch(b,d))};this.removeEventListener=function(a){e[a.eventId]?e[a.eventId].removeEventListener(a):g.forEach(function(b){e[b].removeEventListener(a)})};
-this.registerControlEvent=function(a,b,g){e[g]||f(g);a.addEventListener(b,function(a){a.preventDefault();setTimeout(function(){d.dispatch(g,a)},0)})}}})();(function(){var a=CreJs.CreHelpers=CreJs.CreHelpers||{};a.GetGuid=function(){var d=Date.now().toString(16),d=a.repeatString("x",15-d.length)+d;return("xxxxxxxx-xxxx-4xxx-y"+d.slice(0,3)+"-"+d.slice(3)).replace(/[xy]/g,function(a){var d=16*Math.random()|0;return("x"==a?d:d&3|8).toString(16)})};a.repeatString=function(d,e){return 0>=e?"":d+a.repeatString(d,e-1)};CreJs.CreHelpers=CreJs.CreHelpers})();(function(){(CreJs.Crelog=CreJs.Crelog||{}).Logger=function(){this.log=function(a){console.log(a)}}})();
+var f = f || {};
+f.a = f.a || {};
+window.CreJs = f;
+f.Creanvas = f.a;
+(function() {
+  var a = f.S = f.S || {};
+  a.t = function(a, e, h) {
+    this.Ba = a;
+    this.Ca = e;
+    this.Da = h || 0;
+  };
+  Object.defineProperty(a.t.prototype, "x", {get:function() {
+    return this.Ba;
+  }, set:function(a) {
+    this.Ba = a;
+  }});
+  Object.defineProperty(a.t.prototype, "y", {get:function() {
+    return this.Ca;
+  }, set:function(a) {
+    this.Ca = a;
+  }});
+  Object.defineProperty(a.t.prototype, "z", {get:function() {
+    return this.Da;
+  }, set:function(a) {
+    this.Da = a;
+  }});
+  a.ib = function(d, e, h, b) {
+    d = h - d;
+    e = b - e;
+    b = Math.sqrt(d * d + e * e);
+    return{R:new a.t(d / b, e / b), ea:new a.t(-e / b, d / b), xb:0};
+  };
+  a.eb = function(a, e, h, b, g) {
+    a.lineWidth = 5;
+    a.strokeStyle = g;
+    a.beginPath();
+    a.moveTo(e, h);
+    a.lineTo(e + 100 * b.R.A, h + 100 * b.R.B);
+    a.moveTo(e, h);
+    a.lineTo(e + 50 * b.ea.A, h + 50 * b.ea.B);
+    a.stroke();
+    a.lineWidth = 1;
+    a.strokeStyle = "#000";
+  };
+  a.cb = function(a, e, h, b, g, k, c) {
+    a.lineWidth = 5;
+    a.strokeStyle = c;
+    a.beginPath();
+    a.moveTo(e, h);
+    a.lineTo(e + 100 * g * b.R.A, h + 100 * g * b.R.B);
+    a.lineTo(e + 100 * g * b.R.A + 100 * k * b.ea.A, h + 100 * g * b.R.B + 100 * k * b.ea.B);
+    a.stroke();
+    a.lineWidth = 1;
+    a.strokeStyle = "#000";
+  };
+  a.tb = function(a, e) {
+    return a.A * e.A + a.B * e.B;
+  };
+  a.wb = function(d, e) {
+    return new a.t(d.B * e.oa - d.oa * e.B, d.oa * e.A - d.A * e.oa, d.A * e.B - d.B * e.A);
+  };
+})();
+f.a.Ea = function() {
+};
+f.a.Fa = function(a) {
+  var d, e, h, b, g, k, c;
+  b = this;
+  d = a.canvas;
+  c = a.vb || 1;
+  a.rb ? (k = Date.now(), this.getTime = function() {
+    return(Date.now() - k) * c;
+  }) : (g = 0, setInterval(function() {
+    g += 10 * c;
+  }, 10), this.getTime = function() {
+    return g;
+  });
+  this.f = function(b) {
+    a.log && a.log(b);
+  };
+  this.f("Starting controller");
+  b.u = d.getContext("2d");
+  e = !0;
+  isDrawing = !1;
+  h = a.sb || 50;
+  this.Aa = function(a, e) {
+    var c = !1;
+    b.elements.filter(function(b) {
+      return b.Ha(a);
+    }).sort(function(a, b) {
+      return b.O || 0 - a.O || 0;
+    }).forEach(function(b) {
+      !c && b.Pa(e.x, e.y) && (b.h.K(a, e), c = !0);
+    });
+  };
+  this.Ya = function(a, e) {
+    b.elements.forEach(function(b) {
+      b.m == e.m && b.h.K(a, e);
+    });
+  };
+  this.la = function(a, e) {
+    d.addEventListener(a, function(c) {
+      setTimeout(function() {
+        function g(c, d) {
+          b.f("Canvas event " + a + " with touchIdentifier " + d);
+          var h = b.ba(c);
+          h.m = d;
+          b.Aa(e, h);
+        }
+        if (c.changedTouches) {
+          for (var d = 0;d < c.changedTouches.length;d++) {
+            g(c.changedTouches[d], c.changedTouches[d].identifier);
+          }
+        } else {
+          g(c, -1);
+        }
+      });
+    });
+  };
+  this.da = function(a, e) {
+    d.addEventListener(a, function(c) {
+      setTimeout(function() {
+        function g(c, d) {
+          b.f("Canvas event " + a + " with touchIdentifier " + d);
+          var h = b.ba(c);
+          h.m = d;
+          b.Ya(e, h);
+        }
+        if (c.changedTouches) {
+          for (var d = 0;d < c.changedTouches.length;d++) {
+            g(c.changedTouches[d], c.changedTouches[d].identifier);
+          }
+        } else {
+          g(c, -1);
+        }
+      });
+    });
+  };
+  this.h = new f.T.ga;
+  this.la("click", "click");
+  this.la("mousedown", "pointerDown");
+  this.la("touchstart", "pointerDown");
+  this.da("mousemove", "pointerMove");
+  this.da("touchmove", "pointerMove");
+  this.da("mouseup", "pointerUp");
+  this.da("touchend", "pointerUp");
+  this.Xa = function() {
+    b.h.K("deactivate");
+    b.elements = [];
+  };
+  this.w = function() {
+    e = !0;
+  };
+  this.ba = function(a) {
+    var b = d.getBoundingClientRect();
+    return{x:Math.round((a.clientX - b.left) * d.width / b.width), y:Math.round((a.clientY - b.top) * d.height / b.height)};
+  };
+  b.elements = [];
+  this.add = function() {
+    b.f("Controller.addElement: Adding element - args:" + arguments.length);
+    var a = [].slice.call(arguments), c = new f.a.Ga(b, a[0]);
+    b.f("Controller.addElement: Created element: " + c.C + "-" + c.j);
+    1 < a.length ? (b.f("Controller.addElement: Applying " + (a.length - 1) + " decorators"), c.$.apply(c, a.slice(1))) : b.f("Controller.addElement: No decorator to apply");
+    b.elements.push(c);
+    return c;
+  };
+  b.f("Adding background");
+  this.add({C:"background", L:{Q:d.width, P:d.height, M:{ma:0, na:0}, Qa:a.drawBackground || function(b) {
+    b.fillStyle = a.$a || "#FFF";
+    b.fillRect(0, 0, this.d, this.g);
+  }}, Ma:{ka:-Infinity}});
+  setInterval(function() {
+    e && !isDrawing ? (isDrawing = !0, b.elements.sort(function(a, b) {
+      return(a.O || 0) - (b.O || 0);
+    }).forEach(function(a) {
+      b.u.translate(a.k, a.l);
+      b.u.rotate(a.G || 0);
+      b.u.scale(a.n || 1, a.o || 1);
+      b.u.drawImage(a.H.canvas, 0, 0, a.d, a.g, -a.D, -a.F, a.d, a.g);
+      b.u.scale(1 / (a.n || 1), 1 / a.o || 1);
+      b.u.rotate(-(a.G || 0));
+      b.u.translate(-a.k, -a.l);
+    }), isDrawing = !1) : b.f("No redraw");
+  }, h);
+  this.addElement = this.add;
+  this.redraw = this.w;
+  this.stop = this.Xa;
+};
+f.a.Controller = f.a.Fa;
+f.a.Ga = function(a, d) {
+  this.C = d.C || d.name;
+  var e = d.L || d.image || {};
+  e.Q = e.Q || e.width;
+  e.P = e.P || e.height;
+  var h = e.Qa || e.draw;
+  e.M = e.M || e.translate;
+  e.translate && (e.M.ma = e.M.dx || 0, e.M.na = e.M.dy || 0);
+  var b = d.Ma || d.position;
+  b.va = b.va || b.x;
+  b.wa = b.wa || b.y;
+  b.ka = b.ka || b.z;
+  var g = d.rules, k = [].slice.apply(arguments).slice(2);
+  this.e = a;
+  this.j = f.fa.ha();
+  this.d = e.Q;
+  this.g = e.P;
+  this.k = b.va || 0;
+  this.l = b.wa || 0;
+  this.O = b.ka || 0;
+  this.G = b.qb || 0;
+  this.n = e.kb || 1;
+  this.o = e.lb || 1;
+  this.ua = 1;
+  b = e.M || {ma:e.Q / 2, na:e.P / 2};
+  this.D = b.ma;
+  this.F = b.na;
+  e.Va ? (this.L = e.Va, b = this.e.u.canvas, b = b.ownerDocument.createElement("canvas"), this.H = b.getContext("2d"), this.H.putImageData(this.L, 0, 0)) : (b = this.e.u.canvas, b = b.ownerDocument.createElement("canvas"), b.width = e.Q, b.height = e.P, this.H = b.getContext("2d"), this.H.beginPath(), this.H.translate(this.D, this.F), h(this.H), this.L = this.H.getImageData(0, 0, e.Q, e.P));
+  var c = this;
+  c.debug = function(a, b) {
+    c.e.f("Element." + a + ": " + b + ". Element: " + c.C + "/" + c.j);
+  };
+  g && (c.rules = [], g.forEach(function(a) {
+    var b = c.rules.length;
+    c.rules.push(a);
+    setInterval(function() {
+      c.rules[b].rule.call(c);
+      c.w();
+    }, a.checkTime);
+  }));
+  this.h = new f.T.ga;
+  this.isPointInPath = function(a) {
+    a = c.e.ba(a);
+    return c.e.pb.isPointInPath(c, h, a);
+  };
+  0 < k.length && f.a.c && (a.f("New element " + elementName + " : apply " + k.length + " decorators"), c.$(k));
+  this.Pa = function(a, b) {
+    var e = Math.round(a - c.k + c.D), g = Math.round(b - c.l + c.F), e = 0 <= e && e <= c.d && 0 <= g && g <= c.g && 0 < c.L.data[4 * g * c.d + 4 * e + 3];
+    c.debug("hit", e ? "hit" : "no hit");
+    return e;
+  };
+  this.ra = function(a) {
+    e.jb = c.L;
+    c.debug("cloneElement", "start cloning");
+    var b = c.e.add(d), g = a ? k.filter(function(b) {
+      return a.every(function(a) {
+        return a != b[0];
+      });
+    }) : k;
+    c.debug("cloneElement", "apply " + g.length + " decorators");
+    b.$.apply(b, g);
+    return b;
+  };
+  this.Wa = function(a) {
+    c.debug("removeElementDecorator", a);
+    var b = f.a.c[a];
+    b && b.xa ? b.xa(c) : c.debug("removeElementDecorator", "Cannot remove: " + a);
+  };
+  this.Ha = function(a) {
+    return "click" == a || "pointerDown" == a || c.h.Oa(a);
+  };
+  this.Ja = function() {
+    c.e.h.removeEventListener({p:c.j});
+    c.H = null;
+  };
+  c.e.h.r({eventId:"deactivate", listenerId:c.j, handleEvent:function() {
+    c.Ja();
+  }});
+  this.w = function() {
+    c.e.w();
+  };
+  g = [];
+  g.push({x:-c.D, y:-c.F});
+  g.push({x:-c.D + c.d, y:-c.F});
+  g.push({x:-c.D + c.d, y:-c.F + c.g});
+  g.push({x:-c.D, y:-c.F + c.g});
+  this.$ = function() {
+    var a = this, b = [].slice.apply(arguments);
+    k = k.concat(b);
+    b.forEach(function(b) {
+      a.ia(b[0], b[1]);
+    });
+  };
+  this.ia = function(a, b) {
+    this.debug("applyElementDecorator", a);
+    var c = f.a.c[a];
+    c ? c.I(this, b) : this.debug("applyElementDecorator", "Not found: " + a);
+  };
+  Object.defineProperty(c, "name", {get:function() {
+    return this.C;
+  }, set:function(a) {
+    this.C = a;
+  }});
+  Object.defineProperty(c, "width", {get:function() {
+    return this.d;
+  }, set:function(a) {
+    this.d = a;
+  }});
+  Object.defineProperty(c, "height", {get:function() {
+    return this.g;
+  }, set:function(a) {
+    this.g = a;
+  }});
+  Object.defineProperty(c, "scaleX", {get:function() {
+    return this.n;
+  }, set:function(a) {
+    this.n = a;
+  }});
+  Object.defineProperty(c, "scaleY", {get:function() {
+    return this.o;
+  }, set:function(a) {
+    this.o = a;
+  }});
+  Object.defineProperty(c, "x", {get:function() {
+    return this.k;
+  }, set:function(a) {
+    this.k = a;
+  }});
+  Object.defineProperty(c, "y", {get:function() {
+    return this.l;
+  }, set:function(a) {
+    this.l = a;
+  }});
+  Object.defineProperty(c, "z", {get:function() {
+    return this.O;
+  }, set:function(a) {
+    this.O = a;
+  }});
+  Object.defineProperty(c, "angle", {get:function() {
+    return this.G;
+  }, set:function(a) {
+    this.G = a;
+  }});
+  Object.defineProperty(c, "mass", {get:function() {
+    return this.ua;
+  }, set:function(a) {
+    this.ua = a;
+  }});
+  Object.defineProperty(c, "id", {get:function() {
+    return this.j;
+  }});
+  Object.defineProperty(c, "image", {get:function() {
+    return this.L;
+  }});
+  Object.defineProperty(c, "events", {get:function() {
+    return this.h;
+  }});
+  c.clone = c.ra;
+  c.applyDecorator = c.ia;
+  c.applyDecorators = c.$;
+  c.removeDecorator = c.Wa;
+};
+f = f || {};
+f.a = f.a || {};
+f.a.c = f.a.c || [];
+f.a.c.clickable = {I:function(a, d) {
+  var e = d.onclick;
+  a.Ua = function(d) {
+    a.debug("onClick", e);
+    e.call(a, d);
+    a.w();
+  };
+  a.h.r({i:"click", handleEvent:a.Ua});
+}};
+f = f || {};
+f.a = f.a || {};
+f.a.c = f.a.c || [];
+f.a.c.collidable = {I:function(a, d) {
+  var e = [];
+  a.Ia = {};
+  var h = d.onCollision, b = d.coefficient;
+  a.e.sa = a.e.sa || new f.a.Ea;
+  a.Ia.ab = b || 0 === b ? b : 1;
+  a.b = a.b || {s:new f.S.t(0, 0), V:new f.S.t(0, 0), W:0};
+  a.h.r({i:"collision", handleEvent:function(b) {
+    h && h.call(a, b);
+  }});
+  a.ca = this.ca || [];
+  a.ca.push(function() {
+    return a.e.sa.ub(a);
+  });
+  a.gb = function() {
+    return a.nb / 12 * (a.d * a.n * a.d * a.n + a.g * a.o * a.g * a.o);
+  };
+  a.Na = function() {
+    return Math.sqrt(a.d * a.d * a.n * a.n + a.g * a.g * a.o * a.o) / 2;
+  };
+  a.hb = function() {
+    var b = a.d + "" + a.g + "" + a.n + "" + a.o;
+    if (e.getRadius && e.getRadius.key == b) {
+      return e.getRadius.Za;
+    }
+    var c = a.Na();
+    e.geRadius = {mb:b, Za:c};
+    return c;
+  };
+  var g = a.e.u.canvas, b = g.ownerDocument.createElement("canvas"), g = g.ownerDocument.createElement("canvas");
+  b.width = g.width = a.d;
+  b.height = g.height = a.g;
+  a.U = g.getContext("2d");
+  a.U.putImageData(a.fb, 0, 0);
+  a.U.globalCompositeOperation = "source-atop";
+  a.U.fillStyle = "#000";
+  a.U.fillRect(0, 0, a.d, a.g);
+  a.J = b.getContext("2d");
+  a.J.globalCompositeOperation = "source-over";
+  a.J.drawImage(a.U.canvas, 0, 0);
+  b = a.J.getImageData(0, 0, a.d, a.g);
+  g = a.J.createImageData(a.d, a.g);
+  a.La = [];
+  for (var k = 0;k < a.d;k++) {
+    for (var c = 0;c < a.g;c++) {
+      if (!(200 > b.data[c * a.d * 4 + 4 * k + 3])) {
+        for (var n = !1, l = -1;2 > l;l++) {
+          for (var p = -1;2 > p;p++) {
+            if (0 > c + l || 0 > k + p || c + l > a.g - 1 || k + l > a.d - 1 || 100 > b.data[(c + l) * a.d * 4 + 4 * (k + p) + 3]) {
+              n = !0, p = l = 2;
+            }
+          }
+        }
+        a.J.putImageData(g, 0, 0);
+        n && (a.La.push({x:k, y:c}), g.data[c * a.d * 4 + 4 * k] = 0, g.data[c * a.d * 4 + 4 * k + 1] = 0, g.data[c * a.d * 4 + 4 * k + 2] = 0, g.data[c * a.d * 4 + 4 * k + 3] = 255);
+      }
+    }
+  }
+  a.J.putImageData(g, 0, 0);
+  a.J.translate(a.D, a.F);
+}};
+f = f || {};
+f.a = f.a || {};
+f.a.c = f.a.c || [];
+f.a.c.droppable = {I:function(a, d) {
+  var e = d.dropZone;
+  a.Sa = !0;
+  a.ta = e;
+  a.debug("droppable.applyTo", "Now droppable");
+  Object.defineProperty(a, "dropZone", {get:function() {
+    return this.ta;
+  }, set:function(a) {
+    this.ta = a;
+  }});
+}};
+f = f || {};
+f.a = f.a || {};
+f.a.c = f.a.c || [];
+f.a.c.dropzone = {I:function(a, d) {
+  var e = d.availableSpots, h = d.dropX, b = d.dropY;
+  a.aa = [];
+  a.h.r({q:"dropzone", i:"drop", handleEvent:function(g) {
+    0 >= e || (a.e.f("drop event on dropzone " + a.j + ", dropped " + g.v.id), e--, g.v.x = h || a.k, g.v.y = b || a.l, g.v.N = a, a.aa.push(g.v), g.v.h.K("dropped", {N:a, v:g.v}), a.h.K("droppedIn", {N:a, v:g.v}), a.w());
+  }, p:a.j});
+  a.Ka = function(b) {
+    a.e.f("dragging from dropzone " + a.j + ", dragged " + b.id);
+    b.N = null;
+    e++;
+    a.aa.splice(a.aa.indexOf(b), 1);
+    a.w();
+  };
+  Object.defineProperty(a, "droppedElements", {get:function() {
+    return this.aa;
+  }});
+}};
+f = f || {};
+f.a = f.a || {};
+f.a.c = f.a.c || [];
+f.a.c.duplicable = {I:function(a, d) {
+  var e = d.isBlocked, h = d.generatorCount || Infinity;
+  a.debug("duplicable.applyTo", "generatorCount is " + h);
+  var b = !1;
+  a.h.r({q:"duplicable", i:"pointerDown", handleEvent:function(g) {
+    0 <= g.m && (b = !0);
+    if (!(b && 0 > g.m || e && e() || (a.debug("duplicable.makeCopy", "GeneratorCount was: " + h), 0 >= h))) {
+      h--;
+      a.debug("duplicable.makeCopy", "GeneratorCount is now: " + h);
+      var d = a.ra(["duplicable"]);
+      d.C += " (duplicate)";
+      d.ia("movable", {Ra:e});
+      d.za(g);
+      a.w();
+    }
+  }, p:a.j});
+}, xa:function(a) {
+  a.h.removeEventListener({q:"duplicable", p:a.j});
+}};
+f.a.c = f.a.c || [];
+f.a.elementDecorators = f.a.c;
+f = f || {};
+f.a = f.a || {};
+f.a.c = f.a.c || [];
+f.a.c.movable = {I:function(a, d) {
+  var e = !1, h = this.m = null, b = d.Ra;
+  a.za = function(b) {
+    a.e.f("Starting moving - identifier: " + b.m);
+    e = !0;
+    a.m = b.m;
+    h = {x:b.x, y:b.y};
+    a.N && (a.N.Ka(a), a.N = null);
+  };
+  a.Ta = function(b) {
+    a.e.f("Completed move - identifier: " + b.m);
+    e = !1;
+    h = null;
+    a.Sa && (a.e.f("Trigger drop - identifier: " + b.m), a.e.Aa("drop", {x:b.x, y:b.y, v:a}));
+  };
+  a.h.r({q:"movable", i:"pointerDown", handleEvent:function(e) {
+    b && b() || a.za(e);
+  }, p:a.j});
+  var g = !1;
+  a.h.r({q:"movable", i:"pointerMove", handleEvent:function(d) {
+    !e || b && b() || (g || (g = !0, a.e.f("pointereMove event on movable " + a.j + " (" + a.m + ")")), a.k += d.x - h.x, a.l += d.y - h.y, h = {x:d.x, y:d.y}, a.w());
+  }, p:a.j});
+  a.h.r({q:"movable", i:"pointerUp", handleEvent:function(d) {
+    !e || b && b() || (a.e.f("End detected for touch " + a.m), a.e.ba(d), a.k += d.x - h.x, a.l += d.y - h.y, a.Ta(d), a.m = null, g = !1, a.w());
+  }, p:a.j});
+}};
+f = f || {};
+f.a = f.a || {};
+f.a.c = f.a.c || [];
+f.a.c.moving = {type:"moving", I:function(a, d) {
+  var e, h, b, g, k, c = d.vx, n = d.vy, l = d.ax, p = d.ay, s = d.omega;
+  a.e.f("Applying moving decorator to " + a.C + "-" + a.j);
+  var q, r, m;
+  a.b = a.b || {};
+  a.b.s = new f.S.t(c || 0, n || 0);
+  a.b.V = new f.S.t(l || 0, p || 0);
+  a.b.W = s || 0;
+  q = a.e.getTime();
+  setInterval(function() {
+    r = a.e.getTime();
+    m = r - q;
+    if (!(1 > m) && (q = r, a.b.s.x += a.b.V.x * m, a.b.s.y += a.b.V.y * m, 0 != a.b.s.x || 0 != a.b.s.y || 0 != a.ob.W || a.Y && (0 != a.Y.x || 0 != a.Y.y))) {
+      e = a.k;
+      h = a.l;
+      b = a.G;
+      g = a.n;
+      k = a.o;
+      a.k += a.b.s.x * m;
+      a.l += a.b.s.y * m;
+      a.G += a.b.W * m;
+      a.Y && (a.n += a.Y.x * m, a.o += a.Y.y * m);
+      var c = !0;
+      a.ca && a.ca.forEach(function(b) {
+        c && (b.call(a) || (c = !1));
+      });
+      c || (a.k = e, a.l = h, a.G = b, a.n = g, a.o = k);
+    }
+  }, 20);
+  Object.defineProperty(a, "moving", {get:function() {
+    return this.b;
+  }, set:function(a) {
+    this.b = a;
+  }});
+  Object.defineProperty(a.b, "speed", {get:function() {
+    return this.b.s;
+  }, set:function(a) {
+    this.b.s = a;
+  }});
+  Object.defineProperty(a.b, "acceleration", {get:function() {
+    return this.b.V;
+  }, set:function(a) {
+    this.b.V = a;
+  }});
+  Object.defineProperty(a.b, "rotationSpeed", {get:function() {
+    return this.b.W;
+  }, set:function(a) {
+    this.b.W = a;
+  }});
+}};
+(function() {
+  var a = f.T = f.T || {}, d;
+  a.qa = function(a) {
+    this.i = a;
+    d = f.fa;
+    var h = [], b = new f.pa.Z;
+    this.K = function(g, k) {
+      var c = d.ha(), n = h.length;
+      g && "pointerMove" != g.i && "drag" != g.i && "drop" != g.i && b.f("Dispatching " + n + " " + g.i + ". (" + c + ")");
+      h.forEach(function(d) {
+        d.bb = a;
+        setTimeout(function() {
+          g && "pointerMove" != g.i && b.f("Actually handling " + g.i + ". (" + c + ")");
+          d.handleEvent(g);
+          n--;
+          0 == n && k && k();
+        });
+      });
+    };
+    this.r = function(a) {
+      a.handleEvent = a.handleEvent || a.handleEvent;
+      a.X = a.X || a.rank;
+      a.p = a.p || a.listenerId;
+      a.q = a.q || a.eventGroupType;
+      var b = d.ha();
+      h.push({ja:b, handleEvent:a.handleEvent, X:a.X, p:a.p, q:a.q});
+      h = h.sort(function(a, b) {
+        return(a.X || Infinity) - (b.X || Infinity);
+      });
+      return b;
+    };
+    this.removeEventListener = function(a) {
+      h = h.filter(function(b) {
+        return Boolean(a.ja) && b.ja != a.ja || Boolean(a.p) && b.p != a.p || Boolean(a.q) && b.q != a.q;
+      });
+    };
+  };
+  f.Creevents = a;
+  a.Event = a.qa;
+})();
+(function() {
+  var a = f.T = f.T || {};
+  a.ga = function() {
+    var d = {}, e = [];
+    this.Oa = function(a) {
+      return void 0 != d[a];
+    };
+    this.r = function(h) {
+      var b = h.i || h.eventId;
+      d[b] || (e.push(b), d[b] = new a.qa(b));
+      return d[b].r(h);
+    };
+    this.K = function(a, b, e) {
+      d[a] && (b && (b.i = a), d[a].K(b, e));
+    };
+    this.removeEventListener = function(a) {
+      d[a.i] ? d[a.i].removeEventListener(a) : e.forEach(function(b) {
+        d[b].removeEventListener(a);
+      });
+    };
+    this.addEventListener = this.r;
+  };
+  a.EventContainer = a.ga;
+})();
+(function() {
+  var a = f.fa = f.fa || {};
+  a.ha = function() {
+    var d = Date.now().toString(16), d = a.ya("x", 15 - d.length) + d;
+    return("xxxxxxxx-xxxx-4xxx-y" + d.slice(0, 3) + "-" + d.slice(3)).replace(/[xy]/g, function(a) {
+      var d = 16 * Math.random() | 0;
+      return("x" == a ? d : d & 3 | 8).toString(16);
+    });
+  };
+  a.ya = function(d, e) {
+    return 0 >= e ? "" : d + a.ya(d, e - 1);
+  };
+})();
+(function() {
+  var a = f.pa = f.pa || {};
+  a.Z = function() {
+    this.f = function(a) {
+      console.log(a);
+    };
+  };
+  f.Crelog = a;
+  a.Logger = a.Z;
+  a.Z.log = a.Z.f;
+})();
+

@@ -9,6 +9,7 @@ java ^
 --js_output_file out/CreanvasDebug.js ^
 --define TEST=false ^
 --define DEBUG=true ^
+--formatting=pretty_print ^
 --compilation_level WHITESPACE_ONLY
 
 copy out\CreanvasDebug.js C:\Users\Christian\Development\WebApps\lib\CreanvasDebug.js

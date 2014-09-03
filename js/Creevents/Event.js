@@ -20,15 +20,15 @@
 			
 			var count = eventHandlers.length;
 			if (DEBUG && eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
-				logger.log("Dispatching " + count + " " + eventData.eventId + ". (" + myDispatch + ")");			
+				logger.logMessage("Dispatching " + count + " " + eventData.eventId + ". (" + myDispatch + ")");			
 			
 			eventHandlers.forEach(function(handler){ 
 				handler.debugEvent = eventId;
 				setTimeout(
 						function()
 						{
-							if (DEBUG && eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
-								logger.log("Actually handling " + eventData.eventId + ". (" + myDispatch + ")");			
+							if (DEBUG && eventData && eventData.eventId != 'pointerMove')
+								logger.logMessage("Actually handling " + eventData.eventId + ". (" + myDispatch + ")");			
 							handler.handleEvent(eventData);
 							count--;
 							if (count==0 && callback)
@@ -40,8 +40,14 @@
 		};
 		
 		// can add a optional rank to ensure calling order of the handlers
-		this.addEventListener = function(listenerData)
+		this.addEventListenerX = function(listenerData)
 		{
+			// May be called from intern/extern code - handle optimized and not optimized.
+			listenerData.handleEvent = listenerData.handleEvent || listenerData["handleEvent"];
+			listenerData.rank = listenerData.rank || listenerData["rank"];
+			listenerData.listenerId = listenerData.listenerId || listenerData["listenerId"];
+			listenerData.eventGroupType = listenerData.eventGroupType || listenerData["eventGroupType"];
+			
 			var handlerGuid = helpers.GetGuid();
 			
 			eventHandlers.push({
@@ -53,7 +59,6 @@
 	
 			eventHandlers = eventHandlers.sort(
 				function(a,b) { return (a.rank || Infinity)  - (b.rank || Infinity); }
-
 			); 
 			
 			return handlerGuid;
@@ -70,6 +75,7 @@
 		};
 	};
 	
-	//Prevent external API from Optimization
-	CreJs['Creevents'] = CreJs.Creevents;
+	// Available after ADVANCED_OPTIMIZATION 
+	CreJs['Creevents'] = creevents;
+	creevents['Event'] = creevents.Event;
 })();

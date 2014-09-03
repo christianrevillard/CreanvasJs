@@ -5,31 +5,36 @@ var CreJs = CreJs || {};
 
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 
-	CreJs.Creanvas.elementDecorators.moving = {
+	CreJs.Creanvas.elementDecorators["moving"] = {
 		type : 'moving',
-		applyTo : function(element, movingData) 
+		applyTo : function(element, elementMoving) 
 		{
+			var vx = elementMoving["vx"];
+			var vy = elementMoving["vy"];
+			var ax = elementMoving["ax"];
+			var ay = elementMoving["ay"];
+			var omega = elementMoving["omega"];
 
 			if (DEBUG)
 			{
-				element.controller.log('Applying moving decorator to ' + element.name + '-' + element.id);
+				element.controller.logMessage('Applying moving decorator to ' + element.elementName + '-' + element.elementId);
 			}
-			
+						
 			var lastUpdated, currentTime, dt, rollbackData;
 			
-			element.moving = element.moving || {};
+			element.elementMoving = element.elementMoving || {};
 
-			element.moving.speed =
+			element.elementMoving.movingSpeed =
 				new CreJs.Core.Vector(
-					movingData.vx || 0,
-					movingData.vy || 0);
-			
-			element.moving.acceleration = 
+					vx || 0,
+					vy || 0);
+						
+			element.elementMoving.movingAcceleration = 
 				 new CreJs.Core.Vector(
-					movingData.ax || 0, 
-					movingData.ay || 0);
+					ax || 0, 
+					ay || 0);
 			
-			element.moving.rotationSpeed = movingData.omega || 0;
+			element.elementMoving.omega = omega || 0;
 			
 			lastUpdated = element.controller.getTime();
 
@@ -41,16 +46,16 @@ var CreJs = CreJs || {};
 				if (dt < 1)
 					return;
 
-				//element.controller.log('Now moving : ' + element.name + ', dt=' + dt);
+				//element.controller.logMessage('Now moving : ' + element.elementName + ', dt=' + dt);
 
 				lastUpdated = currentTime;
 
-				element.moving.speed.x += element.moving.acceleration.x * dt;
-				element.moving.speed.y += element.moving.acceleration.y * dt;
+				element.elementMoving.movingSpeed.x += element.elementMoving.movingAcceleration.x * dt;
+				element.elementMoving.movingSpeed.y += element.elementMoving.movingAcceleration.y * dt;
 
-				if (element.moving.speed.x == 0 &&
-						element.moving.speed.y == 0 &&
-						element.moving.rotationSpeed == 0 &&
+				if (element.elementMoving.movingSpeed.x == 0 &&
+						element.elementMoving.movingSpeed.y == 0 &&
+						element.moving.omega == 0 &&
 						(!element.scaleSpeed ||(
 						element.scaleSpeed.x == 0 && element.scaleSpeed.y==0						
 						)))
@@ -59,19 +64,19 @@ var CreJs = CreJs || {};
 				}
 				
 				rollbackData = {
-						x:element.x, 
-						y:element.y, 
-						angle:element.angle,
-						scaleX:element.scaleX,
-						scaleY:element.scaleY};
+						x:element.elementX, 
+						y:element.elementY, 
+						angle:element.elementAngle,
+						scaleX:element.elementScaleX,
+						scaleY:element.elementScaleY};
 
-				element.x += element.moving.speed.x * dt;
-				element.y += element.moving.speed.y * dt;				
-				element.angle += element.moving.rotationSpeed * dt;
+				element.elementX += element.elementMoving.movingSpeed.x * dt;
+				element.elementY += element.elementMoving.movingSpeed.y * dt;				
+				element.elementAngle += element.elementMoving.omega * dt;
 				if (element.scaleSpeed)
 				{
-					element.scaleX += element.scaleSpeed.x * dt;	
-					element.scaleY += element.scaleSpeed.y * dt;	
+					element.elementScaleX += element.scaleSpeed.x * dt;	
+					element.elementScaleY += element.scaleSpeed.y * dt;	
 				}
 				
 				var preMoveOk = true;
@@ -93,15 +98,20 @@ var CreJs = CreJs || {};
 				}
 										
 				if (!preMoveOk) {
-					element.x = rollbackData.x;
-					element.y = rollbackData.y;
-					element.angle = rollbackData.angle;						
-					element.scaleX = rollbackData.scaleX;	
-					element.scaleY = rollbackData.scaleY;
+					element.elementX = rollbackData.x;
+					element.elementY = rollbackData.y;
+					element.elementAngle = rollbackData.angle;						
+					element.elementScaleX = rollbackData.scaleX;	
+					element.elementScaleY = rollbackData.scaleY;
 				} else {
-					//element.controller.log(element.name + " : Updated ok to : " + element.x + ', ' + element.y + ', ' + element.angle);
+					//element.controller.logMessage(element.elementName + " : Updated ok to : " + element.elementX + ', ' + element.elementY + ', ' + element.elementAngle);
 				}
 			}, 20);
-		}
+			
+			Object.defineProperty(element, "moving", { get: function() {return this.elementMoving; }, set: function(y) { this.elementMoving = y; }});
+			Object.defineProperty(element.elementMoving, "speed", { get: function() {return this.elementMoving.movingSpeed; }, set: function(y) { this.elementMoving.movingSpeed = y; }});
+			Object.defineProperty(element.elementMoving, "acceleration", { get: function() {return this.elementMoving.movingAcceleration; }, set: function(y) { this.elementMoving.movingAcceleration = y; }});
+			Object.defineProperty(element.elementMoving, "rotationSpeed", { get: function() {return this.elementMoving.omega; }, set: function(y) { this.elementMoving.omega = y; }});
+		}	
 	};	
 }());

@@ -7,7 +7,7 @@
 	
 	log.Logger = function()
 	{
-		this.log = function(logData)
+		this.logMessage = function(logData)
 		{
 			if (!isLogging)
 				return;
@@ -15,4 +15,10 @@
 			console.log(logData);
 		};
 	};	
+	
+	// Available after ADVANCED_OPTIMIZATION 
+	// Needed ??
+	CreJs["Crelog"] = log;
+	log["Logger"] = log.Logger;
+	log.Logger["log"] = log.Logger.logMessage;	
 }());

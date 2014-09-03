@@ -9,18 +9,16 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators.duplicable =
+	CreJs.Creanvas.elementDecorators["duplicable"] =
 	{
-		applyTo : function(element, duplicableData) {
+		applyTo: function(element, duplicableData) {
 			
-			var isBlocked = duplicableData.isBlocked;
-
-			var generatorCount = duplicableData
-					.hasOwnProperty('generatorCount') ? duplicableData.generatorCount
-					: Infinity;
+			// Externally usable - handle ADVANCED_OPTIMIZATION
+			var isBlocked =  duplicableData["isBlocked"];
+			var generatorCount = duplicableData["generatorCount"] || Infinity;
 			
-			duplicableData.generatorCount=0;
-
+			if (DEBUG) element.debug("duplicable.applyTo","generatorCount is " + generatorCount);				
+						
 			var requiresTouch = false;
 			
 			var makeCopy = function(e) {
@@ -36,40 +34,44 @@ var CreJs = CreJs || {};
 				
 				if (isBlocked && isBlocked()) 
 					return;
+				
+				if (DEBUG) element.debug('duplicable.makeCopy','GeneratorCount was: ' + generatorCount);
 
 				if (generatorCount<=0) 
 					return;
-				
-				if (DEBUG)
-				{
-					element.controller.log('pointereDown event on duplicable ' + element.id + ', count id  ' + generatorCount);
-				}
-				
+
 				generatorCount--;
 
-				var copy = element.clone();
-				copy.name+= " (duplicate)";
+				if (DEBUG) element.debug('duplicable.makeCopy','GeneratorCount is now: ' + generatorCount);
 
-				copy.removeDecorator('duplicable');
+				var copy = element.cloneElement(['duplicable']);
+				copy.elementName+= " (duplicate)";
 
-				copy.applyDecorators(
-						["movable",
-						{
-							isBlocked : duplicableData.isBlocked
-						}]);
+				copy.applyElementDecorator(
+					"movable",
+					{
+						isBlocked : isBlocked
+					});
 
 				copy.startMoving(e);
 
 				element.triggerRedraw();
 			};
-
 			
-			element.events.addEventListener(
+			element.elementEvents.addEventListenerX(
 					{
 						eventGroupType:'duplicable',
 						eventId:'pointerDown', 
 						handleEvent:makeCopy,
-						listenerId:element.id});			
+						listenerId:element.elementId});			
+		},
+		
+	removeFrom : function(element) {
+		
+		element.elementEvents.removeEventListener(
+				{eventGroupType:"duplicable",
+					listenerId:element.elementId});					
+
 		}
 	};
 }());

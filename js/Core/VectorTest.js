@@ -1,30 +1,28 @@
 if (TEST)
-{
-	var CreJsTest = CreJsTest || {};
-	
+{	
 	(function()
 	{
-		var core = CreJsTest.Core= CreJs.Core|| {};
+		var core = CreJs.Test.Core= CreJs.Test.Core|| {};
 		
-		core.test_Vector_constructor = function()
+		core["test_Vector_constructor"] = function()
 		{
 			var x=1, y=2, z=3;
 			
 			var vector = new CreJs.Core.Vector(x,y,z);
 			
-			if(vector.x != x)
+			if(vector.xCoordinate != x)
 			{
-				return "FAILED! vector.x: Expected " + x + ", was " + vector.x;
+				return "FAILED! vector.x: Expected " + x + ", was " + vector.xCoordinate;
 			}
 			
-			if(vector.y != y)
+			if(vector.yCoordinate != y)
 			{
-				return "FAILED! vector.y: Expected " + y + ", was " + vector.y;
+				return "FAILED! vector.y: Expected " + y + ", was " + vector.yCoordinate;
 			}
 
-			if(vector.z != z)
+			if(vector.zCoordinate != z)
 			{
-				return "FAILED! vector.z: Expected " + z + ", was " + vector.z;
+				return "FAILED! vector.z: Expected " + z + ", was " + vector.zCoordinate;
 			}
 			
 			return "OK";
@@ -38,7 +36,7 @@ if (TEST)
 		// core.drawUnitVectors = function(context, x, y, unitVectors, color)
 		// core.drawCoordinateVector = function(context, x, y, unitVectors, ux, vx, color)
 		// core.scalarProduct = function(v1, v2)
-		//	core.VectorProduct = function(v1,v2)
+		//	core.vectorProduct = function(v1,v2)
 			
 	})();
 };
