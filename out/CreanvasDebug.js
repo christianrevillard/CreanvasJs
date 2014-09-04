@@ -398,7 +398,15 @@ if (TEST) {
         controller.logMessage("No redraw");
       }
     }, refreshTime);
-    this["addElement"] = this.add;
+    var convertExternInput = function(elementDefinition) {
+      return{elementName:elementDefinition["name"], elementImage:elementDefinition["image"] ? {imageWidth:elementDefinition["image"]["width"], imageHeight:elementDefinition["image"]["height"], imageDraw:elementDefinition["image"]["draw"], imageTranslate:elementDefinition["image"]["translate"] ? {translateDx:elementDefinition["image"]["translate"]["dx"] || 0, translateDy:elementDefinition["image"]["translate"]["dy"] || 0} : null} : null, elementPosition:elementDefinition["position"] ? {positionX:elementDefinition["position"]["x"], 
+      positionY:elementDefinition["position"]["y"], positionZ:elementDefinition["position"]["z"]} : null, rules:elementDefinition["rules"]};
+    };
+    this["addElement"] = function() {
+      var args = [].slice.call(arguments);
+      args[0] = convertExternInput(args[0]);
+      return this.add.apply(this, args);
+    };
     this["redraw"] = this.triggerRedraw;
     this["stop"] = this.stopController;
   };
@@ -407,21 +415,11 @@ if (TEST) {
 (function() {
   var creanvas = CreJs.Creanvas;
   creanvas.Element = function(controller, elementDefinition) {
-    this.elementName = elementDefinition.elementName || elementDefinition["name"];
-    var image = elementDefinition.elementImage || elementDefinition["image"] || {};
-    image.imageWidth = image.imageWidth || image["width"];
-    image.imageHeight = image.imageHeight || image["height"];
-    var draw = image.imageDraw || image["draw"];
-    image.imageTranslate = image.imageTranslate || image["translate"];
-    if (image["translate"]) {
-      image.imageTranslate.translateDx = image.imageTranslate["dx"] || 0;
-      image.imageTranslate.translateDy = image.imageTranslate["dy"] || 0;
-    }
-    var position = elementDefinition.elementPosition || elementDefinition["position"];
-    position.positionX = position.positionX || position["x"];
-    position.positionY = position.positionY || position["y"];
-    position.positionZ = position.positionZ || position["z"];
-    var rules = elementDefinition["rules"];
+    this.elementName = elementDefinition.elementName;
+    var image = elementDefinition.elementImage;
+    var draw = image.imageDraw;
+    var position = elementDefinition.elementPosition;
+    var rules = elementDefinition.rules;
     var decoratorArguments = [].slice.apply(arguments).slice(2);
     var cachedResults = [];
     this.controller = controller;
@@ -709,7 +707,7 @@ var CreJs = CreJs || {};
     }});
     element.preMove = this.preMove || [];
     element.preMove.push(function() {
-      return element.controller.collisionSolver.solveCollision_(element);
+      return element.controller.collisionSolver.solveCollision(element);
     });
     element.getMomentOfInertia = function() {
       return element.m / 12 * (element.elementWidth * element.elementScaleX * element.elementWidth * element.elementScaleX + element.elementHeight * element.elementScaleY * element.elementHeight * element.elementScaleY);
@@ -732,7 +730,7 @@ var CreJs = CreJs || {};
     tempCollisionCanvas.width = tempCollidedCanvas.width = element.elementWidth;
     tempCollisionCanvas.height = tempCollidedCanvas.height = element.elementHeight;
     element.collidedContext = tempCollidedCanvas.getContext("2d");
-    element.collidedContext.putImageData(element.elementImage_, 0, 0);
+    element.collidedContext.putImageData(element.elementImage, 0, 0);
     element.collidedContext.globalCompositeOperation = "source-atop";
     element.collidedContext.fillStyle = "#000";
     element.collidedContext.fillRect(0, 0, element.elementWidth, element.elementHeight);
@@ -741,7 +739,7 @@ var CreJs = CreJs || {};
     element.collisionContext.drawImage(element.collidedContext.canvas, 0, 0);
     var collisionImageOld = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
     var collisionImageNew = element.collisionContext.createImageData(element.elementWidth, element.elementHeight);
-    element.edges_ = [];
+    element.edges = [];
     for (var imageX = 0;imageX < element.elementWidth;imageX++) {
       for (var imageY = 0;imageY < element.elementHeight;imageY++) {
         if (collisionImageOld.data[imageY * element.elementWidth * 4 + imageX * 4 + 3] < 200) {
@@ -760,7 +758,7 @@ var CreJs = CreJs || {};
         var fillValue = 255;
         element.collisionContext.putImageData(collisionImageNew, 0, 0);
         if (edge) {
-          element.edges_.push({x:imageX, y:imageY});
+          element.edges.push({x:imageX, y:imageY});
           collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4] = 0;
           collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4 + 1] = 0;
           collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4 + 2] = 0;
@@ -1023,19 +1021,19 @@ var CreJs = CreJs || {};
       this.elementMoving = y;
     }});
     Object.defineProperty(element.elementMoving, "speed", {get:function() {
-      return this.elementMoving.movingSpeed;
+      return this.movingSpeed;
     }, set:function(y) {
-      this.elementMoving.movingSpeed = y;
+      this.movingSpeed = y;
     }});
     Object.defineProperty(element.elementMoving, "acceleration", {get:function() {
-      return this.elementMoving.movingAcceleration;
+      return this.movingAcceleration;
     }, set:function(y) {
-      this.elementMoving.movingAcceleration = y;
+      this.movingAcceleration = y;
     }});
     Object.defineProperty(element.elementMoving, "rotationSpeed", {get:function() {
-      return this.elementMoving.omega;
+      return this.omega;
     }, set:function(y) {
-      this.elementMoving.omega = y;
+      this.omega = y;
     }});
   }};
 })();

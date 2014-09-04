@@ -109,9 +109,9 @@ var CreJs = CreJs || {};
 			}, 20);
 			
 			Object.defineProperty(element, "moving", { get: function() {return this.elementMoving; }, set: function(y) { this.elementMoving = y; }});
-			Object.defineProperty(element.elementMoving, "speed", { get: function() {return this.elementMoving.movingSpeed; }, set: function(y) { this.elementMoving.movingSpeed = y; }});
-			Object.defineProperty(element.elementMoving, "acceleration", { get: function() {return this.elementMoving.movingAcceleration; }, set: function(y) { this.elementMoving.movingAcceleration = y; }});
-			Object.defineProperty(element.elementMoving, "rotationSpeed", { get: function() {return this.elementMoving.omega; }, set: function(y) { this.elementMoving.omega = y; }});
+			Object.defineProperty(element.elementMoving, "speed", { get: function() {return this.movingSpeed; }, set: function(y) { this.movingSpeed = y; }});
+			Object.defineProperty(element.elementMoving, "acceleration", { get: function() {return this.movingAcceleration; }, set: function(y) { this.movingAcceleration = y; }});
+			Object.defineProperty(element.elementMoving, "rotationSpeed", { get: function() {return this.omega; }, set: function(y) { this.omega = y; }});
 		}	
 	};	
 }());

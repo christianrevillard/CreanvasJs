@@ -308,7 +308,39 @@
 				},
 				refreshTime);	
 		
-		this["addElement"] = this.add;
+		var convertExternInput=function(elementDefinition)
+		{
+			return {
+				elementName: elementDefinition["name"],
+				elementImage: elementDefinition["image"]?
+						{
+							imageWidth: elementDefinition["image"]["width"],
+							imageHeight: elementDefinition["image"]["height"],
+							imageDraw: elementDefinition["image"]["draw"],
+							imageTranslate: elementDefinition["image"]["translate"]?
+							{
+								translateDx: elementDefinition["image"]["translate"]["dx"] || 0,
+								translateDy: elementDefinition["image"]["translate"]["dy"] || 0
+							}:null
+						}:null,
+				elementPosition: elementDefinition["position"]?
+				{
+					positionX: elementDefinition["position"]["x"],
+					positionY: elementDefinition["position"]["y"],
+					positionZ: elementDefinition["position"]["z"]		
+				}:null,
+				rules: elementDefinition["rules"]
+			};
+		};
+		
+		this["addElement"] = function()
+		{	
+			var args = [].slice.call(arguments);
+			args[0]  = convertExternInput(args[0]);
+
+			return this.add.apply(this, args);
+		};
+		
 		this["redraw"] = this.triggerRedraw;
 		this["stop"] = this.stopController;
 	};

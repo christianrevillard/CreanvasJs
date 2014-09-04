@@ -42,7 +42,7 @@ var CreJs = CreJs || {};
 			
 			element.preMove.push(function()
 			 {			
-				return (element.controller.collisionSolver.solveCollision_(element));
+				return (element.controller.collisionSolver.solveCollision(element));
 			 });			
 			
 			element.getMomentOfInertia = function()
@@ -78,7 +78,7 @@ var CreJs = CreJs || {};
 			tempCollisionCanvas.height = tempCollidedCanvas.height = element.elementHeight;				
 
 			element.collidedContext = tempCollidedCanvas.getContext("2d");				
-			element.collidedContext.putImageData(element.elementImage_,0,0);
+			element.collidedContext.putImageData(element.elementImage,0,0);
 			element.collidedContext.globalCompositeOperation='source-atop';
 			element.collidedContext.fillStyle="#000";
 			element.collidedContext.fillRect(0,0,element.elementWidth, element.elementHeight);
@@ -90,7 +90,7 @@ var CreJs = CreJs || {};
 			var collisionImageOld = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
 			var collisionImageNew = element.collisionContext.createImageData(element.elementWidth, element.elementHeight);
 
-			element.edges_ = [];
+			element.edges = [];
 			
 			for (var imageX=0;imageX<element.elementWidth; imageX++)
 			{
@@ -122,7 +122,7 @@ var CreJs = CreJs || {};
 
 					if (edge)
 					{
-						element.edges_.push({x:imageX, y:imageY});
+						element.edges.push({x:imageX, y:imageY});
 													
 						collisionImageNew.data[((imageY)*element.elementWidth)*4 + (imageX)*4]=0;
 						collisionImageNew.data[((imageY)*element.elementWidth)*4 + (imageX)*4+1]=0;

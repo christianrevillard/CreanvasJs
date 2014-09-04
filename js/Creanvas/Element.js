@@ -9,24 +9,12 @@
 		controller, 
 		elementDefinition){
 		
-		this.elementName = elementDefinition.elementName || elementDefinition["name"];
-		var image = elementDefinition.elementImage || elementDefinition["image"] || {};
-		image.imageWidth = image.imageWidth || image["width"]; 
-		image.imageHeight = image.imageHeight || image["height"]; 
-		var draw = image.imageDraw || image["draw"];
-		image.imageTranslate = image.imageTranslate || image["translate"];
-		if(image["translate"])
-		{
-			image.imageTranslate.translateDx = image.imageTranslate["dx"] || 0;
-			image.imageTranslate.translateDy = image.imageTranslate["dy"] || 0;
-		}
-
-		var position = elementDefinition.elementPosition || elementDefinition["position"];
-		position.positionX = position.positionX || position["x"];
-		position.positionY = position.positionY || position["y"];
-		position.positionZ = position.positionZ || position["z"];		
+		this.elementName = elementDefinition.elementName;
+		var image = elementDefinition.elementImage;
+		var draw = image.imageDraw;
+		var position = elementDefinition.elementPosition;
 		
-		var rules = elementDefinition["rules"];
+		var rules = elementDefinition.rules;
 		
 		var decoratorArguments = [].slice.apply(arguments).slice(2);
 
