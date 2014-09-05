@@ -8,8 +8,10 @@ java ^
 	./js/Crelog/*.js ^
 --js_output_file out/Creanvas.js ^
 --define TEST=false ^
---define DEBUG=true ^
---formatting=pretty_print ^
+--define DEBUG=false ^
 --compilation_level ADVANCED_OPTIMIZATIONS
 
+REM --formatting=pretty_print ^
+
 copy out\Creanvas.js C:\Users\Christian\Development\WebApps\lib\Creanvas.js
+

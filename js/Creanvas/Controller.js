@@ -7,12 +7,13 @@
 			controller,
 			time,
 			timeStart,
-			timeScale;
-			
+			timeScale, // timeCreanvas/timeComputer 100 => every seconds on computer is 100 seconds in Creanvas
+			meterPerPoint; // distanceCreanvas/RealDistance 1 => every point on canvas is 1 meter.
 		controller = this;
-		canvas = controllerData.canvas;
-		timeScale = controllerData.timeScale || 1;
-
+		canvas = controllerData["canvas"];
+		timeScale = controllerData["timeScale"] || 1;
+		meterPerPoint = controllerData["meterPerPoint"] || 1;
+		
 		if (controllerData.realTime)
 		{	
 			timeStart = Date.now();
@@ -67,9 +68,10 @@
 		if (DEBUG) this.logMessage('Starting controller');
 		
 		controller.context = canvas.getContext("2d");	
+		controller.context.scale(1/meterPerPoint, 1/meterPerPoint);
 		needRedraw = true;
 		isDrawing = false;
-		refreshTime = controllerData.refreshTime || 50; // ms	- TODO constant default refresh time
+		refreshTime = controllerData["refreshTime"] || 50; // ms	- TODO constant default refresh time
 		
 		this.triggerPointedElementEvent = function(eventId, event)
 		{
@@ -202,9 +204,18 @@
 		{
 			// what about rotations here?
 			var boundings = canvas.getBoundingClientRect();
-			return { 
-				x: Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width),
-				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};		
+			controller.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ")" );
+			var xy = { 
+				x: Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width * meterPerPoint),
+				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height * meterPerPoint)};
+			controller.logMessage("canvasXY: (" + xy.x + "," + xy.y + ")" );
+			if (clientXY.type=="click")
+				{
+				controller.logMessage("Click on ! canvasXY: (" + xy.x + "," + xy.y + ")" );
+				
+				}
+
+			return xy;
 		};
 	
 		controller.elements = [];
@@ -261,7 +272,7 @@
 						controllerData["drawBackground"] ||  
 						function (context) 
 						{
-							context.fillStyle = controllerData.backgroundStyle || "#FFF";
+							context.fillStyle = controllerData["backgroundStyle"] || "#FFF";
 							context.fillRect(0,0,canvas.width,canvas.height);
 						}				
 				},
@@ -316,18 +327,18 @@
 						{
 							imageWidth: elementDefinition["image"]["width"],
 							imageHeight: elementDefinition["image"]["height"],
-							imageDraw: elementDefinition["image"]["draw"],
+							imageDraw: elementDefinition["image"]["draw"], // scale inside draw
 							imageTranslate: elementDefinition["image"]["translate"]?
 							{
-								translateDx: elementDefinition["image"]["translate"]["dx"] || 0,
-								translateDy: elementDefinition["image"]["translate"]["dy"] || 0
+								translateDx: elementDefinition["image"]["translate"]["dx"],
+								translateDy: elementDefinition["image"]["translate"]["dy"]
 							}:null
 						}:null,
 				elementPosition: elementDefinition["position"]?
 				{
-					positionX: elementDefinition["position"]["x"],
-					positionY: elementDefinition["position"]["y"],
-					positionZ: elementDefinition["position"]["z"]		
+					positionX: elementDefinition["position"]["x"] || 0,
+					positionY: elementDefinition["position"]["y"] || 0,
+					positionZ: elementDefinition["position"]["z"] || 0
 				}:null,
 				rules: elementDefinition["rules"]
 			};

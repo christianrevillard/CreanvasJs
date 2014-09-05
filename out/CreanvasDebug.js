@@ -239,10 +239,11 @@ if (TEST) {
 })();
 (function() {
   CreJs.Creanvas.Controller = function(controllerData) {
-    var canvas, needRedraw, refreshTime, controller, time, timeStart, timeScale;
+    var canvas, needRedraw, refreshTime, controller, time, timeStart, timeScale, meterPerPoint;
     controller = this;
-    canvas = controllerData.canvas;
-    timeScale = controllerData.timeScale || 1;
+    canvas = controllerData["canvas"];
+    timeScale = controllerData["timeScale"] || 1;
+    meterPerPoint = controllerData["meterPerPoint"] || 1;
     if (controllerData.realTime) {
       timeStart = Date.now();
       this.getTime = function() {
@@ -266,9 +267,10 @@ if (TEST) {
       this.logMessage("Starting controller");
     }
     controller.context = canvas.getContext("2d");
+    controller.context.scale(1 / meterPerPoint, 1 / meterPerPoint);
     needRedraw = true;
     isDrawing = false;
-    refreshTime = controllerData.refreshTime || 50;
+    refreshTime = controllerData["refreshTime"] || 50;
     this.triggerPointedElementEvent = function(eventId, event) {
       var hit = false;
       controller.elements.filter(function(e) {
@@ -351,7 +353,13 @@ if (TEST) {
     };
     this.getCanvasXYFromClientXY = function(clientXY) {
       var boundings = canvas.getBoundingClientRect();
-      return{x:Math.round((clientXY.clientX - boundings.left) * canvas.width / boundings.width), y:Math.round((clientXY.clientY - boundings.top) * canvas.height / boundings.height)};
+      controller.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ")");
+      var xy = {x:Math.round((clientXY.clientX - boundings.left) * canvas.width / boundings.width * meterPerPoint), y:Math.round((clientXY.clientY - boundings.top) * canvas.height / boundings.height * meterPerPoint)};
+      controller.logMessage("canvasXY: (" + xy.x + "," + xy.y + ")");
+      if (clientXY.type == "click") {
+        controller.logMessage("Click on ! canvasXY: (" + xy.x + "," + xy.y + ")");
+      }
+      return xy;
     };
     controller.elements = [];
     this.add = function() {
@@ -378,7 +386,7 @@ if (TEST) {
     };
     controller.logMessage("Adding background");
     this.add({elementName:"background", elementImage:{imageWidth:canvas.width, imageHeight:canvas.height, imageTranslate:{translateDx:0, translateDy:0}, imageDraw:controllerData["drawBackground"] || function(context) {
-      context.fillStyle = controllerData.backgroundStyle || "#FFF";
+      context.fillStyle = controllerData["backgroundStyle"] || "#FFF";
       context.fillRect(0, 0, canvas.width, canvas.height);
     }}, elementPosition:{positionZ:-Infinity}});
     setInterval(function() {
@@ -401,8 +409,8 @@ if (TEST) {
       }
     }, refreshTime);
     var convertExternInput = function(elementDefinition) {
-      return{elementName:elementDefinition["name"], elementImage:elementDefinition["image"] ? {imageWidth:elementDefinition["image"]["width"], imageHeight:elementDefinition["image"]["height"], imageDraw:elementDefinition["image"]["draw"], imageTranslate:elementDefinition["image"]["translate"] ? {translateDx:elementDefinition["image"]["translate"]["dx"] || 0, translateDy:elementDefinition["image"]["translate"]["dy"] || 0} : null} : null, elementPosition:elementDefinition["position"] ? {positionX:elementDefinition["position"]["x"], 
-      positionY:elementDefinition["position"]["y"], positionZ:elementDefinition["position"]["z"]} : null, rules:elementDefinition["rules"]};
+      return{elementName:elementDefinition["name"], elementImage:elementDefinition["image"] ? {imageWidth:elementDefinition["image"]["width"], imageHeight:elementDefinition["image"]["height"], imageDraw:elementDefinition["image"]["draw"], imageTranslate:elementDefinition["image"]["translate"] ? {translateDx:elementDefinition["image"]["translate"]["dx"], translateDy:elementDefinition["image"]["translate"]["dy"]} : null} : null, elementPosition:elementDefinition["position"] ? {positionX:elementDefinition["position"]["x"] || 
+      0, positionY:elementDefinition["position"]["y"] || 0, positionZ:elementDefinition["position"]["z"] || 0} : null, rules:elementDefinition["rules"]};
     };
     this["addElement"] = function() {
       var args = [].slice.call(arguments);
