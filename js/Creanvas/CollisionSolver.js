@@ -144,14 +144,14 @@
 			localSpeedOther = speedOther.getCoordinates(colVectors);
 
 
-			var F = element.collidable.coefficient * other.collidable.coefficient * 2 *
+			var F = element.solidData.coefficient * other.solidData.coefficient * 2 *
 				(localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z)
-				/( 1/other.elementMass + 1/element.elementMass + otherRot.z*otherRot.z/other.getMomentOfInertia() + elementRot.z*elementRot.z/element.getMomentOfInertia() );
+				/( 1/other.solidData.elementMass + 1/element.solidData.elementMass + otherRot.z*otherRot.z/other.getMomentOfInertia() + elementRot.z*elementRot.z/element.getMomentOfInertia() );
 					
-			element.elementMoving.movingSpeed.x += F/element.elementMass*colVectors.v.x;
-			element.elementMoving.movingSpeed.y += F/element.elementMass*colVectors.v.y;
-			other.elementMoving.movingSpeed.x -= F/other.elementMass*colVectors.v.x;
-			other.elementMoving.movingSpeed.y -= F/other.elementMass*colVectors.v.y;
+			element.elementMoving.movingSpeed.x += F/element.solidData.elementMass*colVectors.v.x;
+			element.elementMoving.movingSpeed.y += F/element.solidData.elementMass*colVectors.v.y;
+			other.elementMoving.movingSpeed.x -= F/other.solidData.elementMass*colVectors.v.x;
+			other.elementMoving.movingSpeed.y -= F/other.solidData.elementMass*colVectors.v.y;
 			element.elementMoving.omega += F * l1 / element.getMomentOfInertia();
 			other.elementMoving.omega -= F * l2 / other.getMomentOfInertia();
 						
@@ -160,7 +160,7 @@
 
 		var getCollidableElements = function()
 		{
-			return controller.elements.filter(function(e){ return e.collidable;});
+			return controller.elements.filter(function(e){ return e.solidData;});
 		};					
 
 		this.solveCollision = function(element)

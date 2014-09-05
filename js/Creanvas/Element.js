@@ -35,7 +35,6 @@
 		// scaling decorator ?? => should be
 		this.elementScaleX = image.imageScaleX || 1;
 		this.elementScaleY = image.imageScaleY || 1;
-		this.elementMass = 1;
 	
 		// rename cleary, center or something
 		var translate = image.imageTranslate || {translateDx:image.imageWidth/2, translateDy:image.imageHeight/2};			
@@ -295,7 +294,6 @@
 		Object.defineProperty(element, "y", { get: function() {return this.elementY; }, set: function(y) { this.elementY = y; }});
 		Object.defineProperty(element, "z", { get: function() {return this.elementZ; }, set: function(y) { this.elementZ = y; }});
 		Object.defineProperty(element, "angle", { get: function() {return this.elementAngle; }, set: function(y) { this.elementAngle = y; }});
-		Object.defineProperty(element, "mass", { get: function() {return this.elementMass; }, set: function(y) { this.elementMass = y; }});
 
 		Object.defineProperty(element, "id", { get: function() {return this.elementId; }});
 		Object.defineProperty(element, "image", { get: function() {return this.elementImage; }});

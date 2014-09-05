@@ -186,17 +186,17 @@ if (TEST) {
       }
       localSpeedElement = speedElement.getCoordinates(colVectors);
       localSpeedOther = speedOther.getCoordinates(colVectors);
-      var F = element.collidable.coefficient * other.collidable.coefficient * 2 * (localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z) / (1 / other.elementMass + 1 / element.elementMass + otherRot.z * otherRot.z / other.getMomentOfInertia() + elementRot.z * elementRot.z / element.getMomentOfInertia());
-      element.elementMoving.movingSpeed.x += F / element.elementMass * colVectors.v.x;
-      element.elementMoving.movingSpeed.y += F / element.elementMass * colVectors.v.y;
-      other.elementMoving.movingSpeed.x -= F / other.elementMass * colVectors.v.x;
-      other.elementMoving.movingSpeed.y -= F / other.elementMass * colVectors.v.y;
+      var F = element.solidData.coefficient * other.solidData.coefficient * 2 * (localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z) / (1 / other.solidData.elementMass + 1 / element.solidData.elementMass + otherRot.z * otherRot.z / other.getMomentOfInertia() + elementRot.z * elementRot.z / element.getMomentOfInertia());
+      element.elementMoving.movingSpeed.x += F / element.solidData.elementMass * colVectors.v.x;
+      element.elementMoving.movingSpeed.y += F / element.solidData.elementMass * colVectors.v.y;
+      other.elementMoving.movingSpeed.x -= F / other.solidData.elementMass * colVectors.v.x;
+      other.elementMoving.movingSpeed.y -= F / other.solidData.elementMass * colVectors.v.y;
       element.elementMoving.omega += F * l1 / element.getMomentOfInertia();
       other.elementMoving.omega -= F * l2 / other.getMomentOfInertia();
     };
     var getCollidableElements = function() {
       return controller.elements.filter(function(e) {
-        return e.collidable;
+        return e.solidData;
       });
     };
     this.solveCollision = function(element) {
@@ -442,7 +442,6 @@ if (TEST) {
     this.elementAngle = position.positionAngle || 0;
     this.elementScaleX = image.imageScaleX || 1;
     this.elementScaleY = image.imageScaleY || 1;
-    this.elementMass = 1;
     var translate = image.imageTranslate || {translateDx:image.imageWidth / 2, translateDy:image.imageHeight / 2};
     this.dx = translate.translateDx;
     this.dy = translate.translateDy;
@@ -651,11 +650,6 @@ if (TEST) {
     }, set:function(y) {
       this.elementAngle = y;
     }});
-    Object.defineProperty(element, "mass", {get:function() {
-      return this.elementMass;
-    }, set:function(y) {
-      this.elementMass = y;
-    }});
     Object.defineProperty(element, "id", {get:function() {
       return this.elementId;
     }});
@@ -685,88 +679,6 @@ var CreJs = CreJs || {};
       element.triggerRedraw();
     };
     element.elementEvents.addEventListenerX({eventId:"click", handleEvent:element.onClick});
-  }};
-})();
-var CreJs = CreJs || {};
-(function() {
-  CreJs.Creanvas = CreJs.Creanvas || {};
-  CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
-  CreJs.Creanvas.elementDecorators["collidable"] = {applyTo:function(element, collidableData) {
-    var cachedResults = [];
-    element.collidable = {};
-    var onCollision = collidableData["onCollision"];
-    var collisionCoefficient = collidableData["coefficient"];
-    element.controller.collisionSolver = element.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(element.controller);
-    element.collidable.coefficient = !collisionCoefficient && collisionCoefficient !== 0 ? 1 : collisionCoefficient;
-    element.elementMoving = element.elementMoving || {movingSpeed:new CreJs.Core.Vector(0, 0), movingAcceleration:new CreJs.Core.Vector(0, 0), omega:0};
-    element.elementEvents.addEventListenerX({eventId:"collision", handleEvent:function(collisionEvent) {
-      if (onCollision) {
-        onCollision.call(element, collisionEvent);
-      }
-    }});
-    element.preMove = this.preMove || [];
-    element.preMove.push(function() {
-      return element.controller.collisionSolver.solveCollision(element);
-    });
-    element.getMomentOfInertia = function() {
-      return element.elementMass / 12 * (element.elementWidth * element.elementScaleX * element.elementWidth * element.elementScaleX + element.elementHeight * element.elementScaleY * element.elementHeight * element.elementScaleY);
-    };
-    element.geRadiusCache = function() {
-      return Math.sqrt(element.elementWidth * element.elementWidth * element.elementScaleX * element.elementScaleX + element.elementHeight * element.elementHeight * element.elementScaleY * element.elementScaleY) / 2;
-    };
-    element.getRadius = function() {
-      var key = element.elementWidth + "" + element.elementHeight + "" + element.elementScaleX + "" + element.elementScaleY;
-      if (cachedResults["getRadius"] && cachedResults["getRadius"].key == key) {
-        return cachedResults["getRadius"].value_;
-      }
-      var value = element.geRadiusCache();
-      cachedResults["geRadius"] = {kevectorY:key, value_:value};
-      return value;
-    };
-    var canvas = element.controller.context.canvas;
-    var tempCollisionCanvas = canvas.ownerDocument.createElement("canvas");
-    var tempCollidedCanvas = canvas.ownerDocument.createElement("canvas");
-    tempCollisionCanvas.width = tempCollidedCanvas.width = element.elementWidth;
-    tempCollisionCanvas.height = tempCollidedCanvas.height = element.elementHeight;
-    element.collidedContext = tempCollidedCanvas.getContext("2d");
-    element.collidedContext.putImageData(element.elementImage, 0, 0);
-    element.collidedContext.globalCompositeOperation = "source-atop";
-    element.collidedContext.fillStyle = "#000";
-    element.collidedContext.fillRect(0, 0, element.elementWidth, element.elementHeight);
-    element.collisionContext = tempCollisionCanvas.getContext("2d");
-    element.collisionContext.globalCompositeOperation = "source-over";
-    element.collisionContext.drawImage(element.collidedContext.canvas, 0, 0);
-    var collisionImageOld = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
-    var collisionImageNew = element.collisionContext.createImageData(element.elementWidth, element.elementHeight);
-    element.edges = [];
-    for (var imageX = 0;imageX < element.elementWidth;imageX++) {
-      for (var imageY = 0;imageY < element.elementHeight;imageY++) {
-        if (collisionImageOld.data[imageY * element.elementWidth * 4 + imageX * 4 + 3] < 200) {
-          continue;
-        }
-        var edge = false;
-        for (var i = -1;i < 2;i++) {
-          for (var j = -1;j < 2;j++) {
-            if (imageY + i < 0 || imageX + j < 0 || imageY + i > element.elementHeight - 1 || imageX + i > element.elementWidth - 1 || collisionImageOld.data[(imageY + i) * element.elementWidth * 4 + (imageX + j) * 4 + 3] < 100) {
-              edge = true;
-              i = 2;
-              j = 2;
-            }
-          }
-        }
-        var fillValue = 255;
-        element.collisionContext.putImageData(collisionImageNew, 0, 0);
-        if (edge) {
-          element.edges.push({x:imageX, y:imageY});
-          collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4] = 0;
-          collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4 + 1] = 0;
-          collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4 + 2] = 0;
-          collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4 + 3] = fillValue;
-        }
-      }
-    }
-    element.collisionContext.putImageData(collisionImageNew, 0, 0);
-    element.collisionContext.translate(element.dx, element.dy);
   }};
 })();
 var CreJs = CreJs || {};
@@ -1048,6 +960,99 @@ var CreJs = CreJs || {};
       return this.elementScaleSpeed;
     }, set:function(y) {
       this.elementScaleSpeed = y;
+    }});
+  }};
+})();
+var CreJs = CreJs || {};
+(function() {
+  CreJs.Creanvas = CreJs.Creanvas || {};
+  CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+  CreJs.Creanvas.elementDecorators["solid"] = {applyTo:function(element, solidData) {
+    var cachedResults = [];
+    element.solidData = {};
+    element.solidData.elementMass = solidData["mass"] || 1;
+    var onCollision = solidData["onCollision"];
+    var collisionCoefficient = solidData["coefficient"];
+    element.controller.collisionSolver = element.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(element.controller);
+    element.solidData.coefficient = !collisionCoefficient && collisionCoefficient !== 0 ? 1 : collisionCoefficient;
+    element.elementMoving = element.elementMoving || {movingSpeed:new CreJs.Core.Vector(0, 0), movingAcceleration:new CreJs.Core.Vector(0, 0), omega:0};
+    element.elementEvents.addEventListenerX({eventId:"collision", handleEvent:function(collisionEvent) {
+      if (onCollision) {
+        onCollision.call(element, collisionEvent);
+      }
+    }});
+    element.preMove = this.preMove || [];
+    element.preMove.push(function() {
+      return element.controller.collisionSolver.solveCollision(element);
+    });
+    element.getMomentOfInertia = function() {
+      return element.solidData.elementMass / 12 * (element.elementWidth * element.elementScaleX * element.elementWidth * element.elementScaleX + element.elementHeight * element.elementScaleY * element.elementHeight * element.elementScaleY);
+    };
+    element.geRadiusCache = function() {
+      return Math.sqrt(element.elementWidth * element.elementWidth * element.elementScaleX * element.elementScaleX + element.elementHeight * element.elementHeight * element.elementScaleY * element.elementScaleY) / 2;
+    };
+    element.getRadius = function() {
+      var key = element.elementWidth + "" + element.elementHeight + "" + element.elementScaleX + "" + element.elementScaleY;
+      if (cachedResults["getRadius"] && cachedResults["getRadius"].key == key) {
+        return cachedResults["getRadius"].value_;
+      }
+      var value = element.geRadiusCache();
+      cachedResults["geRadius"] = {kevectorY:key, value_:value};
+      return value;
+    };
+    var canvas = element.controller.context.canvas;
+    var tempCollisionCanvas = canvas.ownerDocument.createElement("canvas");
+    var tempCollidedCanvas = canvas.ownerDocument.createElement("canvas");
+    tempCollisionCanvas.width = tempCollidedCanvas.width = element.elementWidth;
+    tempCollisionCanvas.height = tempCollidedCanvas.height = element.elementHeight;
+    element.collidedContext = tempCollidedCanvas.getContext("2d");
+    element.collidedContext.putImageData(element.elementImage, 0, 0);
+    element.collidedContext.globalCompositeOperation = "source-atop";
+    element.collidedContext.fillStyle = "#000";
+    element.collidedContext.fillRect(0, 0, element.elementWidth, element.elementHeight);
+    element.collisionContext = tempCollisionCanvas.getContext("2d");
+    element.collisionContext.globalCompositeOperation = "source-over";
+    element.collisionContext.drawImage(element.collidedContext.canvas, 0, 0);
+    var collisionImageOld = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
+    var collisionImageNew = element.collisionContext.createImageData(element.elementWidth, element.elementHeight);
+    element.edges = [];
+    for (var imageX = 0;imageX < element.elementWidth;imageX++) {
+      for (var imageY = 0;imageY < element.elementHeight;imageY++) {
+        if (collisionImageOld.data[imageY * element.elementWidth * 4 + imageX * 4 + 3] < 200) {
+          continue;
+        }
+        var edge = false;
+        for (var i = -1;i < 2;i++) {
+          for (var j = -1;j < 2;j++) {
+            if (imageY + i < 0 || imageX + j < 0 || imageY + i > element.elementHeight - 1 || imageX + i > element.elementWidth - 1 || collisionImageOld.data[(imageY + i) * element.elementWidth * 4 + (imageX + j) * 4 + 3] < 100) {
+              edge = true;
+              i = 2;
+              j = 2;
+            }
+          }
+        }
+        var fillValue = 255;
+        element.collisionContext.putImageData(collisionImageNew, 0, 0);
+        if (edge) {
+          element.edges.push({x:imageX, y:imageY});
+          collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4] = 0;
+          collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4 + 1] = 0;
+          collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4 + 2] = 0;
+          collisionImageNew.data[imageY * element.elementWidth * 4 + imageX * 4 + 3] = fillValue;
+        }
+      }
+    }
+    element.collisionContext.putImageData(collisionImageNew, 0, 0);
+    element.collisionContext.translate(element.dx, element.dy);
+    Object.defineProperty(element, "solid", {get:function() {
+      return this.solidData;
+    }, set:function(y) {
+      this.solidData = y;
+    }});
+    Object.defineProperty(element.solidData, "mass", {get:function() {
+      return this.elementMass;
+    }, set:function(y) {
+      this.elementMass = y;
     }});
   }};
 })();

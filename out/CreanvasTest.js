@@ -152,16 +152,16 @@ TEST && function() {
       c.elementScaleSpeed && (k.x += h.x * c.elementScaleSpeed.x, k.y += h.y * c.elementScaleSpeed.y);
       l = e.getCoordinates(b);
       k = k.getCoordinates(b);
-      n = a.collidable.coefficient * c.collidable.coefficient * 2 * (k.v - l.v + c.elementMoving.omega * p.z - a.elementMoving.omega * n.z) / (1 / c.elementMass + 1 / a.elementMass + p.z * p.z / c.getMomentOfInertia() + n.z * n.z / a.getMomentOfInertia());
-      a.elementMoving.movingSpeed.x += n / a.elementMass * b.v.x;
-      a.elementMoving.movingSpeed.y += n / a.elementMass * b.v.y;
-      c.elementMoving.movingSpeed.x -= n / c.elementMass * b.v.x;
-      c.elementMoving.movingSpeed.y -= n / c.elementMass * b.v.y;
+      n = a.solidData.coefficient * c.solidData.coefficient * 2 * (k.v - l.v + c.elementMoving.omega * p.z - a.elementMoving.omega * n.z) / (1 / c.solidData.elementMass + 1 / a.solidData.elementMass + p.z * p.z / c.getMomentOfInertia() + n.z * n.z / a.getMomentOfInertia());
+      a.elementMoving.movingSpeed.x += n / a.solidData.elementMass * b.v.x;
+      a.elementMoving.movingSpeed.y += n / a.solidData.elementMass * b.v.y;
+      c.elementMoving.movingSpeed.x -= n / c.solidData.elementMass * b.v.x;
+      c.elementMoving.movingSpeed.y -= n / c.solidData.elementMass * b.v.y;
       a.elementMoving.omega += n * g / a.getMomentOfInertia();
       c.elementMoving.omega -= n * d / c.getMomentOfInertia();
     }, h = function() {
       return a.elements.filter(function(a) {
-        return a.collidable;
+        return a.solidData;
       });
     };
     this.solveCollision = function(a) {
@@ -343,7 +343,6 @@ TEST && function() {
     this.elementAngle = f.positionAngle || 0;
     this.elementScaleX = e.imageScaleX || 1;
     this.elementScaleY = e.imageScaleY || 1;
-    this.elementMass = 1;
     f = e.imageTranslate || {translateDx:e.imageWidth / 2, translateDy:e.imageHeight / 2};
     this.dx = f.translateDx;
     this.dy = f.translateDy;
@@ -503,11 +502,6 @@ TEST && function() {
     }, set:function(a) {
       this.elementAngle = a;
     }});
-    Object.defineProperty(b, "mass", {get:function() {
-      return this.elementMass;
-    }, set:function(a) {
-      this.elementMass = a;
-    }});
     Object.defineProperty(b, "id", {get:function() {
       return this.elementId;
     }});
@@ -535,72 +529,6 @@ CreJs = CreJs || {};
       a.triggerRedraw();
     };
     a.elementEvents.addEventListenerX({eventId:"click", handleEvent:a.onClick});
-  }};
-})();
-CreJs = CreJs || {};
-(function() {
-  CreJs.Creanvas = CreJs.Creanvas || {};
-  CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
-  CreJs.Creanvas.elementDecorators.collidable = {applyTo:function(a, g) {
-    var e = [];
-    a.collidable = {};
-    var h = g.onCollision, f = g.coefficient;
-    a.controller.collisionSolver = a.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(a.controller);
-    a.collidable.coefficient = f || 0 === f ? f : 1;
-    a.elementMoving = a.elementMoving || {movingSpeed:new CreJs.Core.Vector(0, 0), movingAcceleration:new CreJs.Core.Vector(0, 0), omega:0};
-    a.elementEvents.addEventListenerX({eventId:"collision", handleEvent:function(b) {
-      h && h.call(a, b);
-    }});
-    a.preMove = this.preMove || [];
-    a.preMove.push(function() {
-      return a.controller.collisionSolver.solveCollision(a);
-    });
-    a.getMomentOfInertia = function() {
-      return a.elementMass / 12 * (a.elementWidth * a.elementScaleX * a.elementWidth * a.elementScaleX + a.elementHeight * a.elementScaleY * a.elementHeight * a.elementScaleY);
-    };
-    a.geRadiusCache = function() {
-      return Math.sqrt(a.elementWidth * a.elementWidth * a.elementScaleX * a.elementScaleX + a.elementHeight * a.elementHeight * a.elementScaleY * a.elementScaleY) / 2;
-    };
-    a.getRadius = function() {
-      var b = a.elementWidth + "" + a.elementHeight + "" + a.elementScaleX + "" + a.elementScaleY;
-      if (e.getRadius && e.getRadius.key == b) {
-        return e.getRadius.value_;
-      }
-      var c = a.geRadiusCache();
-      e.geRadius = {kevectorY:b, value_:c};
-      return c;
-    };
-    var c = a.controller.context.canvas, f = c.ownerDocument.createElement("canvas"), c = c.ownerDocument.createElement("canvas");
-    f.width = c.width = a.elementWidth;
-    f.height = c.height = a.elementHeight;
-    a.collidedContext = c.getContext("2d");
-    a.collidedContext.putImageData(a.elementImage, 0, 0);
-    a.collidedContext.globalCompositeOperation = "source-atop";
-    a.collidedContext.fillStyle = "#000";
-    a.collidedContext.fillRect(0, 0, a.elementWidth, a.elementHeight);
-    a.collisionContext = f.getContext("2d");
-    a.collisionContext.globalCompositeOperation = "source-over";
-    a.collisionContext.drawImage(a.collidedContext.canvas, 0, 0);
-    f = a.collisionContext.getImageData(0, 0, a.elementWidth, a.elementHeight);
-    c = a.collisionContext.createImageData(a.elementWidth, a.elementHeight);
-    a.edges = [];
-    for (var d = 0;d < a.elementWidth;d++) {
-      for (var b = 0;b < a.elementHeight;b++) {
-        if (!(200 > f.data[b * a.elementWidth * 4 + 4 * d + 3])) {
-          for (var m = !1, k = -1;2 > k;k++) {
-            for (var l = -1;2 > l;l++) {
-              if (0 > b + k || 0 > d + l || b + k > a.elementHeight - 1 || d + k > a.elementWidth - 1 || 100 > f.data[(b + k) * a.elementWidth * 4 + 4 * (d + l) + 3]) {
-                m = !0, l = k = 2;
-              }
-            }
-          }
-          a.collisionContext.putImageData(c, 0, 0);
-          m && (a.edges.push({x:d, y:b}), c.data[b * a.elementWidth * 4 + 4 * d] = 0, c.data[b * a.elementWidth * 4 + 4 * d + 1] = 0, c.data[b * a.elementWidth * 4 + 4 * d + 2] = 0, c.data[b * a.elementWidth * 4 + 4 * d + 3] = 255);
-        }
-      }
-    }
-    a.collisionContext.putImageData(c, 0, 0);
-    a.collisionContext.translate(a.dx, a.dy);
   }};
 })();
 CreJs = CreJs || {};
@@ -767,6 +695,83 @@ CreJs = CreJs || {};
       return this.elementScaleSpeed;
     }, set:function(a) {
       this.elementScaleSpeed = a;
+    }});
+  }};
+})();
+CreJs = CreJs || {};
+(function() {
+  CreJs.Creanvas = CreJs.Creanvas || {};
+  CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+  CreJs.Creanvas.elementDecorators.solid = {applyTo:function(a, g) {
+    var e = [];
+    a.solidData = {};
+    a.solidData.elementMass = g.mass || 1;
+    var h = g.onCollision, f = g.coefficient;
+    a.controller.collisionSolver = a.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(a.controller);
+    a.solidData.coefficient = f || 0 === f ? f : 1;
+    a.elementMoving = a.elementMoving || {movingSpeed:new CreJs.Core.Vector(0, 0), movingAcceleration:new CreJs.Core.Vector(0, 0), omega:0};
+    a.elementEvents.addEventListenerX({eventId:"collision", handleEvent:function(b) {
+      h && h.call(a, b);
+    }});
+    a.preMove = this.preMove || [];
+    a.preMove.push(function() {
+      return a.controller.collisionSolver.solveCollision(a);
+    });
+    a.getMomentOfInertia = function() {
+      return a.solidData.elementMass / 12 * (a.elementWidth * a.elementScaleX * a.elementWidth * a.elementScaleX + a.elementHeight * a.elementScaleY * a.elementHeight * a.elementScaleY);
+    };
+    a.geRadiusCache = function() {
+      return Math.sqrt(a.elementWidth * a.elementWidth * a.elementScaleX * a.elementScaleX + a.elementHeight * a.elementHeight * a.elementScaleY * a.elementScaleY) / 2;
+    };
+    a.getRadius = function() {
+      var b = a.elementWidth + "" + a.elementHeight + "" + a.elementScaleX + "" + a.elementScaleY;
+      if (e.getRadius && e.getRadius.key == b) {
+        return e.getRadius.value_;
+      }
+      var c = a.geRadiusCache();
+      e.geRadius = {kevectorY:b, value_:c};
+      return c;
+    };
+    var c = a.controller.context.canvas, f = c.ownerDocument.createElement("canvas"), c = c.ownerDocument.createElement("canvas");
+    f.width = c.width = a.elementWidth;
+    f.height = c.height = a.elementHeight;
+    a.collidedContext = c.getContext("2d");
+    a.collidedContext.putImageData(a.elementImage, 0, 0);
+    a.collidedContext.globalCompositeOperation = "source-atop";
+    a.collidedContext.fillStyle = "#000";
+    a.collidedContext.fillRect(0, 0, a.elementWidth, a.elementHeight);
+    a.collisionContext = f.getContext("2d");
+    a.collisionContext.globalCompositeOperation = "source-over";
+    a.collisionContext.drawImage(a.collidedContext.canvas, 0, 0);
+    f = a.collisionContext.getImageData(0, 0, a.elementWidth, a.elementHeight);
+    c = a.collisionContext.createImageData(a.elementWidth, a.elementHeight);
+    a.edges = [];
+    for (var d = 0;d < a.elementWidth;d++) {
+      for (var b = 0;b < a.elementHeight;b++) {
+        if (!(200 > f.data[b * a.elementWidth * 4 + 4 * d + 3])) {
+          for (var m = !1, k = -1;2 > k;k++) {
+            for (var l = -1;2 > l;l++) {
+              if (0 > b + k || 0 > d + l || b + k > a.elementHeight - 1 || d + k > a.elementWidth - 1 || 100 > f.data[(b + k) * a.elementWidth * 4 + 4 * (d + l) + 3]) {
+                m = !0, l = k = 2;
+              }
+            }
+          }
+          a.collisionContext.putImageData(c, 0, 0);
+          m && (a.edges.push({x:d, y:b}), c.data[b * a.elementWidth * 4 + 4 * d] = 0, c.data[b * a.elementWidth * 4 + 4 * d + 1] = 0, c.data[b * a.elementWidth * 4 + 4 * d + 2] = 0, c.data[b * a.elementWidth * 4 + 4 * d + 3] = 255);
+        }
+      }
+    }
+    a.collisionContext.putImageData(c, 0, 0);
+    a.collisionContext.translate(a.dx, a.dy);
+    Object.defineProperty(a, "solid", {get:function() {
+      return this.solidData;
+    }, set:function(a) {
+      this.solidData = a;
+    }});
+    Object.defineProperty(a.solidData, "mass", {get:function() {
+      return this.elementMass;
+    }, set:function(a) {
+      this.elementMass = a;
     }});
   }};
 })();

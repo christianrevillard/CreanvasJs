@@ -5,22 +5,22 @@ var CreJs = CreJs || {};
 	
 	CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
 	
-	CreJs.Creanvas.elementDecorators["collidable"]=
+	CreJs.Creanvas.elementDecorators["solid"]=
 	{
-		applyTo: function(element, collidableData)
+		applyTo: function(element, solidData)
 		{	
 			var cachedResults = [];
 
-			element.collidable = {};
-			
-			var onCollision = collidableData["onCollision"];			
-			var collisionCoefficient = collidableData["coefficient"];
+			element.solidData = {};
+			element.solidData.elementMass = solidData["mass"] || 1; 
+			var onCollision = solidData["onCollision"];			
+			var collisionCoefficient = solidData["coefficient"];
 
 			element.controller.collisionSolver = 
 				element.controller.collisionSolver || 
 				new CreJs.Creanvas.CollisionSolver(element.controller);
 			
-			element.collidable.coefficient = (!collisionCoefficient && collisionCoefficient !==0)? 1 : collisionCoefficient;
+			element.solidData.coefficient = (!collisionCoefficient && collisionCoefficient !==0)? 1 : collisionCoefficient;
 			
 			element.elementMoving = element.elementMoving || 
 			{
@@ -47,7 +47,7 @@ var CreJs = CreJs || {};
 			
 			element.getMomentOfInertia = function()
 			{				
-				return element.elementMass / 12 * (element.elementWidth*element.elementScaleX * element.elementWidth*element.elementScaleX + element.elementHeight*element.elementScaleY * element.elementHeight*element.elementScaleY); // square...};
+				return element.solidData.elementMass / 12 * (element.elementWidth*element.elementScaleX * element.elementWidth*element.elementScaleX + element.elementHeight*element.elementScaleY * element.elementHeight*element.elementScaleY); // square...};
 			};
 			
 			element.geRadiusCache = function()
@@ -134,6 +134,9 @@ var CreJs = CreJs || {};
 			element.collisionContext.putImageData(collisionImageNew, 0, 0);
 			
 			element.collisionContext.translate(element.dx, element.dy);
+
+			Object.defineProperty(element, "solid", { get: function() {return this.solidData; }, set: function(y) { this.solidData = y; }});
+			Object.defineProperty(element.solidData, "mass", { get: function() {return this.elementMass; }, set: function(y) { this.elementMass = y; }});
 		}
 	};
 }());
