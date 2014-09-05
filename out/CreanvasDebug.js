@@ -267,6 +267,7 @@ if (TEST) {
       this.logMessage("Starting controller");
     }
     controller.context = canvas.getContext("2d");
+    controller.context.setTransform(1, 0, 0, 1, 0, 0);
     controller.context.scale(1 / meterPerPoint, 1 / meterPerPoint);
     needRedraw = true;
     isDrawing = false;

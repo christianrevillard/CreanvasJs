@@ -211,6 +211,7 @@ TEST && function() {
     };
     DEBUG && this.logMessage("Starting controller");
     e.context = g.getContext("2d");
+    e.context.setTransform(1, 0, 0, 1, 0, 0);
     e.context.scale(1 / c, 1 / c);
     d = !0;
     isDrawing = !1;
@@ -823,8 +824,8 @@ CreJs = CreJs || {};
       d[f] || e(f);
       return d[f].addEventListenerX(a);
     };
-    this.dispatch = function(a, f, e) {
-      d[a] && (f && (f.eventId = a), d[a].dispatch(f, e));
+    this.dispatch = function(a, e, g) {
+      d[a] && (e && (e.eventId = a), d[a].dispatch(e, g));
     };
     this.removeEventListener = function(a) {
       d[a.eventId] ? d[a.eventId].removeEventListener(a) : h.forEach(function(e) {
