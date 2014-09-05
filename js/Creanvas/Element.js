@@ -14,8 +14,6 @@
 		var draw = image.imageDraw;
 		var position = elementDefinition.elementPosition;
 		
-		var rules = elementDefinition.rules;
-		
 		var decoratorArguments = [].slice.apply(arguments).slice(2);
 
 		var cachedResults = [];
@@ -79,25 +77,7 @@
 							"Element." + source + ": " + message + ". Element: " + element.elementName + "/" + element.elementId);
 			};
 		}
-		
-		// decorator stuff ?
-		if (rules)
-		{
-			element.rules = [];
-			rules.forEach(function(rule)
-			{
-				var  ruleId = element.rules.length;
-				element.rules.push(rule);
-				setInterval(
-						function()
-						{
-							element.rules[ruleId]["rule"].call(element);					
-							element.triggerRedraw();
-						},
-						rule["checkTime"]);
-			});
-		};
-							
+									
 		this.elementEvents = new CreJs.Creevents.EventContainer();			
 			
 		this.isPointInPath = function(clientXY){

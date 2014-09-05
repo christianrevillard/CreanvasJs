@@ -340,8 +340,7 @@
 					positionX: elementDefinition["position"]["x"] || 0,
 					positionY: elementDefinition["position"]["y"] || 0,
 					positionZ: elementDefinition["position"]["z"] || 0
-				}:null,
-				rules: elementDefinition["rules"]
+				}:null
 			};
 		};
 		

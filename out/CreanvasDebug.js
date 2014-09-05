@@ -411,7 +411,7 @@ if (TEST) {
     }, refreshTime);
     var convertExternInput = function(elementDefinition) {
       return{elementName:elementDefinition["name"], elementImage:elementDefinition["image"] ? {imageWidth:elementDefinition["image"]["width"], imageHeight:elementDefinition["image"]["height"], imageDraw:elementDefinition["image"]["draw"], imageTranslate:elementDefinition["image"]["translate"] ? {translateDx:elementDefinition["image"]["translate"]["dx"], translateDy:elementDefinition["image"]["translate"]["dy"]} : null} : null, elementPosition:elementDefinition["position"] ? {positionX:elementDefinition["position"]["x"] || 
-      0, positionY:elementDefinition["position"]["y"] || 0, positionZ:elementDefinition["position"]["z"] || 0} : null, rules:elementDefinition["rules"]};
+      0, positionY:elementDefinition["position"]["y"] || 0, positionZ:elementDefinition["position"]["z"] || 0} : null};
     };
     this["addElement"] = function() {
       var args = [].slice.call(arguments);
@@ -430,7 +430,6 @@ if (TEST) {
     var image = elementDefinition.elementImage;
     var draw = image.imageDraw;
     var position = elementDefinition.elementPosition;
-    var rules = elementDefinition.rules;
     var decoratorArguments = [].slice.apply(arguments).slice(2);
     var cachedResults = [];
     this.controller = controller;
@@ -469,17 +468,6 @@ if (TEST) {
       element.debug = function(source, message) {
         element.controller.logMessage("Element." + source + ": " + message + ". Element: " + element.elementName + "/" + element.elementId);
       };
-    }
-    if (rules) {
-      element.rules = [];
-      rules.forEach(function(rule) {
-        var ruleId = element.rules.length;
-        element.rules.push(rule);
-        setInterval(function() {
-          element.rules[ruleId]["rule"].call(element);
-          element.triggerRedraw();
-        }, rule["checkTime"]);
-      });
     }
     this.elementEvents = new CreJs.Creevents.EventContainer;
     this.isPointInPath = function(clientXY) {
@@ -779,6 +767,16 @@ var CreJs = CreJs || {};
     }
     element.collisionContext.putImageData(collisionImageNew, 0, 0);
     element.collisionContext.translate(element.dx, element.dy);
+  }};
+})();
+var CreJs = CreJs || {};
+(function() {
+  CreJs.Creanvas = CreJs.Creanvas || {};
+  CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
+  CreJs.Creanvas.elementDecorators["customTimer"] = {applyTo:function(element, customTimerData) {
+    setInterval(function() {
+      customTimerData["action"].call(element);
+    }, customTimerData["time"]);
   }};
 })();
 var CreJs = CreJs || {};
