@@ -20,7 +20,7 @@ if (TEST) {
       context.strokeStyle = color;
       context.beginPath();
       context.moveTo(x, y);
-      context.lineTo(x + 100 * vector.xCoordinate, y + 100 * vector.yCoordinate);
+      context.lineTo(x + 100 * vector.vectorX, y + 100 * vector.vectorY);
       context.stroke();
       context.lineWidth = 1;
       context.strokeStyle = "#000";
@@ -30,9 +30,9 @@ if (TEST) {
     };
     this.setCoordinates = function(unitVectors, u, v, w) {
       w = w || 0;
-      vector.xCoordinate = u * unitVectors.u.xCoordinate + v * unitVectors.v.xCoordinate + w * unitVectors.w.xCoordinate;
-      vector.yCoordinate = u * unitVectors.u.yCoordinate + v * unitVectors.v.yCoordinate + w * unitVectors.w.yCoordinate;
-      vector.zCoordinate = u * unitVectors.u.zCoordinate + v * unitVectors.v.zCoordinate + w * unitVectors.w.zCoordinate;
+      vector.vectorX = u * unitVectors.u.vectorX + v * unitVectors.v.vectorX + w * unitVectors.w.vectorX;
+      vector.vectorY = u * unitVectors.u.vectorY + v * unitVectors.v.vectorY + w * unitVectors.w.vectorY;
+      vector.vectorZ = u * unitVectors.u.vectorZ + v * unitVectors.v.vectorZ + w * unitVectors.w.vectorZ;
     };
   };
   Object.defineProperty(core.Vector.prototype, "x", {get:function() {
@@ -54,16 +54,16 @@ if (TEST) {
     var dx = x2 - x1;
     var dy = y2 - y1;
     var longueur = Math.sqrt(dx * dx + dy * dy);
-    return{u:new core.Vector(dx / longueur, dy / longueur), v:new core.Vector(-dy / longueur, dx / longueur), w:0};
+    return{u:new core.Vector(dx / longueur, dy / longueur, 0), v:new core.Vector(-dy / longueur, dx / longueur, 0), w:new core.Vector(0, 0, 0)};
   };
   core.drawUnitVectors = function(context, x, y, unitVectors, color) {
     context.lineWidth = 5;
     context.strokeStyle = color;
     context.beginPath();
     context.moveTo(x, y);
-    context.lineTo(x + 100 * unitVectors.u.xCoordinate, y + 100 * unitVectors.u.yCoordinate);
+    context.lineTo(x + 100 * unitVectors.u.vectorX, y + 100 * unitVectors.u.vectorY);
     context.moveTo(x, y);
-    context.lineTo(x + 50 * unitVectors.v.xCoordinate, y + 50 * unitVectors.v.yCoordinate);
+    context.lineTo(x + 50 * unitVectors.v.vectorX, y + 50 * unitVectors.v.vectorY);
     context.stroke();
     context.lineWidth = 1;
     context.strokeStyle = "#000";
@@ -73,18 +73,20 @@ if (TEST) {
     context.strokeStyle = color;
     context.beginPath();
     context.moveTo(x, y);
-    context.lineTo(x + 100 * ux * unitVectors.u.xCoordinate, y + 100 * ux * unitVectors.u.yCoordinate);
-    context.lineTo(x + 100 * ux * unitVectors.u.xCoordinate + 100 * vx * unitVectors.v.xCoordinate, y + 100 * ux * unitVectors.u.yCoordinate + 100 * vx * unitVectors.v.yCoordinate);
+    context.lineTo(x + 100 * ux * unitVectors.u.vectorX, y + 100 * ux * unitVectors.u.vectorY);
+    context.lineTo(x + 100 * ux * unitVectors.u.vectorX + 100 * vx * unitVectors.v.vectorX, y + 100 * ux * unitVectors.u.vectorY + 100 * vx * unitVectors.v.vectorY);
     context.stroke();
     context.lineWidth = 1;
     context.strokeStyle = "#000";
   };
   core.scalarProduct = function(v1, v2) {
-    return v1.xCoordinate * v2.xCoordinate + v1.yCoordinate * v2.yCoordinate;
+    return v1.vectorX * v2.vectorX + v1.vectorY * v2.vectorY;
   };
   core.vectorProduct = function(v1, v2) {
-    return new core.Vector(v1.yCoordinate * v2.zCoordinate - v1.zCoordinate * v2.yCoordinate, v1.zCoordinate * v2.xCoordinate - v1.xCoordinate * v2.zCoordinate, v1.xCoordinate * v2.yCoordinate - v1.yCoordinate * v2.xCoordinate);
+    return new core.Vector(v1.vectorY * v2.vectorZ - v1.vectorZ * v2.vectorY, v1.vectorZ * v2.vectorX - v1.vectorX * v2.vectorZ, v1.vectorX * v2.vectorY - v1.vectorY * v2.vectorX);
   };
+  CreJs["Core"] = CreJs.Core;
+  CreJs.Core["Vector"] = CreJs.Core.Vector;
 })();
 if (TEST) {
   (function() {
@@ -92,14 +94,14 @@ if (TEST) {
     core["test_Vector_constructor"] = function() {
       var x = 1, y = 2, z = 3;
       var vector = new CreJs.Core.Vector(x, y, z);
-      if (vector.xCoordinate != x) {
-        return "FAILED! vector.x: Expected " + x + ", was " + vector.xCoordinate;
+      if (vector.vectorX != x) {
+        return "FAILED! vector.x: Expected " + x + ", was " + vector.vectorX;
       }
-      if (vector.yCoordinate != y) {
-        return "FAILED! vector.y: Expected " + y + ", was " + vector.yCoordinate;
+      if (vector.vectorY != y) {
+        return "FAILED! vector.y: Expected " + y + ", was " + vector.vectorY;
       }
-      if (vector.zCoordinate != z) {
-        return "FAILED! vector.z: Expected " + z + ", was " + vector.zCoordinate;
+      if (vector.vectorZ != z) {
+        return "FAILED! vector.z: Expected " + z + ", was " + vector.vectorZ;
       }
       return "OK";
     };
@@ -111,7 +113,7 @@ if (TEST) {
       var clientRectElement, clientRectOther, clientRectIntersection, imageAfter, edges;
       clientRectElement = element.getClientRect();
       clientRectOther = other.getClientRect();
-      clientRectIntersection = {"left":Math.max(clientRectElement.left, clientRectOther.left) - 1, "right":Math.min(clientRectElement.right, clientRectOther.right) + 1, "top":Math.max(clientRectElement.top, clientRectOther.top) - 1, "bottom":Math.min(clientRectElement.bottom, clientRectOther.bottom) + 1};
+      clientRectIntersection = {left:Math.max(clientRectElement.left, clientRectOther.left) - 1, right:Math.min(clientRectElement.right, clientRectOther.right) + 1, top:Math.max(clientRectElement.top, clientRectOther.top) - 1, bottom:Math.min(clientRectElement.bottom, clientRectOther.bottom) + 1};
       clientRectIntersection.width = clientRectIntersection.right - clientRectIntersection.left;
       clientRectIntersection.height = clientRectIntersection.bottom - clientRectIntersection.top;
       if (clientRectIntersection.width <= 0 || clientRectIntersection.height <= 0) {
@@ -121,12 +123,12 @@ if (TEST) {
       element.collisionContext.scale(1 / (element.elementScaleX || 1), 1 / (element.elementScaleY || 1));
       element.collisionContext.rotate(-(element.elementAngle || 0));
       element.collisionContext.translate(other.elementX - element.elementX, other.elementY - element.elementY);
-      element.collisionContext.rotate(other.angle || 0);
-      element.collisionContext.scale(other.scaleX || 1, other.scaleY || 1);
+      element.collisionContext.rotate(other.elementAngle || 0);
+      element.collisionContext.scale(other.elementScaleX || 1, other.elementScaleY || 1);
       element.collisionContext.globalCompositeOperation = "destination-out";
       element.collisionContext.drawImage(other.collidedContext.canvas, 0, 0, other.elementWidth, other.elementHeight, -other.dx, -other.dy, other.elementWidth, other.elementHeight);
-      element.collisionContext.scale(1 / (other.scaleX || 1), 1 / (other.scaleY || 1));
-      element.collisionContext.rotate(-other.angle || 0);
+      element.collisionContext.scale(1 / (other.elementScaleX || 1), 1 / (other.elementScaleY || 1));
+      element.collisionContext.rotate(-other.elementAngle || 0);
       element.collisionContext.translate(-other.elementX + element.elementX, -other.elementY + element.elementY);
       element.collisionContext.rotate(element.elementAngle || 0);
       element.collisionContext.scale(element.elementScaleX || 1, element.elementScaleY || 1);
@@ -161,7 +163,7 @@ if (TEST) {
       if (point1.x == point2.x && point1.y == point2.y) {
         return null;
       }
-      return{"x":Math.round((point1.x + point2.x) / 2), "y":Math.round((point1.y + point2.y) / 2), "vectors":CreJs.Core.getUnitVectors(point1.x, point1.y, point2.x, point2.y)};
+      return{x:Math.round((point1.x + point2.x) / 2), y:Math.round((point1.y + point2.y) / 2), vectors:CreJs.Core.getUnitVectors(point1.x, point1.y, point2.x, point2.y)};
     };
     var updateAfterCollision = function(element, other, collisionPoint) {
       var colVectors, speedElement, speedOther, localSpeedElement, localSpeedOther, centerCollisionElement, l1, centerCollisionOther, l2;
@@ -174,23 +176,23 @@ if (TEST) {
       var otherRot = CreJs.Core.vectorProduct(centerCollisionOther, colVectors.v);
       speedElement = new CreJs.Core.Vector(element.elementMoving.movingSpeed.x, element.elementMoving.movingSpeed.y);
       speedOther = new CreJs.Core.Vector(other.elementMoving.movingSpeed.x, other.elementMoving.movingSpeed.y);
-      if (element.scaleSpeed) {
-        speedElement.x += centerCollisionElement.x * element.scaleSpeed.x;
-        speedElement.y += centerCollisionElement.y * element.scaleSpeed.y;
+      if (element.elementScaleSpeed) {
+        speedElement.x += centerCollisionElement.x * element.elementScaleSpeed.x;
+        speedElement.y += centerCollisionElement.y * element.elementScaleSpeed.y;
       }
-      if (other.scaleSpeed) {
-        speedOther.x += centerCollisionOther.x * other.scaleSpeed.x;
-        speedOther.y += centerCollisionOther.y * other.scaleSpeed.y;
+      if (other.elementScaleSpeed) {
+        speedOther.x += centerCollisionOther.x * other.elementScaleSpeed.x;
+        speedOther.y += centerCollisionOther.y * other.elementScaleSpeed.y;
       }
       localSpeedElement = speedElement.getCoordinates(colVectors);
       localSpeedOther = speedOther.getCoordinates(colVectors);
-      var F = element.collidable.coefficient * other.collidable.coefficient * 2 * (localSpeedOther.v - localSpeedElement.v + other.elementMoving.movingRotationSpeed * otherRot.z - element.elementMoving.movingRotationSpeed * elementRot.z) / (1 / other.elementMass + 1 / element.elementMass + otherRot.z * otherRot.z / other.getMomentOfInertia() + elementRot.z * elementRot.z / element.getMomentOfInertia());
+      var F = element.collidable.coefficient * other.collidable.coefficient * 2 * (localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z) / (1 / other.elementMass + 1 / element.elementMass + otherRot.z * otherRot.z / other.getMomentOfInertia() + elementRot.z * elementRot.z / element.getMomentOfInertia());
       element.elementMoving.movingSpeed.x += F / element.elementMass * colVectors.v.x;
       element.elementMoving.movingSpeed.y += F / element.elementMass * colVectors.v.y;
       other.elementMoving.movingSpeed.x -= F / other.elementMass * colVectors.v.x;
       other.elementMoving.movingSpeed.y -= F / other.elementMass * colVectors.v.y;
-      element.elementMoving.movingRotationSpeed += F * l1 / element.getMomentOfInertia();
-      other.elementMoving.movingRotationSpeed -= F * l2 / other.getMomentOfInertia();
+      element.elementMoving.omega += F * l1 / element.getMomentOfInertia();
+      other.elementMoving.omega -= F * l2 / other.getMomentOfInertia();
     };
     var getCollidableElements = function() {
       return controller.elements.filter(function(e) {
@@ -203,7 +205,7 @@ if (TEST) {
       center = element.getCenter();
       others = toCheck.filter(function(other) {
         var otherCenter;
-        if (other.elementId === element.elementId || !other.elementMoving.movingSpeed.x && !other.elementMoving.movingSpeed.y && !element.elementMoving.movingSpeed.x && !element.elementMoving.movingSpeed.y && !other.scaleSpeed && !element.scaleSpeed) {
+        if (other.elementId === element.elementId || !other.elementMoving.movingSpeed.x && !other.elementMoving.movingSpeed.y && !element.elementMoving.movingSpeed.x && !element.elementMoving.movingSpeed.y && !other.elementScaleSpeed && !element.elementScaleSpeed) {
           return false;
         }
         otherCenter = other.getCenter();
@@ -229,8 +231,8 @@ if (TEST) {
         return true;
       }
       updateAfterCollision(element, other, collisionPoint);
-      element.elementEvents.dispatch("collision", {"element":other, "collisionPoint":collisionPoint});
-      other.elementEvents.dispatch("collision", {"element":element, "collisionPoint":collisionPoint});
+      element.elementEvents.dispatch("collision", {element:other, collisionPoint:collisionPoint});
+      other.elementEvents.dispatch("collision", {element:element, collisionPoint:collisionPoint});
       return false;
     };
   };
@@ -277,7 +279,7 @@ if (TEST) {
         if (hit) {
           return;
         }
-        if (element.hit(event["x"], event["y"])) {
+        if (element.hit(event.x, event.y)) {
           element.elementEvents.dispatch(eventId, event);
           hit = true;
         }
@@ -349,7 +351,7 @@ if (TEST) {
     };
     this.getCanvasXYFromClientXY = function(clientXY) {
       var boundings = canvas.getBoundingClientRect();
-      return{"x":Math.round((clientXY.clientX - boundings.left) * canvas.width / boundings.width), "y":Math.round((clientXY.clientY - boundings.top) * canvas.height / boundings.height)};
+      return{x:Math.round((clientXY.clientX - boundings.left) * canvas.width / boundings.width), y:Math.round((clientXY.clientY - boundings.top) * canvas.height / boundings.height)};
     };
     controller.elements = [];
     this.add = function() {
@@ -377,7 +379,7 @@ if (TEST) {
     controller.logMessage("Adding background");
     this.add({elementName:"background", elementImage:{imageWidth:canvas.width, imageHeight:canvas.height, imageTranslate:{translateDx:0, translateDy:0}, imageDraw:controllerData["drawBackground"] || function(context) {
       context.fillStyle = controllerData.backgroundStyle || "#FFF";
-      context.fillRect(0, 0, this.elementWidth, this.elementHeight);
+      context.fillRect(0, 0, canvas.width, canvas.height);
     }}, elementPosition:{positionZ:-Infinity}});
     setInterval(function() {
       if (needRedraw && !isDrawing) {
@@ -710,7 +712,7 @@ var CreJs = CreJs || {};
       return element.controller.collisionSolver.solveCollision(element);
     });
     element.getMomentOfInertia = function() {
-      return element.m / 12 * (element.elementWidth * element.elementScaleX * element.elementWidth * element.elementScaleX + element.elementHeight * element.elementScaleY * element.elementHeight * element.elementScaleY);
+      return element.elementMass / 12 * (element.elementWidth * element.elementScaleX * element.elementWidth * element.elementScaleX + element.elementHeight * element.elementScaleY * element.elementHeight * element.elementScaleY);
     };
     element.geRadiusCache = function() {
       return Math.sqrt(element.elementWidth * element.elementWidth * element.elementScaleX * element.elementScaleX + element.elementHeight * element.elementHeight * element.elementScaleY * element.elementScaleY) / 2;
@@ -721,7 +723,7 @@ var CreJs = CreJs || {};
         return cachedResults["getRadius"].value_;
       }
       var value = element.geRadiusCache();
-      cachedResults["geRadius"] = {keyCoordinate:key, value_:value};
+      cachedResults["geRadius"] = {kevectorY:key, value_:value};
       return value;
     };
     var canvas = element.controller.context.canvas;
@@ -965,7 +967,7 @@ var CreJs = CreJs || {};
     var vy = elementMoving["vy"];
     var ax = elementMoving["ax"];
     var ay = elementMoving["ay"];
-    var omega = elementMoving["omega"];
+    var omega = elementMoving["rotationSpeed"];
     if (DEBUG) {
       element.controller.logMessage("Applying moving decorator to " + element.elementName + "-" + element.elementId);
     }
@@ -984,16 +986,16 @@ var CreJs = CreJs || {};
       lastUpdated = currentTime;
       element.elementMoving.movingSpeed.x += element.elementMoving.movingAcceleration.x * dt;
       element.elementMoving.movingSpeed.y += element.elementMoving.movingAcceleration.y * dt;
-      if (element.elementMoving.movingSpeed.x == 0 && element.elementMoving.movingSpeed.y == 0 && element.moving.omega == 0 && (!element.scaleSpeed || element.scaleSpeed.x == 0 && element.scaleSpeed.y == 0)) {
+      if (element.elementMoving.movingSpeed.x == 0 && element.elementMoving.movingSpeed.y == 0 && element.elementMoving.omega == 0 && (!element.elementScaleSpeed || element.elementScaleSpeed.x == 0 && element.elementScaleSpeed.y == 0)) {
         return;
       }
-      rollbackData = {x:element.elementX, y:element.elementY, angle:element.elementAngle, scaleX:element.elementScaleX, scaleY:element.elementScaleY};
+      rollbackData = {elementX:element.elementX, elementY:element.elementY, elementAngle:element.elementAngle, elementScaleX:element.elementScaleX, elementScaleY:element.elementScaleY};
       element.elementX += element.elementMoving.movingSpeed.x * dt;
       element.elementY += element.elementMoving.movingSpeed.y * dt;
       element.elementAngle += element.elementMoving.omega * dt;
-      if (element.scaleSpeed) {
-        element.elementScaleX += element.scaleSpeed.x * dt;
-        element.elementScaleY += element.scaleSpeed.y * dt;
+      if (element.elementScaleSpeed) {
+        element.elementScaleX += element.elementScaleSpeed.x * dt;
+        element.elementScaleY += element.elementScaleSpeed.y * dt;
       }
       var preMoveOk = true;
       if (element.preMove) {
@@ -1007,11 +1009,11 @@ var CreJs = CreJs || {};
         });
       }
       if (!preMoveOk) {
-        element.elementX = rollbackData.x;
-        element.elementY = rollbackData.y;
-        element.elementAngle = rollbackData.angle;
-        element.elementScaleX = rollbackData.scaleX;
-        element.elementScaleY = rollbackData.scaleY;
+        element.elementX = rollbackData.elementX;
+        element.elementY = rollbackData.elementY;
+        element.elementAngle = rollbackData.elementAngle;
+        element.elementScaleX = rollbackData.elementScaleX;
+        element.elementScaleY = rollbackData.elementScaleY;
       } else {
       }
     }, 20);
@@ -1034,6 +1036,11 @@ var CreJs = CreJs || {};
       return this.omega;
     }, set:function(y) {
       this.omega = y;
+    }});
+    Object.defineProperty(element, "scaleSpeed", {get:function() {
+      return this.elementScaleSpeed;
+    }, set:function(y) {
+      this.elementScaleSpeed = y;
     }});
   }};
 })();

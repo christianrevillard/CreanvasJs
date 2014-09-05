@@ -84,7 +84,7 @@
 						if (hit)
 							return;
 						
-						if (element.hit(event["x"], event["y"]))
+						if (element.hit(event.x, event.y))
 						{
 							element.elementEvents.dispatch(eventId, event);
 							hit = true;
@@ -203,8 +203,8 @@
 			// what about rotations here?
 			var boundings = canvas.getBoundingClientRect();
 			return { 
-				"x": Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width),
-				"y": Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};		
+				x: Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width),
+				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};		
 		};
 	
 		controller.elements = [];
@@ -262,7 +262,7 @@
 						function (context) 
 						{
 							context.fillStyle = controllerData.backgroundStyle || "#FFF";
-							context.fillRect(0,0,this.elementWidth,this.elementHeight);
+							context.fillRect(0,0,canvas.width,canvas.height);
 						}				
 				},
 				elementPosition:{

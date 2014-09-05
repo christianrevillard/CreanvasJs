@@ -47,7 +47,7 @@ var CreJs = CreJs || {};
 			
 			element.getMomentOfInertia = function()
 			{				
-				return element.m / 12 * (element.elementWidth*element.elementScaleX * element.elementWidth*element.elementScaleX + element.elementHeight*element.elementScaleY * element.elementHeight*element.elementScaleY); // square...};
+				return element.elementMass / 12 * (element.elementWidth*element.elementScaleX * element.elementWidth*element.elementScaleX + element.elementHeight*element.elementScaleY * element.elementHeight*element.elementScaleY); // square...};
 			};
 			
 			element.geRadiusCache = function()
@@ -63,7 +63,7 @@ var CreJs = CreJs || {};
 					return cachedResults['getRadius'].value_;
 				}
 				var value = element.geRadiusCache();
-				cachedResults['geRadius'] = {keyCoordinate:key, value_:value};
+				cachedResults['geRadius'] = {kevectorY:key, value_:value};
 				return value;
 			};
 

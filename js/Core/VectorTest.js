@@ -10,19 +10,19 @@ if (TEST)
 			
 			var vector = new CreJs.Core.Vector(x,y,z);
 			
-			if(vector.xCoordinate != x)
+			if(vector.vectorX != x)
 			{
-				return "FAILED! vector.x: Expected " + x + ", was " + vector.xCoordinate;
+				return "FAILED! vector.x: Expected " + x + ", was " + vector.vectorX;
 			}
 			
-			if(vector.yCoordinate != y)
+			if(vector.vectorY != y)
 			{
-				return "FAILED! vector.y: Expected " + y + ", was " + vector.yCoordinate;
+				return "FAILED! vector.y: Expected " + y + ", was " + vector.vectorY;
 			}
 
-			if(vector.zCoordinate != z)
+			if(vector.vectorZ != z)
 			{
-				return "FAILED! vector.z: Expected " + z + ", was " + vector.zCoordinate;
+				return "FAILED! vector.z: Expected " + z + ", was " + vector.vectorZ;
 			}
 			
 			return "OK";
