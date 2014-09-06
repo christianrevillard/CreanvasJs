@@ -229,58 +229,48 @@
 			}
 			var args = [].slice.call(arguments);
 
-			var element = new CreJs.Creanvas.Element(
-					controller,
-					args[0]);			
+			var identificationData = args.filter(function(arg){ return arg && arg[0]=="name";})[0] || ["name","Unknown"];
+			var imageData = args.filter(function(arg){ return arg && arg[0]=="image";})[0]; // mandatory
+			var positionData = args.filter(function(arg){ return arg && arg[0]=="position";})[0]; // mandatory
+			
+			var element = new CreJs.Creanvas.Element(controller, identificationData, imageData, positionData);
 
-			if (DEBUG)
+			var decoratorArguments = args.filter(function(arg){ return arg && arg[0]!="name" && arg[0]!="position" && arg[0]!="image";});
+			
+			if (decoratorArguments.length > 0 && CreJs.Creanvas.elementDecorators)
 			{
-				controller.logMessage("Controller.addElement: Created element: " + element.elementName + "-" + element.elementId );
-			}
-
-			if (args.length>1)
-			{
-				if (DEBUG)
-				{
-					controller.logMessage("Controller.addElement: Applying " + (args.length - 1) + " decorators");
-				}
-					
-				element.applyElementDecorators.apply(element, args.slice(1));
-			}
-			else
-			{
-				if (DEBUG)
-				{
-					controller.logMessage("Controller.addElement: No decorator to apply");
-				}
+				if (DEBUG) element.debug('New element',  "apply " + decoratorArguments.length + " decorators");
+				element.applyElementDecorators.apply(element, decoratorArguments);
 			}
 			
 			controller.elements.push(element);
+			
 			return element;
 		};
 			
 		//background
 		controller.logMessage('Adding background');
 		this.add(
-			{
-				elementName:'background',
-				elementImage:
+			["name",'background'],
+			["image", 
 				{
-					imageWidth:canvas.width,
-					imageHeight:canvas.height,
-					imageTranslate:{translateDx:0, translateDy:0},
-					imageDraw: 
+					"width":canvas.width,
+					"height":canvas.height,
+					"translate":{"dx":0, "dy":0},
+					"draw": 
 						controllerData["drawBackground"] ||  
 						function (context) 
 						{
 							context.fillStyle = controllerData["backgroundStyle"] || "#FFF";
-							context.fillRect(0,0,canvas.width,canvas.height);
+							context.fillRect(0,0,this.elementWidth,this.elementHeight);
 						}				
-				},
-				elementPosition:{
-					positionZ: -Infinity	
 				}
-			});
+			],
+			["position", 
+			 	{
+					"z": -Infinity	
+				}
+			]);
 		
 		setInterval(
 				function()
@@ -319,39 +309,8 @@
 					}
 				},
 				refreshTime);	
-		
-		var convertExternInput=function(elementDefinition)
-		{
-			return {
-				elementName: elementDefinition["name"],
-				elementImage: elementDefinition["image"]?
-						{
-							imageWidth: elementDefinition["image"]["width"],
-							imageHeight: elementDefinition["image"]["height"],
-							imageDraw: elementDefinition["image"]["draw"], // scale inside draw
-							imageTranslate: elementDefinition["image"]["translate"]?
-							{
-								translateDx: elementDefinition["image"]["translate"]["dx"],
-								translateDy: elementDefinition["image"]["translate"]["dy"]
-							}:null
-						}:null,
-				elementPosition: elementDefinition["position"]?
-				{
-					positionX: elementDefinition["position"]["x"] || 0,
-					positionY: elementDefinition["position"]["y"] || 0,
-					positionZ: elementDefinition["position"]["z"] || 0
-				}:null
-			};
-		};
-		
-		this["addElement"] = function()
-		{	
-			var args = [].slice.call(arguments);
-			args[0]  = convertExternInput(args[0]);
-
-			return this.add.apply(this, args);
-		};
-		
+				
+		this["addElement"] = this.add;
 		this["redraw"] = this.triggerRedraw;
 		this["stop"] = this.stopController;
 	};
