@@ -95,8 +95,11 @@
 		
 		element.hit = function(pointerX,pointerY)
 		{
-			var imageX = Math.round(pointerX - element.elementX - element.left);
-			var imageY = Math.round(pointerY - element.elementY - element.top);
+
+			var imageXY = element.getElementXY(pointerX, pointerY);
+
+			var imageX = imageXY.x - element.left;
+			var imageY = imageXY.y - element.top;
 		
 			var xx = imageX >= 0 && 
 			imageX <= element.elementWidth &&
@@ -189,7 +192,7 @@
 				y: Math.round(((canvasY- element.elementY)*Math.cos(element.elementAngle)-(canvasX-element.elementX)*Math.sin(element.elementAngle))/element.elementScaleY)
 			};
 		};
-				
+
 		element.getCenter = function()
 		{
 			return element.getCanvasXY(element.left + element.elementWidth/2, element.top + element.elementHeight/2);

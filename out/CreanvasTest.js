@@ -377,9 +377,9 @@ TEST && function() {
       return b.controller.noDrawContext.isPointInPath(b, draw, a);
     };
     b.hit = function(a, c) {
-      var d = Math.round(a - b.elementX - b.left), e = Math.round(c - b.elementY - b.top), d = 0 <= d && d <= b.elementWidth && 0 <= e && e <= b.elementHeight && 0 < b.elementImage.data[4 * e * b.elementWidth + 4 * d + 3];
-      DEBUG && b.debug("hit", d ? "hit" : "no hit");
-      return d;
+      var d = b.getElementXY(a, c), e = d.x - b.left, d = d.y - b.top, e = 0 <= e && e <= b.elementWidth && 0 <= d && d <= b.elementHeight && 0 < b.elementImage.data[4 * d * b.elementWidth + 4 * e + 3];
+      DEBUG && b.debug("hit", e ? "hit" : "no hit");
+      return e;
     };
     b.cloneElement = function(a) {
       DEBUG && b.debug("cloneElement", "start cloning");

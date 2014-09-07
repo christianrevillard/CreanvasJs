@@ -485,8 +485,9 @@ if (TEST) {
       return element.controller.noDrawContext.isPointInPath(element, draw, canvasXY);
     };
     element.hit = function(pointerX, pointerY) {
-      var imageX = Math.round(pointerX - element.elementX - element.left);
-      var imageY = Math.round(pointerY - element.elementY - element.top);
+      var imageXY = element.getElementXY(pointerX, pointerY);
+      var imageX = imageXY.x - element.left;
+      var imageY = imageXY.y - element.top;
       var xx = imageX >= 0 && imageX <= element.elementWidth && imageY >= 0 && imageY <= element.elementHeight && element.elementImage.data[4 * imageY * element.elementWidth + 4 * imageX + 3] > 0;
       if (DEBUG) {
         element.debug("hit", xx ? "hit" : "no hit");
