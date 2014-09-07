@@ -186,15 +186,17 @@ if (TEST) {
       }
       localSpeedElement = speedElement.getCoordinates(colVectors);
       localSpeedOther = speedOther.getCoordinates(colVectors);
-      var elementMass = element.fixedPoint ? Infinity : element.solidData.elementMass;
-      var otherMass = other.fixedPoint ? Infinity : other.solidData.elementMass;
-      var F = element.solidData.coefficient * other.solidData.coefficient * 2 * (localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z) / (1 / otherMass + 1 / elementMass + otherRot.z * otherRot.z / other.getMomentOfInertia() + elementRot.z * elementRot.z / element.getMomentOfInertia());
+      var elementMass = element.solidData.fixedPoint ? Infinity : element.solidData.elementMass;
+      var otherMass = other.solidData.fixedPoint ? Infinity : other.solidData.elementMass;
+      var elementMOI = element.solidData.fixed ? Infinity : element.getMomentOfInertia();
+      var otherMOI = other.solidData.fixed ? Infinity : other.getMomentOfInertia();
+      var F = element.solidData.coefficient * other.solidData.coefficient * 2 * (localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z) / (1 / otherMass + 1 / elementMass + otherRot.z * otherRot.z / otherMOI + elementRot.z * elementRot.z / elementMOI);
       element.elementMoving.movingSpeed.x += F / elementMass * colVectors.v.x;
       element.elementMoving.movingSpeed.y += F / elementMass * colVectors.v.y;
       other.elementMoving.movingSpeed.x -= F / otherMass * colVectors.v.x;
       other.elementMoving.movingSpeed.y -= F / otherMass * colVectors.v.y;
-      element.elementMoving.omega += F * l1 / element.getMomentOfInertia();
-      other.elementMoving.omega -= F * l2 / other.getMomentOfInertia();
+      element.elementMoving.omega += F * l1 / elementMOI;
+      other.elementMoving.omega -= F * l2 / otherMOI;
     };
     var getCollidableElements = function() {
       return controller.elements.filter(function(e) {
@@ -460,7 +462,6 @@ if (TEST) {
     element.elementY = position["y"] || 0;
     element.elementZ = position["z"] || 0;
     element.elementAngle = position["angle"] || 0;
-    element.fixedPoint = position["fixedPoint"] || false;
   };
   creanvas.Element = function(controller, identificationData, imageData, positionData) {
     var element = this;
@@ -974,6 +975,8 @@ var CreJs = CreJs || {};
     element.solidData.elementMass = solidData["mass"] || 1;
     var onCollision = solidData["onCollision"];
     var collisionCoefficient = solidData["coefficient"];
+    element.solidData.fixed = solidData["fixed"] || false;
+    element.solidData.fixedPoint = element.solidData.fixed || solidData["fixedPoint"] || false;
     element.controller.collisionSolver = element.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(element.controller);
     element.solidData.coefficient = !collisionCoefficient && collisionCoefficient !== 0 ? 1 : collisionCoefficient;
     element.elementMoving = element.elementMoving || {movingSpeed:new CreJs.Core.Vector(0, 0), movingAcceleration:new CreJs.Core.Vector(0, 0), omega:0};

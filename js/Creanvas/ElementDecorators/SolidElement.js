@@ -15,6 +15,9 @@ var CreJs = CreJs || {};
 			element.solidData.elementMass = solidData["mass"] || 1; 
 			var onCollision = solidData["onCollision"];			
 			var collisionCoefficient = solidData["coefficient"];
+
+			element.solidData.fixed = solidData["fixed"]|| false;
+			element.solidData.fixedPoint = element.solidData.fixed || solidData["fixedPoint"]|| false;
 			
 			element.controller.collisionSolver = 
 				element.controller.collisionSolver || 

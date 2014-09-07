@@ -57,7 +57,6 @@
 		element.elementY = position["y"] || 0;
 		element.elementZ = position["z"]|| 0;
 		element.elementAngle = position["angle"]|| 0;
-		element.fixedPoint = position["fixedPoint"]|| false;
 	};
 	
 	// decorators as additional arguments.

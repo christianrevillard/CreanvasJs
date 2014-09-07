@@ -123,15 +123,15 @@ TEST && function() {
         if (2 > g.length) {
           return null;
         }
-        var m;
+        var n;
         h = b = 0;
         d = g.length - 1;
         for (k = 1;k < g.length;k++) {
           for (f = k + 1;f < g.length;f++) {
-            m = g[k].x - g[f].x;
-            var n = g[k].y - g[f].y;
-            m = Math.sqrt(m * m + n * n);
-            m > b && (b = m, h = k, d = f);
+            n = g[k].x - g[f].x;
+            var m = g[k].y - g[f].y;
+            n = Math.sqrt(n * n + m * m);
+            n > b && (b = n, h = k, d = f);
           }
         }
         b = a.getCanvasXY(g[h].x + a.left, g[h].y + a.top);
@@ -139,28 +139,29 @@ TEST && function() {
         return b.x == d.x && b.y == d.y ? null : {x:Math.round((b.x + d.x) / 2), y:Math.round((b.y + d.y) / 2), vectors:CreJs.Core.getUnitVectors(b.x, b.y, d.x, d.y)};
       }
     }, g = function(a, c, d) {
-      var b, h, k, g, q, f;
+      var b, h, k, g, q, f, n;
       b = d.vectors;
       g = new CreJs.Core.Vector(d.x - a.elementX, d.y - a.elementY);
       f = CreJs.Core.vectorProduct(g, b.v).z;
-      q = new CreJs.Core.Vector(d.x - c.elementX, d.y - c.elementY);
-      d = CreJs.Core.vectorProduct(q, b.v).z;
-      var m = CreJs.Core.vectorProduct(g, b.v), n = CreJs.Core.vectorProduct(q, b.v);
+      n = new CreJs.Core.Vector(d.x - c.elementX, d.y - c.elementY);
+      d = CreJs.Core.vectorProduct(n, b.v).z;
+      var m = CreJs.Core.vectorProduct(g, b.v), s = CreJs.Core.vectorProduct(n, b.v);
       h = new CreJs.Core.Vector(a.elementMoving.movingSpeed.x, a.elementMoving.movingSpeed.y);
       k = new CreJs.Core.Vector(c.elementMoving.movingSpeed.x, c.elementMoving.movingSpeed.y);
       a.elementScaleSpeed && (h.x += g.x * a.elementScaleSpeed.x, h.y += g.y * a.elementScaleSpeed.y);
-      c.elementScaleSpeed && (k.x += q.x * c.elementScaleSpeed.x, k.y += q.y * c.elementScaleSpeed.y);
+      c.elementScaleSpeed && (k.x += n.x * c.elementScaleSpeed.x, k.y += n.y * c.elementScaleSpeed.y);
       g = h.getCoordinates(b);
       q = k.getCoordinates(b);
-      k = a.fixedPoint ? Infinity : a.solidData.elementMass;
-      h = c.fixedPoint ? Infinity : c.solidData.elementMass;
-      m = a.solidData.coefficient * c.solidData.coefficient * 2 * (q.v - g.v + c.elementMoving.omega * n.z - a.elementMoving.omega * m.z) / (1 / h + 1 / k + n.z * n.z / c.getMomentOfInertia() + m.z * m.z / a.getMomentOfInertia());
+      k = a.solidData.fixedPoint ? Infinity : a.solidData.elementMass;
+      h = c.solidData.fixedPoint ? Infinity : c.solidData.elementMass;
+      n = a.solidData.fixed ? Infinity : a.getMomentOfInertia();
+      var t = c.solidData.fixed ? Infinity : c.getMomentOfInertia(), m = a.solidData.coefficient * c.solidData.coefficient * 2 * (q.v - g.v + c.elementMoving.omega * s.z - a.elementMoving.omega * m.z) / (1 / h + 1 / k + s.z * s.z / t + m.z * m.z / n);
       a.elementMoving.movingSpeed.x += m / k * b.v.x;
       a.elementMoving.movingSpeed.y += m / k * b.v.y;
       c.elementMoving.movingSpeed.x -= m / h * b.v.x;
       c.elementMoving.movingSpeed.y -= m / h * b.v.y;
-      a.elementMoving.omega += m * f / a.getMomentOfInertia();
-      c.elementMoving.omega -= m * d / c.getMomentOfInertia();
+      a.elementMoving.omega += m * f / n;
+      c.elementMoving.omega -= m * d / t;
     }, h = function() {
       return a.elements.filter(function(a) {
         return a.solidData;
@@ -356,7 +357,6 @@ TEST && function() {
     a.elementY = e.y || 0;
     a.elementZ = e.z || 0;
     a.elementAngle = e.angle || 0;
-    a.fixedPoint = e.fixedPoint || !1;
   };
   CreJs.Creanvas.Element = function(h, e, c, d) {
     var b = this;
@@ -661,25 +661,25 @@ CreJs = CreJs || {};
   CreJs.Creanvas.elementDecorators.moving = {type:"moving", applyTo:function(a, f) {
     var g, h, e, c, d, b = f.vx, l = f.vy, k = f.ax, p = f.ay, q = f.rotationSpeed;
     DEBUG && a.controller.logMessage("Applying moving decorator to " + a.elementName + "-" + a.elementId);
-    var r, m, n;
+    var r, n, m;
     a.elementMoving = a.elementMoving || {};
     a.elementMoving.movingSpeed = new CreJs.Core.Vector(b || 0, l || 0);
     a.elementMoving.movingAcceleration = new CreJs.Core.Vector(k || 0, p || 0);
     a.elementMoving.omega = q || 0;
     r = a.controller.getTime();
     setInterval(function() {
-      m = a.controller.getTime();
-      n = m - r;
-      if (!(1 > n) && (r = m, a.elementMoving.movingSpeed.x += a.elementMoving.movingAcceleration.x * n, a.elementMoving.movingSpeed.y += a.elementMoving.movingAcceleration.y * n, 0 != a.elementMoving.movingSpeed.x || 0 != a.elementMoving.movingSpeed.y || 0 != a.elementMoving.omega || a.elementScaleSpeed && (0 != a.elementScaleSpeed.x || 0 != a.elementScaleSpeed.y))) {
+      n = a.controller.getTime();
+      m = n - r;
+      if (!(1 > m) && (r = n, a.elementMoving.movingSpeed.x += a.elementMoving.movingAcceleration.x * m, a.elementMoving.movingSpeed.y += a.elementMoving.movingAcceleration.y * m, 0 != a.elementMoving.movingSpeed.x || 0 != a.elementMoving.movingSpeed.y || 0 != a.elementMoving.omega || a.elementScaleSpeed && (0 != a.elementScaleSpeed.x || 0 != a.elementScaleSpeed.y))) {
         g = a.elementX;
         h = a.elementY;
         e = a.elementAngle;
         c = a.elementScaleX;
         d = a.elementScaleY;
-        a.elementX += a.elementMoving.movingSpeed.x * n;
-        a.elementY += a.elementMoving.movingSpeed.y * n;
-        a.elementAngle += a.elementMoving.omega * n;
-        a.elementScaleSpeed && (a.elementScaleX += a.elementScaleSpeed.x * n, a.elementScaleY += a.elementScaleSpeed.y * n);
+        a.elementX += a.elementMoving.movingSpeed.x * m;
+        a.elementY += a.elementMoving.movingSpeed.y * m;
+        a.elementAngle += a.elementMoving.omega * m;
+        a.elementScaleSpeed && (a.elementScaleX += a.elementScaleSpeed.x * m, a.elementScaleY += a.elementScaleSpeed.y * m);
         var b = !0;
         a.preMove && a.preMove.forEach(function(c) {
           b && (c.call(a) || (b = !1));
@@ -723,6 +723,8 @@ CreJs = CreJs || {};
     a.solidData = {};
     a.solidData.elementMass = f.mass || 1;
     var h = f.onCollision, e = f.coefficient;
+    a.solidData.fixed = f.fixed || !1;
+    a.solidData.fixedPoint = a.solidData.fixed || f.fixedPoint || !1;
     a.controller.collisionSolver = a.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(a.controller);
     a.solidData.coefficient = e || 0 === e ? e : 1;
     a.elementMoving = a.elementMoving || {movingSpeed:new CreJs.Core.Vector(0, 0), movingAcceleration:new CreJs.Core.Vector(0, 0), omega:0};
