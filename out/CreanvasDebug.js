@@ -126,7 +126,7 @@ if (TEST) {
       element.collisionContext.rotate(other.elementAngle || 0);
       element.collisionContext.scale(other.elementScaleX || 1, other.elementScaleY || 1);
       element.collisionContext.globalCompositeOperation = "destination-out";
-      element.collisionContext.drawImage(other.collidedContext.canvas, 0, 0, other.elementWidth, other.elementHeight, -other.dx, -other.dy, other.elementWidth, other.elementHeight);
+      element.collisionContext.drawImage(other.collidedContext.canvas, 0, 0, other.elementWidth, other.elementHeight, other.left, other.top, other.elementWidth, other.elementHeight);
       element.collisionContext.scale(1 / (other.elementScaleX || 1), 1 / (other.elementScaleY || 1));
       element.collisionContext.rotate(-other.elementAngle || 0);
       element.collisionContext.translate(-other.elementX + element.elementX, -other.elementY + element.elementY);
@@ -158,8 +158,8 @@ if (TEST) {
           }
         }
       }
-      var point1 = element.getCanvasXY(edges[theMax.i].x - element.dx, edges[theMax.i].y - element.dy);
-      var point2 = element.getCanvasXY(edges[theMax.j].x - element.dx, edges[theMax.j].y - element.dy);
+      var point1 = element.getCanvasXY(edges[theMax.i].x + element.left, edges[theMax.i].y + element.top);
+      var point2 = element.getCanvasXY(edges[theMax.j].x + element.left, edges[theMax.j].y + element.top);
       if (point1.x == point2.x && point1.y == point2.y) {
         return null;
       }
@@ -186,11 +186,13 @@ if (TEST) {
       }
       localSpeedElement = speedElement.getCoordinates(colVectors);
       localSpeedOther = speedOther.getCoordinates(colVectors);
-      var F = element.solidData.coefficient * other.solidData.coefficient * 2 * (localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z) / (1 / other.solidData.elementMass + 1 / element.solidData.elementMass + otherRot.z * otherRot.z / other.getMomentOfInertia() + elementRot.z * elementRot.z / element.getMomentOfInertia());
-      element.elementMoving.movingSpeed.x += F / element.solidData.elementMass * colVectors.v.x;
-      element.elementMoving.movingSpeed.y += F / element.solidData.elementMass * colVectors.v.y;
-      other.elementMoving.movingSpeed.x -= F / other.solidData.elementMass * colVectors.v.x;
-      other.elementMoving.movingSpeed.y -= F / other.solidData.elementMass * colVectors.v.y;
+      var elementMass = element.fixedPoint ? Infinity : element.solidData.elementMass;
+      var otherMass = other.fixedPoint ? Infinity : other.solidData.elementMass;
+      var F = element.solidData.coefficient * other.solidData.coefficient * 2 * (localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z) / (1 / otherMass + 1 / elementMass + otherRot.z * otherRot.z / other.getMomentOfInertia() + elementRot.z * elementRot.z / element.getMomentOfInertia());
+      element.elementMoving.movingSpeed.x += F / elementMass * colVectors.v.x;
+      element.elementMoving.movingSpeed.y += F / elementMass * colVectors.v.y;
+      other.elementMoving.movingSpeed.x -= F / otherMass * colVectors.v.x;
+      other.elementMoving.movingSpeed.y -= F / otherMass * colVectors.v.y;
       element.elementMoving.omega += F * l1 / element.getMomentOfInertia();
       other.elementMoving.omega -= F * l2 / other.getMomentOfInertia();
     };
@@ -205,7 +207,7 @@ if (TEST) {
       center = element.getCenter();
       others = toCheck.filter(function(other) {
         var otherCenter;
-        if (other.elementId === element.elementId || !other.elementMoving.movingSpeed.x && !other.elementMoving.movingSpeed.y && !element.elementMoving.movingSpeed.x && !element.elementMoving.movingSpeed.y && !other.elementScaleSpeed && !element.elementScaleSpeed) {
+        if (other.elementId === element.elementId || !other.elementMoving.movingSpeed.x && !other.elementMoving.movingSpeed.y && !element.elementMoving.movingSpeed.x && !element.elementMoving.movingSpeed.y && !other.elementScaleSpeed && !element.elementScaleSpeed && !element.elementMoving.omega && !other.elementMoving.omega) {
           return false;
         }
         otherCenter = other.getCenter();
@@ -391,7 +393,7 @@ if (TEST) {
       return element;
     };
     controller.logMessage("Adding background");
-    this.add(["name", "background"], ["image", {"width":canvas.width, "height":canvas.height, "translate":{"dx":0, "dy":0}, "draw":controllerData["drawBackground"] || function(context) {
+    this.add(["name", "background"], ["image", {"left":0, "width":canvas.width, "top":0, "height":canvas.height, "draw":controllerData["drawBackground"] || function(context) {
       context.fillStyle = controllerData["backgroundStyle"] || "#FFF";
       context.fillRect(0, 0, this.elementWidth, this.elementHeight);
     }}], ["position", {"z":-Infinity}]);
@@ -404,7 +406,7 @@ if (TEST) {
           controller.context.translate(element.elementX, element.elementY);
           controller.context.rotate(element.elementAngle || 0);
           controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
-          controller.context.drawImage(element.temporaryRenderingContext.canvas, 0, 0, element.elementWidth, element.elementHeight, -element.dx, -element.dy, element.elementWidth, element.elementHeight);
+          controller.context.drawImage(element.temporaryRenderingContext.canvas, 0, 0, element.elementWidth, element.elementHeight, element.left, element.top, element.elementWidth, element.elementHeight);
           controller.context.scale(1 / (element.elementScaleX || 1), 1 / element.elementScaleY || 1);
           controller.context.rotate(-(element.elementAngle || 0));
           controller.context.translate(-element.elementX, -element.elementY);
@@ -427,11 +429,14 @@ if (TEST) {
     element.elementId = CreJs.CreHelpers.GetGuid();
   };
   var setImage = function(element, imageData) {
-    element.elementWidth = imageData["width"];
-    element.elementHeight = imageData["height"];
-    var translate = imageData["translate"] || {"dx":imageData["width"] / 2, "dy":imageData["height"] / 2};
-    element.dx = translate["dx"];
-    element.dy = translate["dy"];
+    var width = imageData["width"];
+    var height = imageData["height"];
+    element.top = imageData["top"] == 0 ? 0 : imageData["top"] || -height / 2;
+    element.left = imageData["left"] == 0 ? 0 : imageData["left"] || -width / 2;
+    element.bottom = imageData["bottom"] == 0 ? 0 : imageData["bottom"] || element.top + height;
+    element.right = imageData["right"] == 0 ? 0 : imageData["right"] || element.left + width;
+    element.elementWidth = width || element.right - element.left;
+    element.elementHeight = height || element.bottom - element.top;
     var canvas = element.controller.context.canvas;
     var tempCanvas = canvas.ownerDocument.createElement("canvas");
     element.temporaryRenderingContext = tempCanvas.getContext("2d");
@@ -445,7 +450,7 @@ if (TEST) {
       tempCanvas.width = element.elementWidth;
       tempCanvas.height = element.elementHeight;
       element.temporaryRenderingContext.beginPath();
-      element.temporaryRenderingContext.translate(element.dx, element.dy);
+      element.temporaryRenderingContext.translate(-element.left, -element.top);
       draw.call(element, element.temporaryRenderingContext);
       element.elementImage = element.temporaryRenderingContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
     }
@@ -455,6 +460,7 @@ if (TEST) {
     element.elementY = position["y"] || 0;
     element.elementZ = position["z"] || 0;
     element.elementAngle = position["angle"] || 0;
+    element.fixedPoint = position["fixedPoint"] || false;
   };
   creanvas.Element = function(controller, identificationData, imageData, positionData) {
     var element = this;
@@ -478,8 +484,8 @@ if (TEST) {
       return element.controller.noDrawContext.isPointInPath(element, draw, canvasXY);
     };
     element.hit = function(pointerX, pointerY) {
-      var imageX = Math.round(pointerX - element.elementX + element.dx);
-      var imageY = Math.round(pointerY - element.elementY + element.dy);
+      var imageX = Math.round(pointerX - element.elementX - element.left);
+      var imageY = Math.round(pointerY - element.elementY - element.top);
       var xx = imageX >= 0 && imageX <= element.elementWidth && imageY >= 0 && imageY <= element.elementHeight && element.elementImage.data[4 * imageY * element.elementWidth + 4 * imageX + 3] > 0;
       if (DEBUG) {
         element.debug("hit", xx ? "hit" : "no hit");
@@ -536,13 +542,13 @@ if (TEST) {
       return{x:Math.round(((canvasX - element.elementX) * Math.cos(element.elementAngle) + (canvasY - element.elementY) * Math.sin(element.elementAngle)) / element.elementScaleX), y:Math.round(((canvasY - element.elementY) * Math.cos(element.elementAngle) - (canvasX - element.elementX) * Math.sin(element.elementAngle)) / element.elementScaleY)};
     };
     element.getCenter = function() {
-      return element.getCanvasXY(-element.dx + element.elementWidth / 2, -element.dy + element.elementHeight / 2);
+      return element.getCanvasXY(element.left + element.elementWidth / 2, element.top + element.elementHeight / 2);
     };
     var corners = [];
-    corners.push({x:-element.dx, y:-element.dy});
-    corners.push({x:-element.dx + element.elementWidth, y:-element.dy});
-    corners.push({x:-element.dx + element.elementWidth, y:-element.dy + element.elementHeight});
-    corners.push({x:-element.dx, y:-element.dy + element.elementHeight});
+    corners.push({x:element.left, y:element.top});
+    corners.push({x:element.right, y:element.top});
+    corners.push({x:element.right, y:element.bottom});
+    corners.push({x:element.left, y:element.bottom});
     element.getClientCornersCache = function() {
       return corners.map(function(point) {
         return element.getCanvasXY(point.x, point.y);
@@ -1038,7 +1044,7 @@ var CreJs = CreJs || {};
       }
     }
     element.collisionContext.putImageData(collisionImageNew, 0, 0);
-    element.collisionContext.translate(element.dx, element.dy);
+    element.collisionContext.translate(-element.left, -element.top);
     Object.defineProperty(element, "solid", {get:function() {
       return this.solidData;
     }, set:function(y) {

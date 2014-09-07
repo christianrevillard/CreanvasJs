@@ -92,7 +92,7 @@ TEST && function() {
 (function() {
   CreJs.Creanvas.CollisionSolver = function(a) {
     var f = function(a, c) {
-      var d, b, h, k, f, r, m;
+      var d, b, h, k, f, q, g;
       k = a.getClientRect();
       f = c.getClientRect();
       d = Math.max(k.left, f.left) - 1;
@@ -107,58 +107,60 @@ TEST && function() {
         a.collisionContext.rotate(c.elementAngle || 0);
         a.collisionContext.scale(c.elementScaleX || 1, c.elementScaleY || 1);
         a.collisionContext.globalCompositeOperation = "destination-out";
-        a.collisionContext.drawImage(c.collidedContext.canvas, 0, 0, c.elementWidth, c.elementHeight, -c.dx, -c.dy, c.elementWidth, c.elementHeight);
+        a.collisionContext.drawImage(c.collidedContext.canvas, 0, 0, c.elementWidth, c.elementHeight, c.left, c.top, c.elementWidth, c.elementHeight);
         a.collisionContext.scale(1 / (c.elementScaleX || 1), 1 / (c.elementScaleY || 1));
         a.collisionContext.rotate(-c.elementAngle || 0);
         a.collisionContext.translate(-c.elementX + a.elementX, -c.elementY + a.elementY);
         a.collisionContext.rotate(a.elementAngle || 0);
         a.collisionContext.scale(a.elementScaleX || 1, a.elementScaleY || 1);
-        r = a.collisionContext.getImageData(0, 0, a.elementWidth, a.elementHeight);
+        q = a.collisionContext.getImageData(0, 0, a.elementWidth, a.elementHeight);
         a.collisionContext.globalCompositeOperation = "source-over";
         a.collisionContext.putImageData(d, 0, 0);
-        m = [];
+        g = [];
         a.edges.forEach(function(b) {
-          90 > r.data[b.y * a.elementWidth * 4 + 4 * b.x + 3] && m.push(b);
+          90 > q.data[b.y * a.elementWidth * 4 + 4 * b.x + 3] && g.push(b);
         });
-        if (2 > m.length) {
+        if (2 > g.length) {
           return null;
         }
-        var g;
+        var m;
         h = b = 0;
-        d = m.length - 1;
-        for (k = 1;k < m.length;k++) {
-          for (f = k + 1;f < m.length;f++) {
-            g = m[k].x - m[f].x;
-            var n = m[k].y - m[f].y;
-            g = Math.sqrt(g * g + n * n);
-            g > b && (b = g, h = k, d = f);
+        d = g.length - 1;
+        for (k = 1;k < g.length;k++) {
+          for (f = k + 1;f < g.length;f++) {
+            m = g[k].x - g[f].x;
+            var n = g[k].y - g[f].y;
+            m = Math.sqrt(m * m + n * n);
+            m > b && (b = m, h = k, d = f);
           }
         }
-        b = a.getCanvasXY(m[h].x - a.dx, m[h].y - a.dy);
-        d = a.getCanvasXY(m[d].x - a.dx, m[d].y - a.dy);
+        b = a.getCanvasXY(g[h].x + a.left, g[h].y + a.top);
+        d = a.getCanvasXY(g[d].x + a.left, g[d].y + a.top);
         return b.x == d.x && b.y == d.y ? null : {x:Math.round((b.x + d.x) / 2), y:Math.round((b.y + d.y) / 2), vectors:CreJs.Core.getUnitVectors(b.x, b.y, d.x, d.y)};
       }
     }, g = function(a, c, d) {
-      var b, h, k, f, r, g;
+      var b, h, k, g, q, f;
       b = d.vectors;
-      f = new CreJs.Core.Vector(d.x - a.elementX, d.y - a.elementY);
-      r = CreJs.Core.vectorProduct(f, b.v).z;
-      g = new CreJs.Core.Vector(d.x - c.elementX, d.y - c.elementY);
-      d = CreJs.Core.vectorProduct(g, b.v).z;
-      var p = CreJs.Core.vectorProduct(f, b.v), n = CreJs.Core.vectorProduct(g, b.v);
+      g = new CreJs.Core.Vector(d.x - a.elementX, d.y - a.elementY);
+      f = CreJs.Core.vectorProduct(g, b.v).z;
+      q = new CreJs.Core.Vector(d.x - c.elementX, d.y - c.elementY);
+      d = CreJs.Core.vectorProduct(q, b.v).z;
+      var m = CreJs.Core.vectorProduct(g, b.v), n = CreJs.Core.vectorProduct(q, b.v);
       h = new CreJs.Core.Vector(a.elementMoving.movingSpeed.x, a.elementMoving.movingSpeed.y);
       k = new CreJs.Core.Vector(c.elementMoving.movingSpeed.x, c.elementMoving.movingSpeed.y);
-      a.elementScaleSpeed && (h.x += f.x * a.elementScaleSpeed.x, h.y += f.y * a.elementScaleSpeed.y);
-      c.elementScaleSpeed && (k.x += g.x * c.elementScaleSpeed.x, k.y += g.y * c.elementScaleSpeed.y);
-      f = h.getCoordinates(b);
-      k = k.getCoordinates(b);
-      p = a.solidData.coefficient * c.solidData.coefficient * 2 * (k.v - f.v + c.elementMoving.omega * n.z - a.elementMoving.omega * p.z) / (1 / c.solidData.elementMass + 1 / a.solidData.elementMass + n.z * n.z / c.getMomentOfInertia() + p.z * p.z / a.getMomentOfInertia());
-      a.elementMoving.movingSpeed.x += p / a.solidData.elementMass * b.v.x;
-      a.elementMoving.movingSpeed.y += p / a.solidData.elementMass * b.v.y;
-      c.elementMoving.movingSpeed.x -= p / c.solidData.elementMass * b.v.x;
-      c.elementMoving.movingSpeed.y -= p / c.solidData.elementMass * b.v.y;
-      a.elementMoving.omega += p * r / a.getMomentOfInertia();
-      c.elementMoving.omega -= p * d / c.getMomentOfInertia();
+      a.elementScaleSpeed && (h.x += g.x * a.elementScaleSpeed.x, h.y += g.y * a.elementScaleSpeed.y);
+      c.elementScaleSpeed && (k.x += q.x * c.elementScaleSpeed.x, k.y += q.y * c.elementScaleSpeed.y);
+      g = h.getCoordinates(b);
+      q = k.getCoordinates(b);
+      k = a.fixedPoint ? Infinity : a.solidData.elementMass;
+      h = c.fixedPoint ? Infinity : c.solidData.elementMass;
+      m = a.solidData.coefficient * c.solidData.coefficient * 2 * (q.v - g.v + c.elementMoving.omega * n.z - a.elementMoving.omega * m.z) / (1 / h + 1 / k + n.z * n.z / c.getMomentOfInertia() + m.z * m.z / a.getMomentOfInertia());
+      a.elementMoving.movingSpeed.x += m / k * b.v.x;
+      a.elementMoving.movingSpeed.y += m / k * b.v.y;
+      c.elementMoving.movingSpeed.x -= m / h * b.v.x;
+      c.elementMoving.movingSpeed.y -= m / h * b.v.y;
+      a.elementMoving.omega += m * f / a.getMomentOfInertia();
+      c.elementMoving.omega -= m * d / c.getMomentOfInertia();
     }, h = function() {
       return a.elements.filter(function(a) {
         return a.solidData;
@@ -169,7 +171,7 @@ TEST && function() {
       d = a.getCenter();
       c = c.filter(function(b) {
         var c;
-        if (b.elementId === a.elementId || !(b.elementMoving.movingSpeed.x || b.elementMoving.movingSpeed.y || a.elementMoving.movingSpeed.x || a.elementMoving.movingSpeed.y || b.elementScaleSpeed || a.elementScaleSpeed)) {
+        if (b.elementId === a.elementId || !(b.elementMoving.movingSpeed.x || b.elementMoving.movingSpeed.y || a.elementMoving.movingSpeed.x || a.elementMoving.movingSpeed.y || b.elementScaleSpeed || a.elementScaleSpeed || a.elementMoving.omega || b.elementMoving.omega)) {
           return!1;
         }
         c = b.getCenter();
@@ -222,8 +224,8 @@ TEST && function() {
         return b.canHandle(a);
       }).sort(function(a, b) {
         return b.elementZ || 0 - a.elementZ || 0;
-      }).forEach(function(e) {
-        !c && e.hit(b.x, b.y) && (e.elementEvents.dispatch(a, b), c = !0);
+      }).forEach(function(h) {
+        !c && h.hit(b.x, b.y) && (h.elementEvents.dispatch(a, b), c = !0);
       });
     };
     this.triggerElementEventByIdentifier = function(a, b) {
@@ -234,18 +236,18 @@ TEST && function() {
     this.registerCanvasPointerEvent = function(a, b) {
       f.addEventListener(a, function(c) {
         setTimeout(function() {
-          var d = function(c, d) {
-            DEBUG && e.logMessage("Canvas event " + a + " with touchIdentifier " + d);
-            var h = e.getCanvasXYFromClientXY(c);
-            h.touchIdentifier = d;
-            e.triggerPointedElementEvent(b, h);
+          var h = function(c, h) {
+            DEBUG && e.logMessage("Canvas event " + a + " with touchIdentifier " + h);
+            var d = e.getCanvasXYFromClientXY(c);
+            d.touchIdentifier = h;
+            e.triggerPointedElementEvent(b, d);
           };
           if (c.changedTouches) {
-            for (var h = 0;h < c.changedTouches.length;h++) {
-              d(c.changedTouches[h], c.changedTouches[h].identifier);
+            for (var d = 0;d < c.changedTouches.length;d++) {
+              h(c.changedTouches[d], c.changedTouches[d].identifier);
             }
           } else {
-            d(c, -1);
+            h(c, -1);
           }
         });
       });
@@ -253,18 +255,18 @@ TEST && function() {
     this.registerTouchIdentifierEvent = function(a, b) {
       f.addEventListener(a, function(c) {
         setTimeout(function() {
-          var d = function(c, d) {
-            DEBUG && e.logMessage("Canvas event " + a + " with touchIdentifier " + d);
-            var h = e.getCanvasXYFromClientXY(c);
-            h.touchIdentifier = d;
-            e.triggerElementEventByIdentifier(b, h);
+          var h = function(c, h) {
+            DEBUG && e.logMessage("Canvas event " + a + " with touchIdentifier " + h);
+            var d = e.getCanvasXYFromClientXY(c);
+            d.touchIdentifier = h;
+            e.triggerElementEventByIdentifier(b, d);
           };
           if (c.changedTouches) {
-            for (var h = 0;h < c.changedTouches.length;h++) {
-              d(c.changedTouches[h], c.changedTouches[h].identifier);
+            for (var d = 0;d < c.changedTouches.length;d++) {
+              h(c.changedTouches[d], c.changedTouches[d].identifier);
             }
           } else {
-            d(c, -1);
+            h(c, -1);
           }
         });
       });
@@ -299,9 +301,9 @@ TEST && function() {
         return a && "name" == a[0];
       })[0] || ["name", "Unknown"], c = a.filter(function(a) {
         return a && "image" == a[0];
-      })[0], d = a.filter(function(a) {
+      })[0], h = a.filter(function(a) {
         return a && "position" == a[0];
-      })[0], b = new CreJs.Creanvas.Element(e, b, c, d), a = a.filter(function(a) {
+      })[0], b = new CreJs.Creanvas.Element(e, b, c, h), a = a.filter(function(a) {
         return a && "name" != a[0] && "position" != a[0] && "image" != a[0];
       });
       0 < a.length && CreJs.Creanvas.elementDecorators && (DEBUG && b.debug("New element", "apply " + a.length + " decorators"), b.applyElementDecorators.apply(b, a));
@@ -309,7 +311,7 @@ TEST && function() {
       return b;
     };
     e.logMessage("Adding background");
-    this.add(["name", "background"], ["image", {width:f.width, height:f.height, translate:{dx:0, dy:0}, draw:a.drawBackground || function(b) {
+    this.add(["name", "background"], ["image", {left:0, width:f.width, top:0, height:f.height, draw:a.drawBackground || function(b) {
       b.fillStyle = a.backgroundStyle || "#FFF";
       b.fillRect(0, 0, this.elementWidth, this.elementHeight);
     }}], ["position", {z:-Infinity}]);
@@ -320,7 +322,7 @@ TEST && function() {
         e.context.translate(a.elementX, a.elementY);
         e.context.rotate(a.elementAngle || 0);
         e.context.scale(a.elementScaleX || 1, a.elementScaleY || 1);
-        e.context.drawImage(a.temporaryRenderingContext.canvas, 0, 0, a.elementWidth, a.elementHeight, -a.dx, -a.dy, a.elementWidth, a.elementHeight);
+        e.context.drawImage(a.temporaryRenderingContext.canvas, 0, 0, a.elementWidth, a.elementHeight, a.left, a.top, a.elementWidth, a.elementHeight);
         e.context.scale(1 / (a.elementScaleX || 1), 1 / a.elementScaleY || 1);
         e.context.rotate(-(a.elementAngle || 0));
         e.context.translate(-a.elementX, -a.elementY);
@@ -337,31 +339,24 @@ TEST && function() {
     a.elementName = e;
     a.elementId = CreJs.CreHelpers.GetGuid();
   }, f = function(a, e) {
-    a.elementWidth = e.width;
-    a.elementHeight = e.height;
-    var c = e.translate || {dx:e.width / 2, dy:e.height / 2};
-    a.dx = c.dx;
-    a.dy = c.dy;
+    var c = e.width, d = e.height;
+    a.top = 0 == e.top ? 0 : e.top || -d / 2;
+    a.left = 0 == e.left ? 0 : e.left || -c / 2;
+    a.bottom = 0 == e.bottom ? 0 : e.bottom || a.top + d;
+    a.right = 0 == e.right ? 0 : e.right || a.left + c;
+    a.elementWidth = c || a.right - a.left;
+    a.elementHeight = d || a.bottom - a.top;
     c = a.controller.context.canvas.ownerDocument.createElement("canvas");
     a.temporaryRenderingContext = c.getContext("2d");
     a.elementScaleX = e.scaleX || 1;
     a.elementScaleY = e.scaleY || 1;
-    if (e.rawImage) {
-      a.elementImage = e.rawImage, a.temporaryRenderingContext.putImageData(a.elementImage, 0, 0);
-    } else {
-      var d = e.draw;
-      c.width = a.elementWidth;
-      c.height = a.elementHeight;
-      a.temporaryRenderingContext.beginPath();
-      a.temporaryRenderingContext.translate(a.dx, a.dy);
-      d.call(a, a.temporaryRenderingContext);
-      a.elementImage = a.temporaryRenderingContext.getImageData(0, 0, a.elementWidth, a.elementHeight);
-    }
+    e.rawImage ? (a.elementImage = e.rawImage, a.temporaryRenderingContext.putImageData(a.elementImage, 0, 0)) : (d = e.draw, c.width = a.elementWidth, c.height = a.elementHeight, a.temporaryRenderingContext.beginPath(), a.temporaryRenderingContext.translate(-a.left, -a.top), d.call(a, a.temporaryRenderingContext), a.elementImage = a.temporaryRenderingContext.getImageData(0, 0, a.elementWidth, a.elementHeight));
   }, g = function(a, e) {
     a.elementX = e.x || 0;
     a.elementY = e.y || 0;
     a.elementZ = e.z || 0;
     a.elementAngle = e.angle || 0;
+    a.fixedPoint = e.fixedPoint || !1;
   };
   CreJs.Creanvas.Element = function(h, e, c, d) {
     var b = this;
@@ -382,7 +377,7 @@ TEST && function() {
       return b.controller.noDrawContext.isPointInPath(b, draw, a);
     };
     b.hit = function(a, c) {
-      var d = Math.round(a - b.elementX + b.dx), e = Math.round(c - b.elementY + b.dy), d = 0 <= d && d <= b.elementWidth && 0 <= e && e <= b.elementHeight && 0 < b.elementImage.data[4 * e * b.elementWidth + 4 * d + 3];
+      var d = Math.round(a - b.elementX - b.left), e = Math.round(c - b.elementY - b.top), d = 0 <= d && d <= b.elementWidth && 0 <= e && e <= b.elementHeight && 0 < b.elementImage.data[4 * e * b.elementWidth + 4 * d + 3];
       DEBUG && b.debug("hit", d ? "hit" : "no hit");
       return d;
     };
@@ -424,15 +419,15 @@ TEST && function() {
       return{x:Math.round(((a - b.elementX) * Math.cos(b.elementAngle) + (c - b.elementY) * Math.sin(b.elementAngle)) / b.elementScaleX), y:Math.round(((c - b.elementY) * Math.cos(b.elementAngle) - (a - b.elementX) * Math.sin(b.elementAngle)) / b.elementScaleY)};
     };
     b.getCenter = function() {
-      return b.getCanvasXY(-b.dx + b.elementWidth / 2, -b.dy + b.elementHeight / 2);
+      return b.getCanvasXY(b.left + b.elementWidth / 2, b.top + b.elementHeight / 2);
     };
-    var q = [];
-    q.push({x:-b.dx, y:-b.dy});
-    q.push({x:-b.dx + b.elementWidth, y:-b.dy});
-    q.push({x:-b.dx + b.elementWidth, y:-b.dy + b.elementHeight});
-    q.push({x:-b.dx, y:-b.dy + b.elementHeight});
+    var p = [];
+    p.push({x:b.left, y:b.top});
+    p.push({x:b.right, y:b.top});
+    p.push({x:b.right, y:b.bottom});
+    p.push({x:b.left, y:b.bottom});
     b.getClientCornersCache = function() {
-      return q.map(function(a) {
+      return p.map(function(a) {
         return b.getCanvasXY(a.x, a.y);
       });
     };
@@ -664,18 +659,18 @@ CreJs = CreJs || {};
   CreJs.Creanvas = CreJs.Creanvas || {};
   CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
   CreJs.Creanvas.elementDecorators.moving = {type:"moving", applyTo:function(a, f) {
-    var g, h, e, c, d, b = f.vx, l = f.vy, k = f.ax, q = f.ay, r = f.rotationSpeed;
+    var g, h, e, c, d, b = f.vx, l = f.vy, k = f.ax, p = f.ay, q = f.rotationSpeed;
     DEBUG && a.controller.logMessage("Applying moving decorator to " + a.elementName + "-" + a.elementId);
-    var m, p, n;
+    var r, m, n;
     a.elementMoving = a.elementMoving || {};
     a.elementMoving.movingSpeed = new CreJs.Core.Vector(b || 0, l || 0);
-    a.elementMoving.movingAcceleration = new CreJs.Core.Vector(k || 0, q || 0);
-    a.elementMoving.omega = r || 0;
-    m = a.controller.getTime();
+    a.elementMoving.movingAcceleration = new CreJs.Core.Vector(k || 0, p || 0);
+    a.elementMoving.omega = q || 0;
+    r = a.controller.getTime();
     setInterval(function() {
-      p = a.controller.getTime();
-      n = p - m;
-      if (!(1 > n) && (m = p, a.elementMoving.movingSpeed.x += a.elementMoving.movingAcceleration.x * n, a.elementMoving.movingSpeed.y += a.elementMoving.movingAcceleration.y * n, 0 != a.elementMoving.movingSpeed.x || 0 != a.elementMoving.movingSpeed.y || 0 != a.elementMoving.omega || a.elementScaleSpeed && (0 != a.elementScaleSpeed.x || 0 != a.elementScaleSpeed.y))) {
+      m = a.controller.getTime();
+      n = m - r;
+      if (!(1 > n) && (r = m, a.elementMoving.movingSpeed.x += a.elementMoving.movingAcceleration.x * n, a.elementMoving.movingSpeed.y += a.elementMoving.movingAcceleration.y * n, 0 != a.elementMoving.movingSpeed.x || 0 != a.elementMoving.movingSpeed.y || 0 != a.elementMoving.omega || a.elementScaleSpeed && (0 != a.elementScaleSpeed.x || 0 != a.elementScaleSpeed.y))) {
         g = a.elementX;
         h = a.elementY;
         e = a.elementAngle;
@@ -771,9 +766,9 @@ CreJs = CreJs || {};
       for (var b = 0;b < a.elementHeight;b++) {
         if (!(200 > e.data[b * a.elementWidth * 4 + 4 * d + 3])) {
           for (var l = !1, k = -1;2 > k;k++) {
-            for (var q = -1;2 > q;q++) {
-              if (0 > b + k || 0 > d + q || b + k > a.elementHeight - 1 || d + k > a.elementWidth - 1 || 100 > e.data[(b + k) * a.elementWidth * 4 + 4 * (d + q) + 3]) {
-                l = !0, q = k = 2;
+            for (var p = -1;2 > p;p++) {
+              if (0 > b + k || 0 > d + p || b + k > a.elementHeight - 1 || d + k > a.elementWidth - 1 || 100 > e.data[(b + k) * a.elementWidth * 4 + 4 * (d + p) + 3]) {
+                l = !0, p = k = 2;
               }
             }
           }
@@ -783,7 +778,7 @@ CreJs = CreJs || {};
       }
     }
     a.collisionContext.putImageData(c, 0, 0);
-    a.collisionContext.translate(a.dx, a.dy);
+    a.collisionContext.translate(-a.left, -a.top);
     Object.defineProperty(a, "solid", {get:function() {
       return this.solidData;
     }, set:function(a) {

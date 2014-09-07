@@ -254,9 +254,10 @@
 			["name",'background'],
 			["image", 
 				{
+					"left" :0,
 					"width":canvas.width,
+					"top":0,
 					"height":canvas.height,
-					"translate":{"dx":0, "dy":0},
 					"draw": 
 						controllerData["drawBackground"] ||  
 						function (context) 
@@ -293,7 +294,7 @@
 							controller.context.drawImage(
 									element.temporaryRenderingContext.canvas,
 									0, 0, element.elementWidth, element.elementHeight,
-									-element.dx, -element.dy, element.elementWidth, element.elementHeight);
+									element.left, element.top, element.elementWidth, element.elementHeight);
 							
 							controller.context.scale(1/(element.elementScaleX || 1), 1/(element.elementScaleY) || 1);
 							controller.context.rotate(- (element.elementAngle || 0));

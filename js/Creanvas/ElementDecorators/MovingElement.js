@@ -19,7 +19,7 @@ var CreJs = CreJs || {};
 			{
 				element.controller.logMessage('Applying moving decorator to ' + element.elementName + '-' + element.elementId);
 			}
-						
+
 			var lastUpdated, currentTime, dt, rollbackData;
 			
 			element.elementMoving = element.elementMoving || {};
@@ -78,7 +78,7 @@ var CreJs = CreJs || {};
 					element.elementScaleX += element.elementScaleSpeed.x * dt;	
 					element.elementScaleY += element.elementScaleSpeed.y * dt;	
 				}
-				
+
 				var preMoveOk = true;
 
 				if (element.preMove)

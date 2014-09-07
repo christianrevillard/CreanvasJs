@@ -15,7 +15,7 @@ var CreJs = CreJs || {};
 			element.solidData.elementMass = solidData["mass"] || 1; 
 			var onCollision = solidData["onCollision"];			
 			var collisionCoefficient = solidData["coefficient"];
-
+			
 			element.controller.collisionSolver = 
 				element.controller.collisionSolver || 
 				new CreJs.Creanvas.CollisionSolver(element.controller);
@@ -133,7 +133,7 @@ var CreJs = CreJs || {};
 			}
 			element.collisionContext.putImageData(collisionImageNew, 0, 0);
 			
-			element.collisionContext.translate(element.dx, element.dy);
+			element.collisionContext.translate(-element.left, -element.top);
 
 			Object.defineProperty(element, "solid", { get: function() {return this.solidData; }, set: function(y) { this.solidData = y; }});
 			Object.defineProperty(element.solidData, "mass", { get: function() {return this.elementMass; }, set: function(y) { this.elementMass = y; }});

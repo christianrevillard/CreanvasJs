@@ -12,12 +12,16 @@
 	
 	var setImage = function(element, imageData)
 	{		
-		element.elementWidth = imageData["width"];
-		element.elementHeight = imageData["height"];		
-		var translate = imageData["translate"] || {"dx":imageData["width"]/2, "dy":imageData["height"]/2};			
-		element.dx = translate["dx"];
-		element.dy = translate["dy"];
+		var width = imageData["width"];
+		var height = imageData["height"];
 
+		element.top = imageData["top"]==0 ? 0 : imageData["top"] || (-height/2);
+		element.left = imageData["left"]==0 ? 0 : imageData["left"] || (-width/2);
+		element.bottom = imageData["bottom"]==0 ? 0 : imageData["bottom"] || (element.top + height);
+		element.right = imageData["right"]==0 ? 0 : imageData["right"] || (element.left + width);
+		element.elementWidth = width || (element.right - element.left);
+		element.elementHeight = height || (element.bottom - element.top);
+				
 		var canvas = element.controller.context.canvas;
 		var tempCanvas = canvas.ownerDocument.createElement('canvas');			
 		element.temporaryRenderingContext = tempCanvas.getContext("2d");
@@ -39,7 +43,7 @@
 			
 			element.temporaryRenderingContext.beginPath();
 			
-			element.temporaryRenderingContext.translate(element.dx, element.dy);
+			element.temporaryRenderingContext.translate(-element.left, -element.top);
 			draw.call(element,element.temporaryRenderingContext);
 			// several image:store them here with offset
 			element.elementImage = element.temporaryRenderingContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
@@ -53,7 +57,9 @@
 		element.elementY = position["y"] || 0;
 		element.elementZ = position["z"]|| 0;
 		element.elementAngle = position["angle"]|| 0;
+		element.fixedPoint = position["fixedPoint"]|| false;
 	};
+	
 	// decorators as additional arguments.
 	creanvas.Element = function(controller, identificationData, imageData, positionData){
 
@@ -90,8 +96,8 @@
 		
 		element.hit = function(pointerX,pointerY)
 		{
-			var imageX = Math.round(pointerX - element.elementX + element.dx);
-			var imageY = Math.round(pointerY - element.elementY + element.dy);
+			var imageX = Math.round(pointerX - element.elementX - element.left);
+			var imageY = Math.round(pointerY - element.elementY - element.top);
 		
 			var xx = imageX >= 0 && 
 			imageX <= element.elementWidth &&
@@ -187,14 +193,14 @@
 				
 		element.getCenter = function()
 		{
-			return element.getCanvasXY(-element.dx + element.elementWidth/2, -element.dy + element.elementHeight/2);
+			return element.getCanvasXY(element.left + element.elementWidth/2, element.top + element.elementHeight/2);
 		};
 		
 		var corners=[];
-		corners.push({x:- element.dx, y: -element.dy});
-		corners.push({x:- element.dx + element.elementWidth, y:-element.dy});
-		corners.push({x:- element.dx + element.elementWidth, y:-element.dy + element.elementHeight});
-		corners.push({x:- element.dx, y:-element.dy + element.elementHeight});
+		corners.push({x: element.left, y: element.top});
+		corners.push({x: element.right, y: element.top});
+		corners.push({x: element.right, y: element.bottom});
+		corners.push({x: element.left, y: element.bottom});
 
 		element.getClientCornersCache = function()
 		{				
