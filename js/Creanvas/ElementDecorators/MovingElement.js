@@ -43,7 +43,7 @@ var CreJs = CreJs || {};
 				currentTime = element.controller.getTime();
 				dt = currentTime - lastUpdated;
 
-				if (dt < 1)
+				if (dt < 0.001)
 					return;
 
 				//element.controller.logMessage('Now moving : ' + element.elementName + ', dt=' + dt);

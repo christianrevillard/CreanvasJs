@@ -202,9 +202,9 @@ TEST && function() {
     k = a.timeScale || 1;
     this.lengthScale = a.lengthScale || d.height / a.realHeight || d.width / a.realWidth || 1;
     a.realTime ? (c = Date.now(), this.getTime = function() {
-      return(Date.now() - c) * k;
+      return(Date.now() - c) * k / 1E3;
     }) : (g = 0, setInterval(function() {
-      g += 10 * k;
+      g += 10 * k / 1E3;
     }, 10), this.getTime = function() {
       return g;
     });
@@ -668,7 +668,7 @@ CreJs = CreJs || {};
     setInterval(function() {
       q = a.controller.getTime();
       m = q - n;
-      if (!(1 > m) && (n = q, a.elementMoving.movingSpeed.x += a.elementMoving.movingAcceleration.x * m, a.elementMoving.movingSpeed.y += a.elementMoving.movingAcceleration.y * m, 0 != a.elementMoving.movingSpeed.x || 0 != a.elementMoving.movingSpeed.y || 0 != a.elementMoving.omega || a.elementScaleSpeed && (0 != a.elementScaleSpeed.x || 0 != a.elementScaleSpeed.y))) {
+      if (!(.001 > m) && (n = q, a.elementMoving.movingSpeed.x += a.elementMoving.movingAcceleration.x * m, a.elementMoving.movingSpeed.y += a.elementMoving.movingAcceleration.y * m, 0 != a.elementMoving.movingSpeed.x || 0 != a.elementMoving.movingSpeed.y || 0 != a.elementMoving.omega || a.elementScaleSpeed && (0 != a.elementScaleSpeed.x || 0 != a.elementScaleSpeed.y))) {
         e = a.elementX;
         f = a.elementY;
         g = a.elementAngle;

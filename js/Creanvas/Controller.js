@@ -20,16 +20,18 @@
 		if (controllerData.realTime)
 		{	
 			timeStart = Date.now();
-			this.getTime = function(){return (Date.now() - timeStart) * timeScale; };					
+			// seconds
+			this.getTime = function(){return (Date.now() - timeStart) * timeScale / 1000 ; };					
 		}
 		else
 		{
 			time=0;
 			setInterval(
 					function(){
-						time+=10*timeScale;
+						time+=10*timeScale / 1000;
 					},
 					10);
+			// seconds
 			this.getTime = function(){return time;};
 		}
 		

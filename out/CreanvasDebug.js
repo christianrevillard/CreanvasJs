@@ -250,12 +250,12 @@ if (TEST) {
     if (controllerData.realTime) {
       timeStart = Date.now();
       this.getTime = function() {
-        return(Date.now() - timeStart) * timeScale;
+        return(Date.now() - timeStart) * timeScale / 1E3;
       };
     } else {
       time = 0;
       setInterval(function() {
-        time += 10 * timeScale;
+        time += 10 * timeScale / 1E3;
       }, 10);
       this.getTime = function() {
         return time;
@@ -899,7 +899,7 @@ var CreJs = CreJs || {};
     setInterval(function() {
       currentTime = element.controller.getTime();
       dt = currentTime - lastUpdated;
-      if (dt < 1) {
+      if (dt < .001) {
         return;
       }
       lastUpdated = currentTime;
