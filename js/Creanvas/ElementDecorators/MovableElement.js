@@ -95,8 +95,8 @@ var CreJs = CreJs || {};
 					}
 				}
 
-				element.elementX += e.x-movingFrom.x;
-				element.elementY += e.y-movingFrom.y;
+				element.elementX += (e.x-movingFrom.x)/element.controller.lengthScale;
+				element.elementY += (e.y-movingFrom.y)/element.controller.lengthScale;
 				movingFrom = {x:e.x, y:e.y};	
 				element.triggerRedraw();
 			};	
@@ -119,7 +119,6 @@ var CreJs = CreJs || {};
 					element.controller.logMessage('End detected for touch ' + element.touchIdentifier);
 				}
 				
-				var canvasXY = element.controller.getCanvasXYFromClientXY(e);	
 				element.elementX += e.x-movingFrom.x;
 				element.elementY += e.y-movingFrom.y;
 				element.moveCompleted(e);	

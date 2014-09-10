@@ -122,14 +122,14 @@ if (TEST) {
       var collisionImage = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
       element.collisionContext.scale(1 / (element.elementScaleX || 1), 1 / (element.elementScaleY || 1));
       element.collisionContext.rotate(-(element.elementAngle || 0));
-      element.collisionContext.translate(other.elementX - element.elementX, other.elementY - element.elementY);
+      element.collisionContext.translate(other.elementX * element.controller.lengthScale - element.elementX * element.controller.lengthScale, other.elementY * element.controller.lengthScale - element.elementY * element.controller.lengthScale);
       element.collisionContext.rotate(other.elementAngle || 0);
       element.collisionContext.scale(other.elementScaleX || 1, other.elementScaleY || 1);
       element.collisionContext.globalCompositeOperation = "destination-out";
       element.collisionContext.drawImage(other.collidedContext.canvas, 0, 0, other.elementWidth, other.elementHeight, other.left, other.top, other.elementWidth, other.elementHeight);
       element.collisionContext.scale(1 / (other.elementScaleX || 1), 1 / (other.elementScaleY || 1));
       element.collisionContext.rotate(-other.elementAngle || 0);
-      element.collisionContext.translate(-other.elementX + element.elementX, -other.elementY + element.elementY);
+      element.collisionContext.translate(-other.elementX * element.controller.lengthScale + element.elementX * element.controller.lengthScale, -other.elementY * element.controller.lengthScale + element.elementY * element.controller.lengthScale);
       element.collisionContext.rotate(element.elementAngle || 0);
       element.collisionContext.scale(element.elementScaleX || 1, element.elementScaleY || 1);
       imageAfter = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
@@ -168,9 +168,9 @@ if (TEST) {
     var updateAfterCollision = function(element, other, collisionPoint) {
       var colVectors, speedElement, speedOther, localSpeedElement, localSpeedOther, centerCollisionElement, l1, centerCollisionOther, l2;
       colVectors = collisionPoint.vectors;
-      centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x - element.elementX, collisionPoint.y - element.elementY);
+      centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x - element.elementX * element.controller.lengthScale, collisionPoint.y - element.elementY * element.controller.lengthScale);
       l1 = CreJs.Core.vectorProduct(centerCollisionElement, colVectors.v).z;
-      centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x - other.elementX, collisionPoint.y - other.elementY);
+      centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x - other.elementX * element.controller.lengthScale, collisionPoint.y - other.elementY * element.controller.lengthScale);
       l2 = CreJs.Core.vectorProduct(centerCollisionOther, colVectors.v).z;
       var elementRot = CreJs.Core.vectorProduct(centerCollisionElement, colVectors.v);
       var otherRot = CreJs.Core.vectorProduct(centerCollisionOther, colVectors.v);
@@ -243,11 +243,10 @@ if (TEST) {
 })();
 (function() {
   CreJs.Creanvas.Controller = function(controllerData) {
-    var canvas, needRedraw, refreshTime, controller, time, timeStart, timeScale, meterPerPoint;
-    controller = this;
+    var canvas, needRedraw, refreshTime, time, timeStart, timeScale, controller = this;
     canvas = controllerData["canvas"];
     timeScale = controllerData["timeScale"] || 1;
-    meterPerPoint = controllerData["meterPerPoint"] || 1;
+    this.lengthScale = controllerData["lengthScale"] || canvas.height / controllerData["realHeight"] || canvas.width / controllerData["realWidth"] || 1;
     if (controllerData.realTime) {
       timeStart = Date.now();
       this.getTime = function() {
@@ -272,7 +271,6 @@ if (TEST) {
     }
     controller.context = canvas.getContext("2d");
     controller.context.setTransform(1, 0, 0, 1, 0, 0);
-    controller.context.scale(1 / meterPerPoint, 1 / meterPerPoint);
     needRedraw = true;
     isDrawing = false;
     refreshTime = controllerData["refreshTime"] || 50;
@@ -359,7 +357,7 @@ if (TEST) {
     this.getCanvasXYFromClientXY = function(clientXY) {
       var boundings = canvas.getBoundingClientRect();
       controller.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ")");
-      var xy = {x:Math.round((clientXY.clientX - boundings.left) * canvas.width / boundings.width * meterPerPoint), y:Math.round((clientXY.clientY - boundings.top) * canvas.height / boundings.height * meterPerPoint)};
+      var xy = {x:Math.round((clientXY.clientX - boundings.left) * canvas.width / boundings.width), y:Math.round((clientXY.clientY - boundings.top) * canvas.height / boundings.height)};
       controller.logMessage("canvasXY: (" + xy.x + "," + xy.y + ")");
       if (clientXY.type == "click") {
         controller.logMessage("Click on ! canvasXY: (" + xy.x + "," + xy.y + ")");
@@ -395,9 +393,9 @@ if (TEST) {
       return element;
     };
     controller.logMessage("Adding background");
-    this.add(["name", "background"], ["image", {"left":0, "width":canvas.width, "top":0, "height":canvas.height, "draw":controllerData["drawBackground"] || function(context) {
+    this.add(["name", "background"], ["image", {"left":0, "width":canvas.width / controller.lengthScale, "top":0, "height":canvas.height / controller.lengthScale, "draw":controllerData["drawBackground"] || function(context) {
       context.fillStyle = controllerData["backgroundStyle"] || "#FFF";
-      context.fillRect(0, 0, this.elementWidth, this.elementHeight);
+      context.fillRect(0, 0, canvas.width / controller.lengthScale, canvas.height / controller.lengthScale);
     }}], ["position", {"z":-Infinity}]);
     setInterval(function() {
       if (needRedraw && !isDrawing) {
@@ -405,13 +403,13 @@ if (TEST) {
         controller.elements.sort(function(a, b) {
           return(a.elementZ || 0) - (b.elementZ || 0);
         }).forEach(function(element) {
-          controller.context.translate(element.elementX, element.elementY);
+          controller.context.translate(element.elementX * controller.lengthScale, element.elementY * controller.lengthScale);
           controller.context.rotate(element.elementAngle || 0);
           controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
           controller.context.drawImage(element.temporaryRenderingContext.canvas, 0, 0, element.elementWidth, element.elementHeight, element.left, element.top, element.elementWidth, element.elementHeight);
           controller.context.scale(1 / (element.elementScaleX || 1), 1 / element.elementScaleY || 1);
           controller.context.rotate(-(element.elementAngle || 0));
-          controller.context.translate(-element.elementX, -element.elementY);
+          controller.context.translate(-element.elementX * controller.lengthScale, -element.elementY * controller.lengthScale);
         });
         isDrawing = false;
       } else {
@@ -439,6 +437,12 @@ if (TEST) {
     element.right = imageData["right"] == 0 ? 0 : imageData["right"] || element.left + width;
     element.elementWidth = width || element.right - element.left;
     element.elementHeight = height || element.bottom - element.top;
+    element.top = Math.round(element.top * element.controller.lengthScale);
+    element.left = Math.round(element.left * element.controller.lengthScale);
+    element.bottom = Math.round(element.bottom * element.controller.lengthScale);
+    element.right = Math.round(element.right * element.controller.lengthScale);
+    element.elementWidth = Math.round(element.elementWidth * element.controller.lengthScale);
+    element.elementHeight = Math.round(element.elementHeight * element.controller.lengthScale);
     var canvas = element.controller.context.canvas;
     var tempCanvas = canvas.ownerDocument.createElement("canvas");
     element.temporaryRenderingContext = tempCanvas.getContext("2d");
@@ -453,6 +457,7 @@ if (TEST) {
       tempCanvas.height = element.elementHeight;
       element.temporaryRenderingContext.beginPath();
       element.temporaryRenderingContext.translate(-element.left, -element.top);
+      element.temporaryRenderingContext.scale(element.controller.lengthScale, element.controller.lengthScale);
       draw.call(element, element.temporaryRenderingContext);
       element.elementImage = element.temporaryRenderingContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
     }
@@ -480,10 +485,6 @@ if (TEST) {
       };
     }
     element.elementEvents = new CreJs.Creevents.EventContainer;
-    element.isPointInPath = function(clientXY) {
-      var canvasXY = element.controller.getCanvasXYFromClientXY(clientXY);
-      return element.controller.noDrawContext.isPointInPath(element, draw, canvasXY);
-    };
     element.hit = function(pointerX, pointerY) {
       var imageXY = element.getElementXY(pointerX, pointerY);
       var imageX = imageXY.x - element.left;
@@ -535,13 +536,13 @@ if (TEST) {
       element.controller.triggerRedraw();
     };
     element.getCanvasXY = function(imageX, imageY) {
-      return{x:Math.round(element.elementX + imageX * element.elementScaleX * Math.cos(element.elementAngle) - imageY * element.elementScaleY * Math.sin(element.elementAngle)), y:Math.round(element.elementY + imageX * element.elementScaleX * Math.sin(element.elementAngle) + imageY * element.elementScaleY * Math.cos(element.elementAngle))};
+      return{x:Math.round(element.elementX * element.controller.lengthScale + imageX * element.elementScaleX * Math.cos(element.elementAngle) - imageY * element.elementScaleY * Math.sin(element.elementAngle)), y:Math.round(element.elementY * element.controller.lengthScale + imageX * element.elementScaleX * Math.sin(element.elementAngle) + imageY * element.elementScaleY * Math.cos(element.elementAngle))};
     };
     element.getCanvasXYNoRounding = function(imageX, imageY) {
-      return{x:element.elementX + imageX * element.elementScaleX * Math.cos(element.elementAngle) - imageY * element.elementScaleY * Math.sin(element.elementAngle), y:element.elementY + imageX * element.elementScaleX * Math.sin(element.elementAngle) + imageY * element.elementScaleY * Math.cos(element.elementAngle)};
+      return{x:element.elementX * element.controller.lengthScale + imageX * element.elementScaleX * Math.cos(element.elementAngle) - imageY * element.elementScaleY * Math.sin(element.elementAngle), y:element.elementY * element.controller.lengthScale + imageX * element.elementScaleX * Math.sin(element.elementAngle) + imageY * element.elementScaleY * Math.cos(element.elementAngle)};
     };
     element.getElementXY = function(canvasX, canvasY) {
-      return{x:Math.round(((canvasX - element.elementX) * Math.cos(element.elementAngle) + (canvasY - element.elementY) * Math.sin(element.elementAngle)) / element.elementScaleX), y:Math.round(((canvasY - element.elementY) * Math.cos(element.elementAngle) - (canvasX - element.elementX) * Math.sin(element.elementAngle)) / element.elementScaleY)};
+      return{x:Math.round(((canvasX - element.elementX * element.controller.lengthScale) * Math.cos(element.elementAngle) + (canvasY - element.elementY * element.controller.lengthScale) * Math.sin(element.elementAngle)) / element.elementScaleX), y:Math.round(((canvasY - element.elementY * element.controller.lengthScale) * Math.cos(element.elementAngle) - (canvasX - element.elementX * element.controller.lengthScale) * Math.sin(element.elementAngle)) / element.elementScaleY)};
     };
     element.getCenter = function() {
       return element.getCanvasXY(element.left + element.elementWidth / 2, element.top + element.elementHeight / 2);
@@ -853,8 +854,8 @@ var CreJs = CreJs || {};
           element.controller.logMessage("pointereMove event on movable " + element.elementId + " (" + element.touchIdentifier + ")");
         }
       }
-      element.elementX += e.x - movingFrom.x;
-      element.elementY += e.y - movingFrom.y;
+      element.elementX += (e.x - movingFrom.x) / element.controller.lengthScale;
+      element.elementY += (e.y - movingFrom.y) / element.controller.lengthScale;
       movingFrom = {x:e.x, y:e.y};
       element.triggerRedraw();
     };

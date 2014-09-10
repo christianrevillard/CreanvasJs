@@ -4,15 +4,18 @@
 			canvas, 
 			needRedraw, 
 			refreshTime, 
-			controller,
 			time,
 			timeStart,
 			timeScale, // timeCreanvas/timeComputer 100 => every seconds on computer is 100 seconds in Creanvas
-			meterPerPoint; // distanceCreanvas/RealDistance 1 => every point on canvas is 1 meter.
-		controller = this;
+			controller = this;
+		
 		canvas = controllerData["canvas"];
 		timeScale = controllerData["timeScale"] || 1;
-		meterPerPoint = controllerData["meterPerPoint"] || 1;
+		this.lengthScale = 
+			controllerData["lengthScale"] || 
+			canvas.height / controllerData["realHeight"] ||
+			canvas.width / controllerData["realWidth"]||
+			1;
 		
 		if (controllerData.realTime)
 		{	
@@ -68,8 +71,9 @@
 		if (DEBUG) this.logMessage('Starting controller');
 		
 		controller.context = canvas.getContext("2d");
+		
 		controller.context.setTransform(1,0,0,1,0,0);
-		controller.context.scale(1/meterPerPoint, 1/meterPerPoint);
+
 		needRedraw = true;
 		isDrawing = false;
 		refreshTime = controllerData["refreshTime"] || 50; // ms	- TODO constant default refresh time
@@ -207,14 +211,13 @@
 			var boundings = canvas.getBoundingClientRect();
 			controller.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ")" );
 			var xy = { 
-				x: Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width * meterPerPoint),
-				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height * meterPerPoint)};
+				x: Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width),
+				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};
 			controller.logMessage("canvasXY: (" + xy.x + "," + xy.y + ")" );
 			if (clientXY.type=="click")
-				{
-				controller.logMessage("Click on ! canvasXY: (" + xy.x + "," + xy.y + ")" );
-				
-				}
+			{
+				controller.logMessage("Click on ! canvasXY: (" + xy.x + "," + xy.y + ")" );				
+			}
 
 			return xy;
 		};
@@ -255,24 +258,23 @@
 			["image", 
 				{
 					"left" :0,
-					"width":canvas.width,
+					"width":canvas.width/controller.lengthScale,
 					"top":0,
-					"height":canvas.height,
-					"draw": 
-						controllerData["drawBackground"] ||  
-						function (context) 
-						{
-							context.fillStyle = controllerData["backgroundStyle"] || "#FFF";
-							context.fillRect(0,0,this.elementWidth,this.elementHeight);
-						}				
+					"height":canvas.height/controller.lengthScale,
+					"draw": controllerData["drawBackground"] || function(context)
+					{
+						context.fillStyle = controllerData["backgroundStyle"] || "#FFF";
+						context.fillRect(0,0,canvas.width/controller.lengthScale,canvas.height/controller.lengthScale);
+					}
 				}
 			],
 			["position", 
 			 	{
 					"z": -Infinity	
 				}
-			]);
-		
+			]
+		);
+
 		setInterval(
 				function()
 				{
@@ -280,14 +282,14 @@
 					{						
 						//needRedraw = false;
 						isDrawing = true;
-						
+					
 						controller.elements
 						.sort(function(a,b){return ((a.elementZ || 0) - (b.elementZ || 0));})
 						.forEach(function(element)
 						{
 //							controller.logMessage ("Redraw " + element.elementName + "/" + element.elementId);
 							
-							controller.context.translate(element.elementX, element.elementY);
+							controller.context.translate(element.elementX*controller.lengthScale, element.elementY*controller.lengthScale);
 							controller.context.rotate(element.elementAngle || 0);
 							controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
 																		
@@ -298,9 +300,9 @@
 							
 							controller.context.scale(1/(element.elementScaleX || 1), 1/(element.elementScaleY) || 1);
 							controller.context.rotate(- (element.elementAngle || 0));
-							controller.context.translate(-element.elementX, - element.elementY);
+							controller.context.translate(-element.elementX*controller.lengthScale, - element.elementY*controller.lengthScale);
 						});
-					
+						
 						isDrawing = false;
 												
 					}

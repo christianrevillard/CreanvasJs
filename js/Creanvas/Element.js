@@ -21,7 +21,14 @@
 		element.right = imageData["right"]==0 ? 0 : imageData["right"] || (element.left + width);
 		element.elementWidth = width || (element.right - element.left);
 		element.elementHeight = height || (element.bottom - element.top);
-				
+
+		element.top = Math.round(element.top*element.controller.lengthScale);
+		element.left = Math.round(element.left*element.controller.lengthScale);
+		element.bottom = Math.round(element.bottom*element.controller.lengthScale);
+		element.right = Math.round(element.right*element.controller.lengthScale);
+		element.elementWidth = Math.round(element.elementWidth*element.controller.lengthScale);
+		element.elementHeight = Math.round(element.elementHeight*element.controller.lengthScale);
+
 		var canvas = element.controller.context.canvas;
 		var tempCanvas = canvas.ownerDocument.createElement('canvas');			
 		element.temporaryRenderingContext = tempCanvas.getContext("2d");
@@ -44,6 +51,9 @@
 			element.temporaryRenderingContext.beginPath();
 			
 			element.temporaryRenderingContext.translate(-element.left, -element.top);
+			
+			element.temporaryRenderingContext.scale(element.controller.lengthScale,element.controller.lengthScale);
+			
 			draw.call(element,element.temporaryRenderingContext);
 			// several image:store them here with offset
 			element.elementImage = element.temporaryRenderingContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
@@ -55,7 +65,7 @@
 		// position prop
 		element.elementX = position["x"] || 0;
 		element.elementY = position["y"] || 0;
-		element.elementZ = position["z"]|| 0;
+		element.elementZ = position["z"] || 0;
 		element.elementAngle = position["angle"]|| 0;
 	};
 	
@@ -85,14 +95,7 @@
 		}
 
 		element.elementEvents = new CreJs.Creevents.EventContainer();			
-			
-		element.isPointInPath = function(clientXY){
-
-			var canvasXY = element.controller.getCanvasXYFromClientXY(clientXY);	
-
-			return element.controller.noDrawContext.isPointInPath(element, draw, canvasXY);
-		};
-		
+					
 		element.hit = function(pointerX,pointerY)
 		{
 
@@ -169,27 +172,21 @@
 			element.controller.triggerRedraw();
 		};	
 				
+		// coordinate in canvas from elementimage, in points
 		element.getCanvasXY=function(imageX, imageY)
 		{
 			return {
-				x: Math.round(element.elementX + imageX*element.elementScaleX*Math.cos(element.elementAngle) - imageY*element.elementScaleY*Math.sin(element.elementAngle)),
-				y: Math.round(element.elementY + imageX*element.elementScaleX*Math.sin(element.elementAngle) + imageY*element.elementScaleY*Math.cos(element.elementAngle))
+				x: Math.round(element.elementX * element.controller.lengthScale + imageX*element.elementScaleX*Math.cos(element.elementAngle) - imageY*element.elementScaleY*Math.sin(element.elementAngle)),
+				y: Math.round(element.elementY * element.controller.lengthScale + imageX*element.elementScaleX*Math.sin(element.elementAngle) + imageY*element.elementScaleY*Math.cos(element.elementAngle))
 			};
 		};
 
-		element.getCanvasXYNoRounding=function(imageX, imageY)
-		{
-			return {
-				x: element.elementX + imageX*element.elementScaleX*Math.cos(element.elementAngle) - imageY*element.elementScaleY*Math.sin(element.elementAngle),
-				y: element.elementY + imageX*element.elementScaleX*Math.sin(element.elementAngle) + imageY*element.elementScaleY*Math.cos(element.elementAngle)
-			};
-		};
-
+		// coordinates inside element image, in points
 		element.getElementXY=function(canvasX, canvasY)
 		{
 			return {
-				x: Math.round(((canvasX- element.elementX)*Math.cos(element.elementAngle) + (canvasY-element.elementY)*Math.sin(element.elementAngle))/element.elementScaleX),
-				y: Math.round(((canvasY- element.elementY)*Math.cos(element.elementAngle)-(canvasX-element.elementX)*Math.sin(element.elementAngle))/element.elementScaleY)
+				x: Math.round(((canvasX- element.elementX * element.controller.lengthScale)*Math.cos(element.elementAngle) + (canvasY-element.elementY * element.controller.lengthScale)*Math.sin(element.elementAngle))/element.elementScaleX),
+				y: Math.round(((canvasY- element.elementY * element.controller.lengthScale)*Math.cos(element.elementAngle)-(canvasX-element.elementX * element.controller.lengthScale)*Math.sin(element.elementAngle))/element.elementScaleY)
 			};
 		};
 

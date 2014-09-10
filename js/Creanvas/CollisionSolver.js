@@ -24,7 +24,7 @@
 
 			element.collisionContext.scale(1 / (element.elementScaleX || 1), 1 / (element.elementScaleY || 1));
 			element.collisionContext.rotate( - (element.elementAngle || 0));
-			element.collisionContext.translate(other.elementX - element.elementX, other.elementY - element.elementY);
+			element.collisionContext.translate(other.elementX * element.controller.lengthScale - element.elementX * element.controller.lengthScale, other.elementY * element.controller.lengthScale - element.elementY * element.controller.lengthScale);
 			element.collisionContext.rotate(other.elementAngle || 0 );
 			element.collisionContext.scale(other.elementScaleX || 1, other.elementScaleY || 1);
 
@@ -37,7 +37,7 @@
 	
 			element.collisionContext.scale(1/(other.elementScaleX || 1), 1/(other.elementScaleY || 1));
 			element.collisionContext.rotate( - other.elementAngle || 0 );
-			element.collisionContext.translate(-other.elementX + element.elementX, -other.elementY + element.elementY);
+			element.collisionContext.translate(-other.elementX * element.controller.lengthScale + element.elementX * element.controller.lengthScale, -other.elementY * element.controller.lengthScale + element.elementY * element.controller.lengthScale);
 			element.collisionContext.rotate( element.elementAngle || 0);
 			element.collisionContext.scale(element.elementScaleX || 1, element.elementScaleY || 1);
 
@@ -106,10 +106,10 @@
 			colVectors = collisionPoint.vectors;
 				
 
-			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.elementX, collisionPoint.y-element.elementY);								
+			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.elementX * element.controller.lengthScale, collisionPoint.y-element.elementY * element.controller.lengthScale);								
 			l1 = CreJs.Core.vectorProduct(centerCollisionElement, colVectors.v).z;		
 
-			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.elementX, collisionPoint.y-other.elementY);								
+			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.elementX * element.controller.lengthScale, collisionPoint.y-other.elementY * element.controller.lengthScale);								
 			l2= CreJs.Core.vectorProduct(centerCollisionOther, colVectors.v).z;		
 
 			var elementRot = CreJs.Core.vectorProduct(
