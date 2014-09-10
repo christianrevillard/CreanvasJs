@@ -127,7 +127,7 @@
 							{
 								controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
 							}
-							var eventData = controller.getCanvasXYFromClientXY(clientXY);
+							var eventData = controller.getWebappXYFromClientXY(clientXY);
 							eventData.touchIdentifier = touchIdentifier;
 							controller.triggerPointedElementEvent(customEventId, eventData);
 						};
@@ -161,7 +161,7 @@
 							{
 								controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
 							}
-							var eventData = controller.getCanvasXYFromClientXY(clientXY);
+							var eventData = controller.getWebappXYFromClientXY(clientXY);
 							eventData.touchIdentifier = touchIdentifier;
 							controller.triggerElementEventByIdentifier(customEventId, eventData);
 						};
@@ -205,18 +205,18 @@
 			needRedraw = true;
 		};	
 	
-		this.getCanvasXYFromClientXY  = function(clientXY)
+		this.getWebappXYFromClientXY  = function(clientXY)
 		{
 			// what about rotations here?
 			var boundings = canvas.getBoundingClientRect();
 			controller.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ")" );
 			var xy = { 
-				x: Math.round((clientXY.clientX-boundings.left) * canvas.width/boundings.width),
-				y: Math.round((clientXY.clientY-boundings.top) * canvas.height/boundings.height)};
-			controller.logMessage("canvasXY: (" + xy.x + "," + xy.y + ")" );
+				x: (clientXY.clientX-boundings.left) * canvas.width/boundings.width/controller.lengthScale,
+				y: (clientXY.clientY-boundings.top) * canvas.height/boundings.height/controller.lengthScale};
+			controller.logMessage("WebAppXY: (" + xy.x + "," + xy.y + ")" );
 			if (clientXY.type=="click")
 			{
-				controller.logMessage("Click on ! canvasXY: (" + xy.x + "," + xy.y + ")" );				
+				controller.logMessage("Click on ! WebAppXY: (" + xy.x + "," + xy.y + ")" );				
 			}
 
 			return xy;
@@ -295,8 +295,8 @@
 																		
 							controller.context.drawImage(
 									element.temporaryRenderingContext.canvas,
-									0, 0, element.elementWidth, element.elementHeight,
-									element.left, element.top, element.elementWidth, element.elementHeight);
+									0, 0, element.widthInPoints, element.heightInPoints,
+									element.leftInPoints, element.topInPoints, element.widthInPoints, element.heightInPoints);
 							
 							controller.context.scale(1/(element.elementScaleX || 1), 1/(element.elementScaleY) || 1);
 							controller.context.rotate(- (element.elementAngle || 0));

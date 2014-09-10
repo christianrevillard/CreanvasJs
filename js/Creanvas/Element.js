@@ -22,12 +22,12 @@
 		element.elementWidth = width || (element.right - element.left);
 		element.elementHeight = height || (element.bottom - element.top);
 
-		element.top = Math.round(element.top*element.controller.lengthScale);
-		element.left = Math.round(element.left*element.controller.lengthScale);
-		element.bottom = Math.round(element.bottom*element.controller.lengthScale);
-		element.right = Math.round(element.right*element.controller.lengthScale);
-		element.elementWidth = Math.round(element.elementWidth*element.controller.lengthScale);
-		element.elementHeight = Math.round(element.elementHeight*element.controller.lengthScale);
+		element.topInPoints = Math.round(element.top*element.controller.lengthScale);
+		element.leftInPoints = Math.round(element.left*element.controller.lengthScale);
+		element.bottomInPoints = Math.round(element.bottom*element.controller.lengthScale);
+		element.rightInPoints = Math.round(element.right*element.controller.lengthScale);
+		element.widthInPoints = Math.round(element.elementWidth*element.controller.lengthScale);
+		element.heightInPoints = Math.round(element.elementHeight*element.controller.lengthScale);
 
 		var canvas = element.controller.context.canvas;
 		var tempCanvas = canvas.ownerDocument.createElement('canvas');			
@@ -45,18 +45,18 @@
 		else
 		{
 			var draw = imageData["draw"];
-			tempCanvas.width = element.elementWidth;
-			tempCanvas.height = element.elementHeight;
+			tempCanvas.width = element.widthInPoints;
+			tempCanvas.height = element.heightInPoints;
 			
 			element.temporaryRenderingContext.beginPath();
 			
-			element.temporaryRenderingContext.translate(-element.left, -element.top);
+			element.temporaryRenderingContext.translate(-element.leftInPoints, -element.topInPoints);
 			
 			element.temporaryRenderingContext.scale(element.controller.lengthScale,element.controller.lengthScale);
 			
 			draw.call(element,element.temporaryRenderingContext);
 			// several image:store them here with offset
-			element.elementImage = element.temporaryRenderingContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
+			element.elementImage = element.temporaryRenderingContext.getImageData(0, 0, element.widthInPoints, element.heightInPoints);
 		}
 	};
 	
@@ -101,14 +101,14 @@
 
 			var imageXY = element.getElementXY(pointerX, pointerY);
 
-			var imageX = imageXY.x - element.left;
-			var imageY = imageXY.y - element.top;
+			var imageX = imageXY.x - element.leftInPoints;
+			var imageY = imageXY.y - element.topInPoints;
 		
 			var xx = imageX >= 0 && 
-			imageX <= element.elementWidth &&
+			imageX <= element.widthInPoints &&
 			imageY >= 0 &&
-			imageY <= element.elementHeight && 
-			element.elementImage.data[4*imageY*element.elementWidth + 4*imageX + 3]>0;
+			imageY <= element.heightInPoints && 
+			element.elementImage.data[4*imageY*element.widthInPoints + 4*imageX + 3]>0;
 			
 			if(DEBUG) element.debug("hit",xx?"hit":"no hit");
 
@@ -172,38 +172,38 @@
 			element.controller.triggerRedraw();
 		};	
 				
-		// coordinate in canvas from elementimage, in points
-		element.getCanvasXY=function(imageX, imageY)
+		// coordinate in Web app canvas according to scale
+		element.getWebappXY=function(imageX, imageY)
 		{
 			return {
-				x: Math.round(element.elementX * element.controller.lengthScale + imageX*element.elementScaleX*Math.cos(element.elementAngle) - imageY*element.elementScaleY*Math.sin(element.elementAngle)),
-				y: Math.round(element.elementY * element.controller.lengthScale + imageX*element.elementScaleX*Math.sin(element.elementAngle) + imageY*element.elementScaleY*Math.cos(element.elementAngle))
+				x: element.elementX + (imageX*element.elementScaleX*Math.cos(element.elementAngle) - imageY*element.elementScaleY*Math.sin(element.elementAngle))/element.controller.lengthScale,
+				y: element.elementY + (imageX*element.elementScaleX*Math.sin(element.elementAngle) + imageY*element.elementScaleY*Math.cos(element.elementAngle))/element.controller.lengthScale
 			};
 		};
 
 		// coordinates inside element image, in points
-		element.getElementXY=function(canvasX, canvasY)
+		element.getElementXY=function(webAppX, webAppY)
 		{
 			return {
-				x: Math.round(((canvasX- element.elementX * element.controller.lengthScale)*Math.cos(element.elementAngle) + (canvasY-element.elementY * element.controller.lengthScale)*Math.sin(element.elementAngle))/element.elementScaleX),
-				y: Math.round(((canvasY- element.elementY * element.controller.lengthScale)*Math.cos(element.elementAngle)-(canvasX-element.elementX * element.controller.lengthScale)*Math.sin(element.elementAngle))/element.elementScaleY)
+				x: Math.round(((webAppX- element.elementX)*element.controller.lengthScale*Math.cos(element.elementAngle) +(webAppY-element.elementY)*element.controller.lengthScale*Math.sin(element.elementAngle))/element.elementScaleX),
+				y: Math.round(((webAppY- element.elementY)*element.controller.lengthScale*Math.cos(element.elementAngle)-(webAppX-element.elementX)*element.controller.lengthScale*Math.sin(element.elementAngle))/element.elementScaleY)
 			};
 		};
 
 		element.getCenter = function()
 		{
-			return element.getCanvasXY(element.left + element.elementWidth/2, element.top + element.elementHeight/2);
+			return element.getWebappXY(element.leftInPoints + element.widthInPoints/2, element.topInPoints + element.heightInPoints/2);
 		};
 		
 		var corners=[];
-		corners.push({x: element.left, y: element.top});
-		corners.push({x: element.right, y: element.top});
-		corners.push({x: element.right, y: element.bottom});
-		corners.push({x: element.left, y: element.bottom});
+		corners.push({x: element.leftInPoints, y: element.topInPoints});
+		corners.push({x: element.rightInPoints, y: element.topInPoints});
+		corners.push({x: element.rightInPoints, y: element.bottomInPoints});
+		corners.push({x: element.leftInPoints, y: element.bottomInPoints});
 
 		element.getClientCornersCache = function()
 		{				
-			return corners.map(function(point){return element.getCanvasXY(point.x, point.y);});
+			return corners.map(function(point){return element.getWebappXY(point.x, point.y);});
 		};
 
 		element.getClientCorners = function()

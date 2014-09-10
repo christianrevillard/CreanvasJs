@@ -95,8 +95,8 @@ var CreJs = CreJs || {};
 					}
 				}
 
-				element.elementX += (e.x-movingFrom.x)/element.controller.lengthScale;
-				element.elementY += (e.y-movingFrom.y)/element.controller.lengthScale;
+				element.elementX += e.x-movingFrom.x;
+				element.elementY += e.y-movingFrom.y;
 				movingFrom = {x:e.x, y:e.y};	
 				element.triggerRedraw();
 			};	

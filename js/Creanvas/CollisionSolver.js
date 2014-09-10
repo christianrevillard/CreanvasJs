@@ -9,10 +9,10 @@
 			clientRectOther = other.getClientRect();
 
 			clientRectIntersection = {
-				left: Math.max(clientRectElement.left, clientRectOther.left)-1,
-				right: Math.min(clientRectElement.right, clientRectOther.right)+1,
-				top: Math.max(clientRectElement.top, clientRectOther.top)-1,
-				bottom: Math.min(clientRectElement.bottom, clientRectOther.bottom)+1};
+				left: Math.max(clientRectElement.leftInPoints, clientRectOther.leftInPoints)-1,
+				right: Math.min(clientRectElement.rightInPoints, clientRectOther.rightInPoints)+1,
+				top: Math.max(clientRectElement.topInPoints, clientRectOther.topInPoints)-1,
+				bottom: Math.min(clientRectElement.bottomInPoints, clientRectOther.bottomInPoints)+1};
 			
 			clientRectIntersection.width = clientRectIntersection.right-clientRectIntersection.left;
 			clientRectIntersection.height = clientRectIntersection.bottom-clientRectIntersection.top;
@@ -20,7 +20,7 @@
 			if (clientRectIntersection.width<=0|| clientRectIntersection.height<=0)
 				return;
 			
-			var collisionImage = element.collisionContext.getImageData(0, 0, element.elementWidth, element.elementHeight);
+			var collisionImage = element.collisionContext.getImageData(0, 0, element.widthInPoints, element.heightInPoints);
 
 			element.collisionContext.scale(1 / (element.elementScaleX || 1), 1 / (element.elementScaleY || 1));
 			element.collisionContext.rotate( - (element.elementAngle || 0));
@@ -32,8 +32,8 @@
 
 			element.collisionContext.drawImage(
 				other.collidedContext.canvas,
-				0, 0, other.elementWidth, other.elementHeight,
-				  other.left , other.top, other.elementWidth, other.elementHeight);
+				0, 0, other.widthInPoints, other.heightInPoints,
+				  other.leftInPoints , other.topInPoints, other.widthInPoints, other.heightInPoints);
 	
 			element.collisionContext.scale(1/(other.elementScaleX || 1), 1/(other.elementScaleY || 1));
 			element.collisionContext.rotate( - other.elementAngle || 0 );
@@ -44,8 +44,8 @@
 			 imageAfter =element.collisionContext.getImageData(
 					0,
 					0,
-					element.elementWidth,
-					element.elementHeight);
+					element.widthInPoints,
+					element.heightInPoints);
 
 				element.collisionContext.globalCompositeOperation='source-over';
 
@@ -56,7 +56,7 @@
 			element.edges.forEach(
 					function(edgePoint)
 					{
-						if (imageAfter.data[(edgePoint.y)*element.elementWidth*4 + (edgePoint.x)*4 + 3] < 90)
+						if (imageAfter.data[(edgePoint.y)*element.widthInPoints*4 + (edgePoint.x)*4 + 3] < 90)
 						{
 							edges.push(edgePoint);						
 						}
@@ -83,8 +83,8 @@
 				};																			
 			};
 
-			var point1 = element.getCanvasXY(edges[theMax.i].x + element.left, edges[theMax.i].y + element.top);
-			var point2 = element.getCanvasXY(edges[theMax.j].x + element.left, edges[theMax.j].y + element.top);
+			var point1 = element.getWebappXY(edges[theMax.i].x + element.left, edges[theMax.i].y + element.topInPoints);
+			var point2 = element.getWebappXY(edges[theMax.j].x + element.left, edges[theMax.j].y + element.topInPoints);
 			
 			if (point1.x == point2.x && point1.y == point2.y)
 			{
@@ -92,8 +92,8 @@
 			}
 			
 			return {
-				x:Math.round((point1.x + point2.x)/2), 
-				y:Math.round((point1.y + point2.y)/2), 
+				x:(point1.x + point2.x)/2, 
+				y:(point1.y + point2.y)/2, 
 				vectors: CreJs.Core.getUnitVectors(point1.x, point1.y,  point2.x , point2.y)};			
 		};
 		
@@ -106,10 +106,10 @@
 			colVectors = collisionPoint.vectors;
 				
 
-			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.elementX * element.controller.lengthScale, collisionPoint.y-element.elementY * element.controller.lengthScale);								
+			centerCollisionElement = new CreJs.Core.Vector(collisionPoint.x-element.elementX, collisionPoint.y-element.elementY);								
 			l1 = CreJs.Core.vectorProduct(centerCollisionElement, colVectors.v).z;		
 
-			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.elementX * element.controller.lengthScale, collisionPoint.y-other.elementY * element.controller.lengthScale);								
+			centerCollisionOther = new CreJs.Core.Vector(collisionPoint.x-other.elementX, collisionPoint.y-other.elementY);								
 			l2= CreJs.Core.vectorProduct(centerCollisionOther, colVectors.v).z;		
 
 			var elementRot = CreJs.Core.vectorProduct(
