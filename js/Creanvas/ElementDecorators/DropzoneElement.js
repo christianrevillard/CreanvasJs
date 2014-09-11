@@ -36,9 +36,8 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};
 	
-			element.elementEvents.addEventListenerX({
+			element.elementEvents.getEvent('drop').addListener({
 				eventGroupType:'dropzone',
-				eventId:'drop', 
 				handleEvent:drop,
 				listenerId:element.elementId});
 	

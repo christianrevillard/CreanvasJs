@@ -40,7 +40,7 @@
 		};
 		
 		// can add a optional rank to ensure calling order of the handlers
-		this.addEventListenerX = function(listenerData)
+		this.addListener = function(listenerData)
 		{
 			// May be called from intern/extern code - handle optimized and not optimized.
 			listenerData.handleEvent = listenerData.handleEvent || listenerData["handleEvent"];

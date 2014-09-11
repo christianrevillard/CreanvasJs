@@ -71,9 +71,8 @@ var CreJs = CreJs || {};
 				element.startMoving(e);
 			};
 			
-			element.elementEvents.addEventListenerX(
+			element.elementEvents.getEvent('pointerDown').addListener(
 					{eventGroupType:'movable',
-					eventId:'pointerDown', 
 					handleEvent:beginMove,
 					listenerId:element.elementId});
 
@@ -101,9 +100,8 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};	
 	
-			element.elementEvents.addEventListenerX(
+			element.elementEvents.getEvent('pointerMove').addListener(
 				{eventGroupType:'movable',
-				eventId:'pointerMove', 
 				handleEvent:move,
 				listenerId:element.elementId});
 	
@@ -127,9 +125,8 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};
 	
-			element.elementEvents.addEventListenerX(
+			element.elementEvents.getEvent('pointerUp').addListener(
 					{eventGroupType:'movable',
-					eventId:'pointerUp', 
 					handleEvent:moveend,
 					listenerId:element.elementId});
 		}

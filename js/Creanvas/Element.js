@@ -160,9 +160,8 @@
 			element.temporaryRenderingContext = null;
 		};
 		
-		element.controller.elementEvents.addEventListenerX(
+		element.controller.elementEvents.getEvent('deactivate').addListener(
 		{
-			"eventId": 'deactivate', 
 			"listenerId":element.elementId,
 			"handleEvent": function(e) { element.deactivate(); }
 		});

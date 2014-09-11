@@ -32,9 +32,8 @@ var CreJs = CreJs || {};
 				omega:0
 			};
 			
-			element.elementEvents.addEventListenerX(
+			element.elementEvents.getEvent('collision').addListener(
 			{
-				eventId:'collision',
 				handleEvent:function(collisionEvent)
 			{
 				if (onCollision) onCollision.call(element, collisionEvent);						

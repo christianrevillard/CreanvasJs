@@ -404,7 +404,7 @@ TEST && function() {
       b.controller.elementEvents.removeEventListener({listenerId:b.elementId});
       b.temporaryRenderingContext = null;
     };
-    b.controller.elementEvents.addEventListenerX({eventId:"deactivate", listenerId:b.elementId, handleEvent:function(a) {
+    b.controller.elementEvents.getEvent("deactivate").addListener({listenerId:b.elementId, handleEvent:function(a) {
       b.deactivate();
     }});
     b.triggerRedraw = function() {
@@ -537,12 +537,23 @@ CreJs = CreJs || {};
   CreJs.Creanvas.elementDecorators = CreJs.Creanvas.elementDecorators || [];
   CreJs.Creanvas.elementDecorators.clickable = {applyTo:function(a, d) {
     var e = d.onclick;
-    a.onClick = function(d) {
+    e && (a.onClick = function(c) {
       DEBUG && a.debug("onClick", e);
-      e.call(a, d);
+      e.call(a, c);
       a.triggerRedraw();
-    };
-    a.elementEvents.addEventListenerX({eventId:"click", handleEvent:a.onClick});
+    }, a.elementEvents.getEvent("click").addListener({handleEvent:a.onClick}));
+    var f = !1;
+    this.touchIdentifier = null;
+    var g = d.ondown, c = d.onup;
+    a.elementEvents.getEvent("pointerDown").addListener({eventGroupType:"clickable", handleEvent:function(c) {
+      DEBUG && a.controller.logMessage("Registered down - identifier: " + c.touchIdentifier);
+      a.touchIdentifier = c.touchIdentifier;
+      f = !0;
+      g && (DEBUG && a.debug("onDown", g), g.call(a, event), a.triggerRedraw());
+    }, listenerId:a.elementId});
+    a.elementEvents.getEvent("pointerUp").addListener({eventGroupType:"clickable", handleEvent:function(d) {
+      f && a.touchIdentifier == d.touchIdentifier && (DEBUG && a.controller.logMessage("registerd up - identifier: " + d.touchIdentifier), f = !1, c && (DEBUG && a.debug("onUp", c), c.call(a, event), a.triggerRedraw()));
+    }, listenerId:a.elementId});
   }};
 })();
 CreJs = CreJs || {};
@@ -578,7 +589,7 @@ CreJs = CreJs || {};
   CreJs.Creanvas.elementDecorators.dropzone = {applyTo:function(a, d) {
     var e = d.availableSpots, f = d.dropX, g = d.dropY;
     a.droppedElementsList = [];
-    a.elementEvents.addEventListenerX({eventGroupType:"dropzone", eventId:"drop", handleEvent:function(c) {
+    a.elementEvents.getEvent("drop").addListener({eventGroupType:"dropzone", handleEvent:function(c) {
       0 >= e || (DEBUG && a.controller.logMessage("drop event on dropzone " + a.elementId + ", dropped " + c.droppedElement.id), e--, c.droppedElement.x = f || a.elementX, c.droppedElement.y = g || a.elementY, c.droppedElement.dropZone = a, a.droppedElementsList.push(c.droppedElement), c.droppedElement.elementEvents.dispatch("dropped", {dropZone:a, droppedElement:c.droppedElement}), a.elementEvents.dispatch("droppedIn", {dropZone:a, droppedElement:c.droppedElement}), a.triggerRedraw());
     }, listenerId:a.elementId});
     a.drag = function(c) {
@@ -601,7 +612,7 @@ CreJs = CreJs || {};
     var e = d.isBlocked, f = d.generatorCount || Infinity;
     DEBUG && a.debug("duplicable.applyTo", "generatorCount is " + f);
     var g = !1;
-    a.elementEvents.addEventListenerX({eventGroupType:"duplicable", eventId:"pointerDown", handleEvent:function(c) {
+    a.elementEvents.getEvent("pointerDown").addListener({eventGroupType:"duplicable", handleEvent:function(c) {
       0 <= c.touchIdentifier && (g = !0);
       if (!(g && 0 > c.touchIdentifier || e && e() || (DEBUG && a.debug("duplicable.makeCopy", "GeneratorCount was: " + f), 0 >= f))) {
         f--;
@@ -640,14 +651,14 @@ CreJs = CreJs || {};
       f = null;
       a.isDroppable && (DEBUG && a.controller.logMessage("Trigger drop - identifier: " + c.touchIdentifier), a.controller.triggerPointedElementEvent("drop", {x:c.x, y:c.y, droppedElement:a}));
     };
-    a.elementEvents.addEventListenerX({eventGroupType:"movable", eventId:"pointerDown", handleEvent:function(c) {
+    a.elementEvents.getEvent("pointerDown").addListener({eventGroupType:"movable", handleEvent:function(c) {
       g && g() || a.startMoving(c);
     }, listenerId:a.elementId});
     var c = !1;
-    a.elementEvents.addEventListenerX({eventGroupType:"movable", eventId:"pointerMove", handleEvent:function(d) {
+    a.elementEvents.getEvent("pointerMove").addListener({eventGroupType:"movable", handleEvent:function(d) {
       !e || g && g() || (c || (c = !0, DEBUG && a.controller.logMessage("pointereMove event on movable " + a.elementId + " (" + a.touchIdentifier + ")")), a.elementX += d.x - f.x, a.elementY += d.y - f.y, f = {x:d.x, y:d.y}, a.triggerRedraw());
     }, listenerId:a.elementId});
-    a.elementEvents.addEventListenerX({eventGroupType:"movable", eventId:"pointerUp", handleEvent:function(d) {
+    a.elementEvents.getEvent("pointerUp").addListener({eventGroupType:"movable", handleEvent:function(d) {
       !e || g && g() || (DEBUG && a.controller.logMessage("End detected for touch " + a.touchIdentifier), a.elementX += d.x - f.x, a.elementY += d.y - f.y, a.moveCompleted(d), a.touchIdentifier = null, c = !1, a.triggerRedraw());
     }, listenerId:a.elementId});
   }};
@@ -726,7 +737,7 @@ CreJs = CreJs || {};
     a.controller.collisionSolver = a.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(a.controller);
     a.solidData.coefficient = g || 0 === g ? g : 1;
     a.elementMoving = a.elementMoving || {movingSpeed:new CreJs.Core.Vector(0, 0), movingAcceleration:new CreJs.Core.Vector(0, 0), omega:0};
-    a.elementEvents.addEventListenerX({eventId:"collision", handleEvent:function(b) {
+    a.elementEvents.getEvent("collision").addListener({handleEvent:function(b) {
       f && f.call(a, b);
     }});
     a.preMove = this.preMove || [];
@@ -810,7 +821,7 @@ CreJs = CreJs || {};
         });
       });
     };
-    this.addEventListenerX = function(a) {
+    this.addListener = function(a) {
       a.handleEvent = a.handleEvent || a.handleEvent;
       a.rank = a.rank || a.rank;
       a.listenerId = a.listenerId || a.listenerId;
@@ -842,10 +853,9 @@ CreJs = CreJs || {};
       f.push(c);
       e[c] = new a.Event(c);
     };
-    this.addEventListenerX = function(a) {
-      var d = a.eventId || a.eventId;
-      e[d] || g(d);
-      return e[d].addEventListenerX(a);
+    this.getEvent = function(a) {
+      e[a] || g(a);
+      return e[a];
     };
     this.dispatch = function(a, d, b) {
       e[a] && (d && (d.eventId = a), e[a].dispatch(d, b));
@@ -857,14 +867,14 @@ CreJs = CreJs || {};
     };
     this.registerControlEvent = function(a, f, b) {
       e[b] || g(b);
-      a.addEventListenerX(f, function(a) {
+      a.addListener(f, function(a) {
         a.preventDefault();
         setTimeout(function() {
           d.dispatch(b, a);
         }, 0);
       });
     };
-    this.addEventListener = this.addEventListenerX;
+    this.getEvent = this.getEvent;
   };
   a.EventContainer = a.EventContainer;
 })();

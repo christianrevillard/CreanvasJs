@@ -58,10 +58,9 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};
 			
-			element.elementEvents.addEventListenerX(
+			element.elementEvents.getEvent('pointerDown').addListener(
 					{
 						eventGroupType:'duplicable',
-						eventId:'pointerDown', 
 						handleEvent:makeCopy,
 						listenerId:element.elementId});			
 		},

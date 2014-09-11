@@ -18,15 +18,14 @@
 			events[eventId] = new creevents.Event(eventId);											
 		};
 		
-		this.addEventListenerX = function(listenerData)
-		{
-			var eventId = listenerData.eventId || listenerData["eventId"];
-			
+		this.getEvent = function(eventId)
+		{			
 			if (!events[eventId])
 			{
 				addEvent(eventId);
 			}
-			return events[eventId].addEventListenerX(listenerData);
+			
+			return events[eventId];
 		};
 						
 		this.dispatch = function(eventId, eventData, callback)
@@ -59,7 +58,7 @@
 				addEvent(customEventId);
 			}
 
-			control.addEventListenerX(
+			control.addListener(
 					controlEventId,
 				function(event)
 				{
@@ -72,7 +71,7 @@
 				});
 		};
 
-		this['addEventListener'] = this.addEventListenerX;
+		this['getEvent'] = this.getEvent;
 };
 
 	// Available after ADVANCED_OPTIMIZATION 
