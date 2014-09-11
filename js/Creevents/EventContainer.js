@@ -26,18 +26,7 @@
 			}
 			
 			return events[eventId];
-		};
-						
-		this.dispatch = function(eventId, eventData, callback)
-		{
-			if (events[eventId])
-			{
-				if (eventData)
-					eventData.eventId = eventId;
-				
-				events[eventId].dispatch(eventData, callback);
-			}		
-		};
+		};					
 	
 		this.removeEventListener = function(listenerData)
 		{

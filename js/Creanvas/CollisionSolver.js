@@ -218,8 +218,8 @@
 						
 			updateAfterCollision(element, other, collisionPoint);
 	
-			element.elementEvents.dispatch('collision', {element:other, collisionPoint:collisionPoint});									
-			other.elementEvents.dispatch('collision', {element:element, collisionPoint:collisionPoint});
+			element.elementEvents.getEvent('collision').dispatch({element:other, collisionPoint:collisionPoint});									
+			other.elementEvents.getEvent('collision').dispatch({element:element, collisionPoint:collisionPoint});
 
 			return false;
 		};

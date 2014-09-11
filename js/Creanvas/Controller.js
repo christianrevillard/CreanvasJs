@@ -95,7 +95,7 @@
 						
 						if (element.hit(event.x, event.y))
 						{
-							element.elementEvents.dispatch(eventId, event);
+							element.elementEvents.getEvent(eventId).dispatch(event);
 							hit = true;
 						}
 					}
@@ -110,7 +110,7 @@
 					{							
 						if (element.touchIdentifier == event.touchIdentifier)
 						{
-							element.elementEvents.dispatch(eventId, event);
+							element.elementEvents.getEvent(eventId).dispatch(event);
 						}
 					}
 				);
@@ -198,7 +198,7 @@
 				
 		this.stopController = function()
 		{
-			controller.elementEvents.dispatch('deactivate');
+			controller.elementEvents.getEvent('deactivate').dispatch();
 			controller.elements = [];
 		};
 	

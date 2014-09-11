@@ -235,8 +235,8 @@ if (TEST) {
         return true;
       }
       updateAfterCollision(element, other, collisionPoint);
-      element.elementEvents.dispatch("collision", {element:other, collisionPoint:collisionPoint});
-      other.elementEvents.dispatch("collision", {element:element, collisionPoint:collisionPoint});
+      element.elementEvents.getEvent("collision").dispatch({element:other, collisionPoint:collisionPoint});
+      other.elementEvents.getEvent("collision").dispatch({element:element, collisionPoint:collisionPoint});
       return false;
     };
   };
@@ -285,7 +285,7 @@ if (TEST) {
           return;
         }
         if (element.hit(event.x, event.y)) {
-          element.elementEvents.dispatch(eventId, event);
+          element.elementEvents.getEvent(eventId).dispatch(event);
           hit = true;
         }
       });
@@ -293,7 +293,7 @@ if (TEST) {
     this.triggerElementEventByIdentifier = function(eventId, event) {
       controller.elements.forEach(function(element) {
         if (element.touchIdentifier == event.touchIdentifier) {
-          element.elementEvents.dispatch(eventId, event);
+          element.elementEvents.getEvent(eventId).dispatch(event);
         }
       });
     };
@@ -348,7 +348,7 @@ if (TEST) {
     this.registerTouchIdentifierEvent("mouseup", "pointerUp");
     this.registerTouchIdentifierEvent("touchend", "pointerUp");
     this.stopController = function() {
-      controller.elementEvents.dispatch("deactivate");
+      controller.elementEvents.getEvent("deactivate").dispatch();
       controller.elements = [];
     };
     this.triggerRedraw = function() {
@@ -758,8 +758,8 @@ var CreJs = CreJs || {};
       e.droppedElement.y = dropY || element.elementY;
       e.droppedElement.dropZone = element;
       element.droppedElementsList.push(e.droppedElement);
-      e.droppedElement.elementEvents.dispatch("dropped", {dropZone:element, droppedElement:e.droppedElement});
-      element.elementEvents.dispatch("droppedIn", {dropZone:element, droppedElement:e.droppedElement});
+      e.droppedElement.elementEvents.getEvent("dropped").dispatch({dropZone:element, droppedElement:e.droppedElement});
+      element.elementEvents.getEvent("droppedIn").dispatch({dropZone:element, droppedElement:e.droppedElement});
       element.triggerRedraw();
     };
     element.elementEvents.getEvent("drop").addListener({handleEvent:drop, listenerId:element.elementId});
@@ -1149,14 +1149,6 @@ var CreJs = CreJs || {};
         addEvent(eventId);
       }
       return events[eventId];
-    };
-    this.dispatch = function(eventId, eventData, callback) {
-      if (events[eventId]) {
-        if (eventData) {
-          eventData.eventId = eventId;
-        }
-        events[eventId].dispatch(eventData, callback);
-      }
     };
     this.removeEventListener = function(listenerData) {
       if (events[listenerData.eventId]) {

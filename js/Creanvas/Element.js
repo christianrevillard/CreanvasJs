@@ -116,6 +116,7 @@
 
 		};
 		
+		// unpractical syntax... ignore is unnatural here TODO
 		element.cloneElement = function(ignoreDecorators)
 		{
 			if (DEBUG) element.debug("cloneElement","start cloning");
