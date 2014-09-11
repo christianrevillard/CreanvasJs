@@ -60,17 +60,8 @@ var CreJs = CreJs || {};
 			
 			element.elementEvents.getEvent('pointerDown').addListener(
 					{
-						eventGroupType:'duplicable',
 						handleEvent:makeCopy,
 						listenerId:element.elementId});			
-		},
-		
-	removeFrom : function(element) {
-		
-		element.elementEvents.removeEventListener(
-				{eventGroupType:"duplicable",
-					listenerId:element.elementId});					
-
 		}
 	};
 }());

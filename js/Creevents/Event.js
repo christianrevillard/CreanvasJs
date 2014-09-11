@@ -46,7 +46,6 @@
 			listenerData.handleEvent = listenerData.handleEvent || listenerData["handleEvent"];
 			listenerData.rank = listenerData.rank || listenerData["rank"];
 			listenerData.listenerId = listenerData.listenerId || listenerData["listenerId"];
-			listenerData.eventGroupType = listenerData.eventGroupType || listenerData["eventGroupType"];
 			
 			var handlerGuid = helpers.GetGuid();
 			
@@ -54,8 +53,7 @@
 				handlerGuid:handlerGuid, 
 				handleEvent:listenerData.handleEvent, 
 				rank:listenerData.rank,
-				listenerId:listenerData.listenerId,
-				eventGroupType:listenerData.eventGroupType});
+				listenerId:listenerData.listenerId});
 	
 			eventHandlers = eventHandlers.sort(
 				function(a,b) { return (a.rank || Infinity)  - (b.rank || Infinity); }
@@ -69,8 +67,7 @@
 			eventHandlers = eventHandlers.filter(
 					function(registered){ 
 						return (Boolean(listenerData.handlerGuid) && (registered.handlerGuid != listenerData.handlerGuid))
-								|| (Boolean(listenerData.listenerId) && (registered.listenerId != listenerData.listenerId))
-								|| (Boolean(listenerData.eventGroupType) && (registered.eventGroupType != listenerData.eventGroupType));
+								|| (Boolean(listenerData.listenerId) && (registered.listenerId != listenerData.listenerId));
 						});
 		};
 	};

@@ -72,7 +72,7 @@ var CreJs = CreJs || {};
 			};
 			
 			element.elementEvents.getEvent('pointerDown').addListener(
-					{eventGroupType:'movable',
+					{
 					handleEvent:beginMove,
 					listenerId:element.elementId});
 
@@ -101,7 +101,7 @@ var CreJs = CreJs || {};
 			};	
 	
 			element.elementEvents.getEvent('pointerMove').addListener(
-				{eventGroupType:'movable',
+				{
 				handleEvent:move,
 				listenerId:element.elementId});
 	
@@ -126,7 +126,7 @@ var CreJs = CreJs || {};
 			};
 	
 			element.elementEvents.getEvent('pointerUp').addListener(
-					{eventGroupType:'movable',
+					{
 					handleEvent:moveend,
 					listenerId:element.elementId});
 		}

@@ -130,23 +130,7 @@
 
 			return element.controller.add.apply(element.controller, elementsToApply);
 		};
-		
-		element.removeElementDecorator = function (decoratorType)
-		{			
-			if(DEBUG) element.debug("removeElementDecorator", decoratorType);			
-
-			var decorator = CreJs.Creanvas.elementDecorators[decoratorType];
-
-			if (decorator && decorator.removeFrom)
-			{
-				decorator.removeFrom(element);
-			}
-			else
-			{
-				if(DEBUG) element.debug("removeElementDecorator","Cannot remove: " + decoratorType);
-			}		
-		};
-		
+				
 		element.canHandle = function(eventId)
 		{
 			// click, pointerDown, always stopped by top element, even if not handled
@@ -156,7 +140,7 @@
 		
 		element.deactivate = function ()
 		{
-			element.controller.elementEvents.removeEventListener({listenerId:element.elementId});
+			element.controller.elementEvents.removeEventListener(element.elementId);
 			element.temporaryRenderingContext = null;
 		};
 		
@@ -292,6 +276,5 @@
 		element["clone"] = element.cloneElement;
 		element["applyDecorator"] = element.applyElementDecorator;
 		element["applyDecorators"] = element.applyElementDecorators;
-		element["removeDecorator"] = element.removeElementDecorator;
 	};
 }());

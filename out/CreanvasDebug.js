@@ -509,24 +509,11 @@ if (TEST) {
       }
       return element.controller.add.apply(element.controller, elementsToApply);
     };
-    element.removeElementDecorator = function(decoratorType) {
-      if (DEBUG) {
-        element.debug("removeElementDecorator", decoratorType);
-      }
-      var decorator = CreJs.Creanvas.elementDecorators[decoratorType];
-      if (decorator && decorator.removeFrom) {
-        decorator.removeFrom(element);
-      } else {
-        if (DEBUG) {
-          element.debug("removeElementDecorator", "Cannot remove: " + decoratorType);
-        }
-      }
-    };
     element.canHandle = function(eventId) {
       return eventId == "click" || eventId == "pointerDown" || element.elementEvents.hasEvent(eventId);
     };
     element.deactivate = function() {
-      element.controller.elementEvents.removeEventListener({listenerId:element.elementId});
+      element.controller.elementEvents.removeEventListener(element.elementId);
       element.temporaryRenderingContext = null;
     };
     element.controller.elementEvents.getEvent("deactivate").addListener({"listenerId":element.elementId, "handleEvent":function(e) {
@@ -663,7 +650,6 @@ if (TEST) {
     element["clone"] = element.cloneElement;
     element["applyDecorator"] = element.applyElementDecorator;
     element["applyDecorators"] = element.applyElementDecorators;
-    element["removeDecorator"] = element.removeElementDecorator;
   };
 })();
 var CreJs = CreJs || {};
@@ -719,8 +705,8 @@ var CreJs = CreJs || {};
         element.triggerRedraw();
       }
     };
-    element.elementEvents.getEvent("pointerDown").addListener({eventGroupType:"clickable", handleEvent:onDown, listenerId:element.elementId});
-    element.elementEvents.getEvent("pointerUp").addListener({eventGroupType:"clickable", handleEvent:onUp, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerDown").addListener({handleEvent:onDown, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerUp").addListener({handleEvent:onUp, listenerId:element.elementId});
   }};
 })();
 var CreJs = CreJs || {};
@@ -776,7 +762,7 @@ var CreJs = CreJs || {};
       element.elementEvents.dispatch("droppedIn", {dropZone:element, droppedElement:e.droppedElement});
       element.triggerRedraw();
     };
-    element.elementEvents.getEvent("drop").addListener({eventGroupType:"dropzone", handleEvent:drop, listenerId:element.elementId});
+    element.elementEvents.getEvent("drop").addListener({handleEvent:drop, listenerId:element.elementId});
     element.drag = function(draggedElement) {
       if (DEBUG) {
         element.controller.logMessage("dragging from dropzone " + element.elementId + ", dragged " + draggedElement.id);
@@ -828,9 +814,7 @@ var CreJs = CreJs || {};
       copy.startMoving(e);
       element.triggerRedraw();
     };
-    element.elementEvents.getEvent("pointerDown").addListener({eventGroupType:"duplicable", handleEvent:makeCopy, listenerId:element.elementId});
-  }, removeFrom:function(element) {
-    element.elementEvents.removeEventListener({eventGroupType:"duplicable", listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerDown").addListener({handleEvent:makeCopy, listenerId:element.elementId});
   }};
 })();
 (function() {
@@ -877,7 +861,7 @@ var CreJs = CreJs || {};
       }
       element.startMoving(e);
     };
-    element.elementEvents.getEvent("pointerDown").addListener({eventGroupType:"movable", handleEvent:beginMove, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerDown").addListener({handleEvent:beginMove, listenerId:element.elementId});
     var isMovingLogged = false;
     var move = function(e) {
       if (!isMoving) {
@@ -897,7 +881,7 @@ var CreJs = CreJs || {};
       movingFrom = {x:e.x, y:e.y};
       element.triggerRedraw();
     };
-    element.elementEvents.getEvent("pointerMove").addListener({eventGroupType:"movable", handleEvent:move, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerMove").addListener({handleEvent:move, listenerId:element.elementId});
     var moveend = function(e) {
       if (!isMoving) {
         return;
@@ -915,7 +899,7 @@ var CreJs = CreJs || {};
       isMovingLogged = false;
       element.triggerRedraw();
     };
-    element.elementEvents.getEvent("pointerUp").addListener({eventGroupType:"movable", handleEvent:moveend, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerUp").addListener({handleEvent:moveend, listenerId:element.elementId});
   }};
 })();
 var CreJs = CreJs || {};
@@ -1131,9 +1115,8 @@ var CreJs = CreJs || {};
       listenerData.handleEvent = listenerData.handleEvent || listenerData["handleEvent"];
       listenerData.rank = listenerData.rank || listenerData["rank"];
       listenerData.listenerId = listenerData.listenerId || listenerData["listenerId"];
-      listenerData.eventGroupType = listenerData.eventGroupType || listenerData["eventGroupType"];
       var handlerGuid = helpers.GetGuid();
-      eventHandlers.push({handlerGuid:handlerGuid, handleEvent:listenerData.handleEvent, rank:listenerData.rank, listenerId:listenerData.listenerId, eventGroupType:listenerData.eventGroupType});
+      eventHandlers.push({handlerGuid:handlerGuid, handleEvent:listenerData.handleEvent, rank:listenerData.rank, listenerId:listenerData.listenerId});
       eventHandlers = eventHandlers.sort(function(a, b) {
         return(a.rank || Infinity) - (b.rank || Infinity);
       });
@@ -1141,7 +1124,7 @@ var CreJs = CreJs || {};
     };
     this.removeEventListener = function(listenerData) {
       eventHandlers = eventHandlers.filter(function(registered) {
-        return Boolean(listenerData.handlerGuid) && registered.handlerGuid != listenerData.handlerGuid || Boolean(listenerData.listenerId) && registered.listenerId != listenerData.listenerId || Boolean(listenerData.eventGroupType) && registered.eventGroupType != listenerData.eventGroupType;
+        return Boolean(listenerData.handlerGuid) && registered.handlerGuid != listenerData.handlerGuid || Boolean(listenerData.listenerId) && registered.listenerId != listenerData.listenerId;
       });
     };
   };
@@ -1183,17 +1166,6 @@ var CreJs = CreJs || {};
           events[eventId].removeEventListener(listenerData);
         });
       }
-    };
-    this.registerControlEvent = function(control, controlEventId, customEventId) {
-      if (!events[customEventId]) {
-        addEvent(customEventId);
-      }
-      control.addListener(controlEventId, function(event) {
-        event.preventDefault();
-        setTimeout(function() {
-          container.dispatch(customEventId, event);
-        }, 0);
-      });
     };
     this["getEvent"] = this.getEvent;
   };

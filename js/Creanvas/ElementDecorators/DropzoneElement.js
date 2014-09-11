@@ -37,7 +37,6 @@ var CreJs = CreJs || {};
 			};
 	
 			element.elementEvents.getEvent('drop').addListener({
-				eventGroupType:'dropzone',
 				handleEvent:drop,
 				listenerId:element.elementId});
 	

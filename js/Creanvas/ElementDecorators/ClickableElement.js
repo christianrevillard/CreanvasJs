@@ -82,12 +82,12 @@ var CreJs = CreJs || {};
 			};
 						
 			element.elementEvents.getEvent('pointerDown').addListener(
-					{eventGroupType:'clickable',
+					{
 					handleEvent:onDown,
 					listenerId:element.elementId});
 	
 			element.elementEvents.getEvent('pointerUp').addListener(
-					{eventGroupType:'clickable',
+					{
 					handleEvent:onUp,
 					listenerId:element.elementId});
 		}

@@ -51,26 +51,6 @@
 			}
 		};
 
-		this.registerControlEvent = function (control, controlEventId, customEventId)
-		{
-			if (!events[customEventId])
-			{
-				addEvent(customEventId);
-			}
-
-			control.addListener(
-					controlEventId,
-				function(event)
-				{
-					event.preventDefault();
-					setTimeout(function()
-					{					
-						container.dispatch(customEventId, event);
-					},
-					0);
-				});
-		};
-
 		this['getEvent'] = this.getEvent;
 };
 
