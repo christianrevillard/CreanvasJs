@@ -141,15 +141,10 @@
 		
 		element.deactivate = function ()
 		{
-			element.controller.elementEvents.removeEventListener(element.elementId);
 			element.temporaryRenderingContext = null;
 		};
 		
-		element.controller.elementEvents.getEvent('deactivate').addListener(
-		{
-			"listenerId":element.elementId,
-			"handleEvent": function(e) { element.deactivate(); }
-		});
+		element.controller.elementEvents.getEvent('deactivate').addListener(function(e) { element.deactivate(); });
 
 		element.triggerRedraw = function()
 		{
@@ -258,7 +253,7 @@
 				if(DEBUG) element.debug("applyElementDecorator","Not found: " + decoratorType);
 			}
 		};
-
+		
 		// Export interface 		
 		Object.defineProperty(element, "name", { get: function() {return this.elementName; }, set: function(y) { this.elementName = y; }});
 		Object.defineProperty(element, "width", { get: function() {return this.elementWidth; }, set: function(y) { this.elementWidth = y; }});

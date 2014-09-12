@@ -22,10 +22,7 @@ var CreJs = CreJs || {};
 						element.triggerRedraw();
 				};
 				
-				element.elementEvents.getEvent('click').addListener(
-				{
-					handleEvent:element.onClick
-				});
+				element.elementEvents.getEvent('click').addListener(element.onClick);
 			}
 
 			var isPointerDown = false;
@@ -81,15 +78,9 @@ var CreJs = CreJs || {};
 
 			};
 						
-			element.elementEvents.getEvent('pointerDown').addListener(
-					{
-					handleEvent:onDown,
-					listenerId:element.elementId});
+			element.elementEvents.getEvent('pointerDown').addListener(onDown);
 	
-			element.elementEvents.getEvent('pointerUp').addListener(
-					{
-					handleEvent:onUp,
-					listenerId:element.elementId});
+			element.elementEvents.getEvent('pointerUp').addListener(onUp);
 		}
 	};
 }());

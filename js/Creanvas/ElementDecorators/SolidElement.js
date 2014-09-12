@@ -33,11 +33,10 @@ var CreJs = CreJs || {};
 			};
 			
 			element.elementEvents.getEvent('collision').addListener(
-			{
-				handleEvent:function(collisionEvent)
-			{
-				if (onCollision) onCollision.call(element, collisionEvent);						
-			}});
+				function(collisionEvent)
+				{
+					if (onCollision) onCollision.call(element, collisionEvent);						
+				});
 			
 			
 			element.preMove = this.preMove || [];

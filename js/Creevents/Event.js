@@ -8,6 +8,8 @@
 	{
 		this.eventId = eventId;
 		
+		var nextHandlerId = 0;
+		
 		helpers = CreJs.CreHelpers;
 
 		var eventHandlers = [];
@@ -15,20 +17,19 @@
 		var logger = new CreJs.Crelog.Logger();
 		
 		this.dispatch = function(eventData, callback)
-		{		
-			var myDispatch = helpers.GetGuid();
-			
+		{					
 			var count = eventHandlers.length;
-			if (DEBUG && eventData && eventData.eventId != 'pointerMove' && eventData.eventId != 'drag' && eventData.eventId != 'drop')
-				logger.logMessage("Dispatching " + count + " " + eventData.eventId + ". (" + myDispatch + ")");			
 			
 			eventHandlers.forEach(function(handler){ 
-				handler.debugEvent = eventId;
 				setTimeout(
 						function()
 						{
-							if (DEBUG && eventData && eventData.eventId != 'pointerMove')
-								logger.logMessage("Actually handling " + eventData.eventId + ". (" + myDispatch + ")");			
+							if (DEBUG)
+							{
+								if (eventData && eventData.eventId != 'pointerMove')
+									logger.logMessage("Handling " + eventData.eventId);			
+
+							}
 							handler.handleEvent(eventData);
 							count--;
 							if (count==0 && callback)
@@ -40,36 +41,30 @@
 		};
 		
 		// can add a optional rank to ensure calling order of the handlers
-		this.addListener = function(listenerData)
+		this.addListener = function(handleEvent, rank)
 		{
-			// May be called from intern/extern code - handle optimized and not optimized.
-			listenerData.handleEvent = listenerData.handleEvent || listenerData["handleEvent"];
-			listenerData.rank = listenerData.rank || listenerData["rank"];
-			listenerData.listenerId = listenerData.listenerId || listenerData["listenerId"];
-			
-			var handlerGuid = helpers.GetGuid();
+			var handlerId = nextHandlerId++;
 			
 			eventHandlers.push({
-				handlerGuid:handlerGuid, 
-				handleEvent:listenerData.handleEvent, 
-				rank:listenerData.rank,
-				listenerId:listenerData.listenerId});
-	
+				handlerId:handlerId, 
+				handleEvent:handleEvent, 
+				rank:rank});
+
+			// insert in the right place?? TODO
 			eventHandlers = eventHandlers.sort(
 				function(a,b) { return (a.rank || Infinity)  - (b.rank || Infinity); }
 			); 
 			
-			return handlerGuid;
+			return handlerId;
 		};
 	
-		this.removeEventListener = function(listenerData)
+		this.removeListener = function(handlerId)
 		{
-			eventHandlers = eventHandlers.filter(
-					function(registered){ 
-						return (Boolean(listenerData.handlerGuid) && (registered.handlerGuid != listenerData.handlerGuid))
-								|| (Boolean(listenerData.listenerId) && (registered.listenerId != listenerData.listenerId));
-						});
+			eventHandlers = eventHandlers.filter(function(registered){ return registered.handlerId != handlerId;});
 		};
+		
+		this["addListener"] = this.addListener;
+		this["removeListener"] = this.removeListener;
 	};
 	
 	// Available after ADVANCED_OPTIMIZATION 

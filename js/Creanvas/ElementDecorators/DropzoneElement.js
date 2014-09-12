@@ -36,9 +36,7 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};
 	
-			element.elementEvents.getEvent('drop').addListener({
-				handleEvent:drop,
-				listenerId:element.elementId});
+			element.elementEvents.getEvent('drop').addListener(drop);
 	
 			element.drag = function(draggedElement) {
 	

@@ -513,12 +513,11 @@ if (TEST) {
       return eventId == "click" || eventId == "pointerDown" || element.elementEvents.hasEvent(eventId);
     };
     element.deactivate = function() {
-      element.controller.elementEvents.removeEventListener(element.elementId);
       element.temporaryRenderingContext = null;
     };
-    element.controller.elementEvents.getEvent("deactivate").addListener({"listenerId":element.elementId, "handleEvent":function(e) {
+    element.controller.elementEvents.getEvent("deactivate").addListener(function(e) {
       element.deactivate();
-    }});
+    });
     element.triggerRedraw = function() {
       element.controller.triggerRedraw();
     };
@@ -666,7 +665,7 @@ var CreJs = CreJs || {};
         onclick.call(element, event);
         element.triggerRedraw();
       };
-      element.elementEvents.getEvent("click").addListener({handleEvent:element.onClick});
+      element.elementEvents.getEvent("click").addListener(element.onClick);
     }
     var isPointerDown = false;
     this.touchIdentifier = null;
@@ -705,8 +704,8 @@ var CreJs = CreJs || {};
         element.triggerRedraw();
       }
     };
-    element.elementEvents.getEvent("pointerDown").addListener({handleEvent:onDown, listenerId:element.elementId});
-    element.elementEvents.getEvent("pointerUp").addListener({handleEvent:onUp, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerDown").addListener(onDown);
+    element.elementEvents.getEvent("pointerUp").addListener(onUp);
   }};
 })();
 var CreJs = CreJs || {};
@@ -762,7 +761,7 @@ var CreJs = CreJs || {};
       element.elementEvents.getEvent("droppedIn").dispatch({dropZone:element, droppedElement:e.droppedElement});
       element.triggerRedraw();
     };
-    element.elementEvents.getEvent("drop").addListener({handleEvent:drop, listenerId:element.elementId});
+    element.elementEvents.getEvent("drop").addListener(drop);
     element.drag = function(draggedElement) {
       if (DEBUG) {
         element.controller.logMessage("dragging from dropzone " + element.elementId + ", dragged " + draggedElement.id);
@@ -814,7 +813,7 @@ var CreJs = CreJs || {};
       copy.startMoving(e);
       element.triggerRedraw();
     };
-    element.elementEvents.getEvent("pointerDown").addListener({handleEvent:makeCopy, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerDown").addListener(makeCopy);
   }};
 })();
 (function() {
@@ -861,7 +860,7 @@ var CreJs = CreJs || {};
       }
       element.startMoving(e);
     };
-    element.elementEvents.getEvent("pointerDown").addListener({handleEvent:beginMove, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerDown").addListener(beginMove);
     var isMovingLogged = false;
     var move = function(e) {
       if (!isMoving) {
@@ -881,7 +880,7 @@ var CreJs = CreJs || {};
       movingFrom = {x:e.x, y:e.y};
       element.triggerRedraw();
     };
-    element.elementEvents.getEvent("pointerMove").addListener({handleEvent:move, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerMove").addListener(move);
     var moveend = function(e) {
       if (!isMoving) {
         return;
@@ -899,7 +898,7 @@ var CreJs = CreJs || {};
       isMovingLogged = false;
       element.triggerRedraw();
     };
-    element.elementEvents.getEvent("pointerUp").addListener({handleEvent:moveend, listenerId:element.elementId});
+    element.elementEvents.getEvent("pointerUp").addListener(moveend);
   }};
 })();
 var CreJs = CreJs || {};
@@ -1003,11 +1002,11 @@ var CreJs = CreJs || {};
     element.controller.collisionSolver = element.controller.collisionSolver || new CreJs.Creanvas.CollisionSolver(element.controller);
     element.solidData.coefficient = !collisionCoefficient && collisionCoefficient !== 0 ? 1 : collisionCoefficient;
     element.elementMoving = element.elementMoving || {movingSpeed:new CreJs.Core.Vector(0, 0), movingAcceleration:new CreJs.Core.Vector(0, 0), omega:0};
-    element.elementEvents.getEvent("collision").addListener({handleEvent:function(collisionEvent) {
+    element.elementEvents.getEvent("collision").addListener(function(collisionEvent) {
       if (onCollision) {
         onCollision.call(element, collisionEvent);
       }
-    }});
+    });
     element.preMove = this.preMove || [];
     element.preMove.push(function() {
       return element.controller.collisionSolver.solveCollision(element);
@@ -1088,20 +1087,18 @@ var CreJs = CreJs || {};
   var helpers;
   creevents.Event = function(eventId) {
     this.eventId = eventId;
+    var nextHandlerId = 0;
     helpers = CreJs.CreHelpers;
     var eventHandlers = [];
     var logger = new CreJs.Crelog.Logger;
     this.dispatch = function(eventData, callback) {
-      var myDispatch = helpers.GetGuid();
       var count = eventHandlers.length;
-      if (DEBUG && eventData && eventData.eventId != "pointerMove" && eventData.eventId != "drag" && eventData.eventId != "drop") {
-        logger.logMessage("Dispatching " + count + " " + eventData.eventId + ". (" + myDispatch + ")");
-      }
       eventHandlers.forEach(function(handler) {
-        handler.debugEvent = eventId;
         setTimeout(function() {
-          if (DEBUG && eventData && eventData.eventId != "pointerMove") {
-            logger.logMessage("Actually handling " + eventData.eventId + ". (" + myDispatch + ")");
+          if (DEBUG) {
+            if (eventData && eventData.eventId != "pointerMove") {
+              logger.logMessage("Handling " + eventData.eventId);
+            }
           }
           handler.handleEvent(eventData);
           count--;
@@ -1111,22 +1108,21 @@ var CreJs = CreJs || {};
         });
       });
     };
-    this.addListener = function(listenerData) {
-      listenerData.handleEvent = listenerData.handleEvent || listenerData["handleEvent"];
-      listenerData.rank = listenerData.rank || listenerData["rank"];
-      listenerData.listenerId = listenerData.listenerId || listenerData["listenerId"];
-      var handlerGuid = helpers.GetGuid();
-      eventHandlers.push({handlerGuid:handlerGuid, handleEvent:listenerData.handleEvent, rank:listenerData.rank, listenerId:listenerData.listenerId});
+    this.addListener = function(handleEvent, rank) {
+      var handlerId = nextHandlerId++;
+      eventHandlers.push({handlerId:handlerId, handleEvent:handleEvent, rank:rank});
       eventHandlers = eventHandlers.sort(function(a, b) {
         return(a.rank || Infinity) - (b.rank || Infinity);
       });
-      return handlerGuid;
+      return handlerId;
     };
-    this.removeEventListener = function(listenerData) {
+    this.removeListener = function(handlerId) {
       eventHandlers = eventHandlers.filter(function(registered) {
-        return Boolean(listenerData.handlerGuid) && registered.handlerGuid != listenerData.handlerGuid || Boolean(listenerData.listenerId) && registered.listenerId != listenerData.listenerId;
+        return registered.handlerId != handlerId;
       });
     };
+    this["addListener"] = this.addListener;
+    this["removeListener"] = this.removeListener;
   };
   CreJs["Creevents"] = creevents;
   creevents["Event"] = creevents.Event;
@@ -1136,30 +1132,16 @@ var CreJs = CreJs || {};
   creevents.EventContainer = function() {
     var container = this;
     var events = {};
-    var eventIds = [];
-    this.hasEvent = function(eventId) {
+    container.hasEvent = function(eventId) {
       return events[eventId] != undefined;
     };
-    var addEvent = function(eventId) {
-      eventIds.push(eventId);
-      events[eventId] = new creevents.Event(eventId);
-    };
-    this.getEvent = function(eventId) {
+    container.getEvent = function(eventId) {
       if (!events[eventId]) {
-        addEvent(eventId);
+        events[eventId] = new creevents.Event(eventId);
       }
       return events[eventId];
     };
-    this.removeEventListener = function(listenerData) {
-      if (events[listenerData.eventId]) {
-        events[listenerData.eventId].removeEventListener(listenerData);
-      } else {
-        eventIds.forEach(function(eventId) {
-          events[eventId].removeEventListener(listenerData);
-        });
-      }
-    };
-    this["getEvent"] = this.getEvent;
+    container["getEvent"] = container.getEvent;
   };
   creevents["EventContainer"] = creevents.EventContainer;
 })();

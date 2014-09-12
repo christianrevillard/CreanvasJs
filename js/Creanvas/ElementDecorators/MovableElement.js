@@ -71,10 +71,7 @@ var CreJs = CreJs || {};
 				element.startMoving(e);
 			};
 			
-			element.elementEvents.getEvent('pointerDown').addListener(
-					{
-					handleEvent:beginMove,
-					listenerId:element.elementId});
+			element.elementEvents.getEvent('pointerDown').addListener(beginMove);
 
 			var isMovingLogged = false;
 			
@@ -100,10 +97,7 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};	
 	
-			element.elementEvents.getEvent('pointerMove').addListener(
-				{
-				handleEvent:move,
-				listenerId:element.elementId});
+			element.elementEvents.getEvent('pointerMove').addListener(move);
 	
 			var moveend = function(e) {
 				if(!isMoving)
@@ -125,10 +119,7 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};
 	
-			element.elementEvents.getEvent('pointerUp').addListener(
-					{
-					handleEvent:moveend,
-					listenerId:element.elementId});
+			element.elementEvents.getEvent('pointerUp').addListener(moveend);
 		}
 	};
 }());
