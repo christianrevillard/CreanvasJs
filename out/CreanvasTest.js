@@ -797,7 +797,9 @@ CreJs = CreJs || {};
   var a = CreJs.Creevents = CreJs.Creevents || {};
   a.Event = function(a) {
     this.eventId = a;
-    var e = 0, d = [], g = new CreJs.Crelog.Logger;
+    var e = 0;
+    helpers = CreJs.CreHelpers;
+    var d = [], g = new CreJs.Crelog.Logger;
     this.dispatch = function(a, c) {
       var b = d.length;
       d.forEach(function(d) {

@@ -2,7 +2,6 @@
 (function(){
 	
 	var creevents = CreJs.Creevents = CreJs.Creevents || {};		
-	var helpers;	
 
 	creevents.Event = function(eventId)
 	{
@@ -50,7 +49,7 @@
 				handleEvent:handleEvent, 
 				rank:rank});
 
-			// insert in the right place?? TODO
+			// insert in the right place?? TODO/Check
 			eventHandlers = eventHandlers.sort(
 				function(a,b) { return (a.rank || Infinity)  - (b.rank || Infinity); }
 			); 

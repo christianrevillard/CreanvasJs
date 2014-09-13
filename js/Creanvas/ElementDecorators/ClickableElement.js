@@ -15,11 +15,11 @@ var CreJs = CreJs || {};
 			{
 				element.onClick = function(event)
 				{
-						if(DEBUG) element.debug("onClick", onclick );
-		
-						onclick.call(element, event);						
-		
-						element.triggerRedraw();
+					if(DEBUG) element.debug("onClick", onclick );
+	
+					onclick.call(element, event);						
+	
+					element.triggerRedraw();
 				};
 				
 				element.elementEvents.getEvent('click').addListener(element.onClick);

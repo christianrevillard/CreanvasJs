@@ -88,8 +88,7 @@
 			.sort(function(a,b){return (b.elementZ || 0 - a.elementZ || 0);})
 			.forEach(
 					function(element)
-					{
-						
+					{						
 						if (hit)
 							return;
 						

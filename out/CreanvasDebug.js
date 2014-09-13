@@ -1084,7 +1084,6 @@ var CreJs = CreJs || {};
 })();
 (function() {
   var creevents = CreJs.Creevents = CreJs.Creevents || {};
-  var helpers;
   creevents.Event = function(eventId) {
     this.eventId = eventId;
     var nextHandlerId = 0;
