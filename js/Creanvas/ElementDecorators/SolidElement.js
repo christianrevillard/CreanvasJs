@@ -9,28 +9,26 @@ var CreJs = CreJs || {};
 	{
 		applyTo: function(element, solidData)
 		{	
+			element.isSolid = true;
+			
 			var cachedResults = [];
 
-			element.solidData = {};
-			element.solidData.elementMass = solidData["mass"] || 1; 
+			element.elementMass = solidData["mass"] || 1; 
 			var onCollision = solidData["onCollision"];			
 			var collisionCoefficient = solidData["coefficient"];
 
-			element.solidData.fixed = solidData["fixed"]|| false;
-			element.solidData.fixedPoint = element.solidData.fixed || solidData["fixedPoint"]|| false;
+			element.fixed = solidData["fixed"]|| false;
+			element.fixedPoint = element.fixed || solidData["fixedPoint"]|| false;
 			
 			element.controller.collisionSolver = 
 				element.controller.collisionSolver || 
 				new CreJs.Creanvas.CollisionSolver(element.controller);
 			
-			element.solidData.coefficient = (!collisionCoefficient && collisionCoefficient !==0)? 1 : collisionCoefficient;
+			element.coefficient = (!collisionCoefficient && collisionCoefficient !==0)? 1 : collisionCoefficient;
 			
-			element.elementMoving = element.elementMoving || 
-			{
-				movingSpeed: new CreJs.Core.Vector(0,0), 
-				movingAcceleration: new CreJs.Core.Vector(0,0), 
-				omega:0
-			};
+			element.movingSpeed = element.movingSpeed || new CreJs.Core.Vector(0,0); 
+			element.movingAcceleration =  element.movingAcceleration || new CreJs.Core.Vector(0,0); 
+			element.omega = element.omega || 0;
 			
 			element.elementEvents.getEvent('collision').addListener(
 				function(collisionEvent)
@@ -48,7 +46,7 @@ var CreJs = CreJs || {};
 			
 			element.getMomentOfInertia = function()
 			{				
-				return element.solidData.elementMass / 12 * (element.widthInPoints*element.elementScaleX * element.widthInPoints*element.elementScaleX + element.heightInPoints*element.elementScaleY * element.heightInPoints*element.elementScaleY); // square...};
+				return element.elementMass / 12 * (element.widthInPoints*element.elementScaleX * element.widthInPoints*element.elementScaleX + element.heightInPoints*element.elementScaleY * element.heightInPoints*element.elementScaleY); // square...};
 			};
 			// obs. "real" distance in WebApp unit
 			element.geRadiusCache = function()
@@ -136,8 +134,7 @@ var CreJs = CreJs || {};
 			
 			element.collisionContext.translate(-element.leftInPoints, -element.topInPoints);
 
-			Object.defineProperty(element, "solid", { get: function() {return this.solidData; }, set: function(y) { this.solidData = y; }});
-			Object.defineProperty(element.solidData, "mass", { get: function() {return this.elementMass; }, set: function(y) { this.elementMass = y; }});
+			Object.defineProperty(element, "mass", { get: function() {return this.elementMass; }, set: function(y) { this.elementMass = y; }});
 		}
 	};
 }());

@@ -22,19 +22,17 @@ var CreJs = CreJs || {};
 
 			var lastUpdated, currentTime, dt, rollbackData;
 			
-			element.elementMoving = element.elementMoving || {};
-
-			element.elementMoving.movingSpeed =
+			element.movingSpeed =
 				new CreJs.Core.Vector(
 					vx || 0,
 					vy || 0);
 						
-			element.elementMoving.movingAcceleration = 
+			element.movingAcceleration = 
 				 new CreJs.Core.Vector(
 					ax || 0, 
 					ay || 0);
 			
-			element.elementMoving.omega = omega || 0;
+			element.omega = omega || 0;
 			
 			lastUpdated = element.controller.getTime();
 
@@ -50,12 +48,12 @@ var CreJs = CreJs || {};
 
 				lastUpdated = currentTime;
 
-				element.elementMoving.movingSpeed.x += element.elementMoving.movingAcceleration.x * dt;
-				element.elementMoving.movingSpeed.y += element.elementMoving.movingAcceleration.y * dt;
+				element.movingSpeed.x += element.movingAcceleration.x * dt;
+				element.movingSpeed.y += element.movingAcceleration.y * dt;
 
-				if (element.elementMoving.movingSpeed.x == 0 &&
-						element.elementMoving.movingSpeed.y == 0 &&
-						element.elementMoving.omega == 0 &&
+				if (element.movingSpeed.x == 0 &&
+						element.movingSpeed.y == 0 &&
+						element.omega == 0 &&
 						(!element.elementScaleSpeed ||(
 						element.elementScaleSpeed.x == 0 && element.elementScaleSpeed.y==0						
 						)))
@@ -70,9 +68,9 @@ var CreJs = CreJs || {};
 						elementScaleX:element.elementScaleX,
 						elementScaleY:element.elementScaleY};
 
-				element.elementX += element.elementMoving.movingSpeed.x * dt;
-				element.elementY += element.elementMoving.movingSpeed.y * dt;				
-				element.elementAngle += element.elementMoving.omega * dt;
+				element.elementX += element.movingSpeed.x * dt;
+				element.elementY += element.movingSpeed.y * dt;				
+				element.elementAngle += element.omega * dt;
 				if (element.elementScaleSpeed)
 				{
 					element.elementScaleX += element.elementScaleSpeed.x * dt;	
@@ -108,10 +106,9 @@ var CreJs = CreJs || {};
 				}
 			}, 20);
 			
-			Object.defineProperty(element, "moving", { get: function() {return this.elementMoving; }, set: function(y) { this.elementMoving = y; }});
-			Object.defineProperty(element.elementMoving, "speed", { get: function() {return this.movingSpeed; }, set: function(y) { this.movingSpeed = y; }});
-			Object.defineProperty(element.elementMoving, "acceleration", { get: function() {return this.movingAcceleration; }, set: function(y) { this.movingAcceleration = y; }});
-			Object.defineProperty(element.elementMoving, "rotationSpeed", { get: function() {return this.omega; }, set: function(y) { this.omega = y; }});
+			Object.defineProperty(element, "speed", { get: function() {return this.movingSpeed; }, set: function(y) { this.movingSpeed = y; }});
+			Object.defineProperty(element, "acceleration", { get: function() {return this.movingAcceleration; }, set: function(y) { this.movingAcceleration = y; }});
+			Object.defineProperty(element, "rotationSpeed", { get: function() {return this.omega; }, set: function(y) { this.omega = y; }});
 			Object.defineProperty(element, "scaleSpeed", { get: function() {return this.elementScaleSpeed; }, set: function(y) { this.elementScaleSpeed = y; }});
 		}	
 	};	

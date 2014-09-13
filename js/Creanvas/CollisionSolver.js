@@ -121,12 +121,12 @@
 					colVectors.v);	
 
 			speedElement = new CreJs.Core.Vector(
-					element.elementMoving.movingSpeed.x, 
-					element.elementMoving.movingSpeed.y);
+					element.movingSpeed.x, 
+					element.movingSpeed.y);
 			
 			speedOther = new CreJs.Core.Vector(
-					other.elementMoving.movingSpeed.x, 
-					other.elementMoving.movingSpeed.y);
+					other.movingSpeed.x, 
+					other.movingSpeed.y);
 
 			if (element.elementScaleSpeed)
 			{
@@ -143,26 +143,26 @@
 			localSpeedElement = speedElement.getCoordinates(colVectors);
 			localSpeedOther = speedOther.getCoordinates(colVectors);
 
-			var elementMass = element.solidData.fixedPoint ? Infinity:element.solidData.elementMass;
-			var otherMass = other.solidData.fixedPoint ? Infinity:other.solidData.elementMass;
-			var elementMOI = element.solidData.fixed ? Infinity:element.getMomentOfInertia();
-			var otherMOI = other.solidData.fixed ? Infinity:other.getMomentOfInertia();
+			var elementMass = element.fixedPoint ? Infinity:element.elementMass;
+			var otherMass = other.fixedPoint ? Infinity:other.elementMass;
+			var elementMOI = element.fixed ? Infinity:element.getMomentOfInertia();
+			var otherMOI = other.fixed ? Infinity:other.getMomentOfInertia();
 
-			var F = element.solidData.coefficient * other.solidData.coefficient * 2 *
-				(localSpeedOther.v - localSpeedElement.v + other.elementMoving.omega * otherRot.z - element.elementMoving.omega * elementRot.z)
+			var F = element.coefficient * other.coefficient * 2 *
+				(localSpeedOther.v - localSpeedElement.v + other.omega * otherRot.z - element.omega * elementRot.z)
 				/( 1/otherMass + 1/elementMass + otherRot.z*otherRot.z/otherMOI + elementRot.z*elementRot.z/elementMOI );
 					
-			element.elementMoving.movingSpeed.x += F/elementMass*colVectors.v.x;
-			element.elementMoving.movingSpeed.y += F/elementMass*colVectors.v.y;
-			other.elementMoving.movingSpeed.x -= F/otherMass*colVectors.v.x;
-			other.elementMoving.movingSpeed.y -= F/otherMass*colVectors.v.y;
-			element.elementMoving.omega += F * l1 / elementMOI;
-			other.elementMoving.omega -= F * l2 / otherMOI;
+			element.movingSpeed.x += F/elementMass*colVectors.v.x;
+			element.movingSpeed.y += F/elementMass*colVectors.v.y;
+			other.movingSpeed.x -= F/otherMass*colVectors.v.x;
+			other.movingSpeed.y -= F/otherMass*colVectors.v.y;
+			element.omega += F * l1 / elementMOI;
+			other.omega -= F * l2 / otherMOI;
 		};
 
 		var getCollidableElements = function()
 		{
-			return controller.elements.filter(function(e){ return e.solidData;});
+			return controller.elements.filter(function(e){ return e.isSolid;});
 		};					
 
 		this.solveCollision = function(element)
@@ -177,14 +177,14 @@
 				if (
 					other.elementId === element.elementId || 
 					((
-							!other.elementMoving.movingSpeed.x 
-							&& !other.elementMoving.movingSpeed.y 
-							&& !element.elementMoving.movingSpeed.x 
-							&& !element.elementMoving.movingSpeed.y
+							!other.movingSpeed.x 
+							&& !other.movingSpeed.y 
+							&& !element.movingSpeed.x 
+							&& !element.movingSpeed.y
 							&& !other.elementScaleSpeed 
 							&& !element.elementScaleSpeed	
-							&& !element.elementMoving.omega
-							&& !other.elementMoving.omega	
+							&& !element.omega
+							&& !other.omega	
 					)))
 					return false;
 				
