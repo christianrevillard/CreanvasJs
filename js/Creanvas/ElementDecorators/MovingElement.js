@@ -15,10 +15,7 @@ var CreJs = CreJs || {};
 			var ay = elementMoving["ay"];
 			var omega = elementMoving["rotationSpeed"];
 
-			if (DEBUG)
-			{
-				element.controller.logMessage('Applying moving decorator to ' + element.elementName + '-' + element.elementId);
-			}
+			if (DEBUG) element.debug('moving', 'applyTo');
 
 			var lastUpdated, currentTime, dt, rollbackData;
 			
@@ -43,8 +40,6 @@ var CreJs = CreJs || {};
 
 				if (dt < 0.001)
 					return;
-
-				//element.controller.logMessage('Now moving : ' + element.elementName + ', dt=' + dt);
 
 				lastUpdated = currentTime;
 
@@ -101,9 +96,7 @@ var CreJs = CreJs || {};
 					element.elementAngle = rollbackData.elementAngle;						
 					element.elementScaleX = rollbackData.elementScaleX;	
 					element.elementScaleY = rollbackData.elementScaleY;
-				} else {
-					//element.controller.logMessage(element.elementName + " : Updated ok to : " + element.elementX + ', ' + element.elementY + ', ' + element.elementAngle);
-				}
+				} 
 			}, 20);
 			
 			Object.defineProperty(element, "speed", { get: function() {return this.movingSpeed; }, set: function(y) { this.movingSpeed = y; }});

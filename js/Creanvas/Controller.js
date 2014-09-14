@@ -1,46 +1,43 @@
 (function(){
-	CreJs.Creanvas.Controller = function(controllerData) {
-		var 
-			canvas, 
-			needRedraw, 
-			refreshTime, 
-			time,
-			timeStart,
-			timeScale, // timeCreanvas/timeComputer 100 => every seconds on computer is 100 seconds in Creanvas
-			controller = this;
-		
-		canvas = controllerData["canvas"];
-		timeScale = controllerData["timeScale"] || 1;
-		this.lengthScale = 
-			controllerData["lengthScale"] || 
-			canvas.height / controllerData["realHeight"] ||
-			canvas.width / controllerData["realWidth"]||
-			1;
-		
-		if (controllerData.realTime)
-		{	
-			timeStart = Date.now();
-			// seconds
-			this.getTime = function(){return (Date.now() - timeStart) * timeScale / 1000 ; };					
-		}
-		else
-		{
-			time=0;
-			setInterval(
-					function(){
-						time+=10*timeScale / 1000;
-					},
-					10);
-			// seconds
-			this.getTime = function(){return time;};
-		}
-		
-		this.logMessage = function(logData){
-			if (controllerData['log'])
-				controllerData['log'](logData);
-		};
+	var creanvas = CreJs.Creanvas;
+	
+	creanvas.Controller = function(controllerData) {
+		var controller = this;
 				
-		/* Not used for the moment
+		var canvas = controllerData["canvas"];
+		this.logger = controllerData['log'];		
+		this.lengthScale =  controllerData["lengthScale"] ||  canvas.height / controllerData["realHeight"] || canvas.width / controllerData["realWidth"]|| 1;
+		timeScale = controllerData["timeScale"] || 1;
+		
+		/*if (controllerData.realTime) { var timeStart = Date.now(); this.getTime = function(){return (Date.now() - timeStart) * timeScale / 1000 ; };} else {*/
+		var time=0; // seconds
+		setInterval(
+			function(){ time+=10*timeScale/1000;},    
+			10);
+		this.getTime = function(){return time;};
+		//}
+		
+		// startHeavyLoadController();
+				
+		if (DEBUG) this.logMessage('Starting controller');
+		
+		controller.needRedraw = true;
+		controller.isDrawing = false;
+		controller.refreshTime = controllerData["controller.refreshTime"] || creanvas.Controller.DEFAULT_REFRESH_TIME;
+		controller.elements = [];
+		controller.elementEvents = new CreJs.Creevents.EventContainer();		
+		controller.context = canvas.getContext("2d");		
+		
+		controller.context.setTransform(1,0,0,1,0,0);
+		registerCanvasEvents.call(controller);
+		addBackground.call(controller, controllerData["drawBackground"], controllerData["backgroundStyle"]);
+		startController.call(controller);
+	};
+	
+	/* Not used for the moment
+	var startHeavyLoadController = function()
+	{
+		var controller = this;
 		//for heavy load stuff that can be handled by a worker / WebSocket
 		var asynchronousController;
 		if (window.Worker && (!controllerData.noWorker))
@@ -69,256 +66,258 @@
 		};
 			
 		this.sendMessage("Test heavy load");
-					*/
-		if (DEBUG) this.logMessage('Starting controller');
-		
-		controller.context = canvas.getContext("2d");
-		
-		controller.context.setTransform(1,0,0,1,0,0);
-
-		needRedraw = true;
-		isDrawing = false;
-		refreshTime = controllerData["refreshTime"] || 50; // ms	- TODO constant default refresh time
-		
-		this.triggerPointedElementEvent = function(eventId, event)
-		{
-			var hit = false;
-			controller.elements
-			.filter(function(e){return e.canHandle(eventId);})
-			.sort(function(a,b){return (b.elementZ || 0 - a.elementZ || 0);})
-			.forEach(
-					function(element)
-					{						
-						if (hit)
-							return;
-						
-						if (element.hit(event.x, event.y))
-						{
-							element.elementEvents.getEvent(eventId).dispatch(event);
-							hit = true;
-						}
-					}
-				);
-		};
-
-		this.triggerElementEventByIdentifier = function(eventId, event)
-		{
-			controller.elements
-			.forEach(
-					function(element)
-					{							
-						if (element.touchIdentifier == event.touchIdentifier)
-						{
-							element.elementEvents.getEvent(eventId).dispatch(event);
-						}
-					}
-				);
-		};
-		
-		this.registerCanvasPointerEvent = function (controlEventId, customEventId)
-		{
-			canvas.addEventListener(controlEventId,
-				function(event)
-				{
-					setTimeout(function()
-					{	
-						var triggerEvent = function(clientXY, touchIdentifier)
-						{							
-							if (DEBUG)
-							{
-								controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
-							}
-							var eventData = controller.getWebappXYFromClientXY(clientXY);
-							eventData.touchIdentifier = touchIdentifier;
-							controller.triggerPointedElementEvent(customEventId, eventData);
-						};
-						
-						if (event.changedTouches)
-						{
-							for(var i=0;i<event.changedTouches.length;i++)
-							{
-								 triggerEvent(event.changedTouches[i], event.changedTouches[i].identifier);
-							}
-						}
-						else
-						{
-							triggerEvent(event, -1);
-						}
-					});
-				});
-		};
-		
-		this.registerTouchIdentifierEvent = function (controlEventId, customEventId)
-		{
-			canvas.addEventListener(
-					controlEventId,
-				function(event)
-				{
-					setTimeout(function()
-					{	
-						var triggerEvent = function(clientXY, touchIdentifier)
-						{							
-							if (DEBUG)
-							{
-								controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
-							}
-							var eventData = controller.getWebappXYFromClientXY(clientXY);
-							eventData.touchIdentifier = touchIdentifier;
-							controller.triggerElementEventByIdentifier(customEventId, eventData);
-						};
-
-						
-						if (event.changedTouches)
-						{
-							for(var i=0;i<event.changedTouches.length;i++)
-							{
-								 triggerEvent(event.changedTouches[i], event.changedTouches[i].identifier);
-							}
-						}
-						else
-						{
-							triggerEvent(event, -1);
-						}
-					});
-				});
-		};
-		
-		this.elementEvents = new CreJs.Creevents.EventContainer();		
+					
+	};*/
+	
+	var registerCanvasEvents = function()
+	{
 		this.registerCanvasPointerEvent('click', 'click');
-
 		this.registerCanvasPointerEvent('mousedown','pointerDown');
 		this.registerCanvasPointerEvent('touchstart','pointerDown');
-
 		this.registerTouchIdentifierEvent('mousemove','pointerMove');
 		this.registerTouchIdentifierEvent('touchmove','pointerMove');
-
 		this.registerTouchIdentifierEvent('mouseup','pointerUp');
 		this.registerTouchIdentifierEvent('touchend','pointerUp');
-				
-		this.stopController = function()
-		{
-			controller.elementEvents.getEvent('deactivate').dispatch();
-			controller.elements = [];
-		};
+	};		
 	
-		this.triggerRedraw = function()
-		{		
-			needRedraw = true;
-		};	
-	
-		this.getWebappXYFromClientXY  = function(clientXY)
-		{
-			// what about rotations here?
-			var boundings = canvas.getBoundingClientRect();
-			controller.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ")" );
-			var xy = { 
-				x: (clientXY.clientX-boundings.left) * canvas.width/boundings.width/controller.lengthScale,
-				y: (clientXY.clientY-boundings.top) * canvas.height/boundings.height/controller.lengthScale};
-			controller.logMessage("WebAppXY: (" + xy.x + "," + xy.y + ")" );
-			if (clientXY.type=="click")
-			{
-				controller.logMessage("Click on ! WebAppXY: (" + xy.x + "," + xy.y + ")" );				
-			}
-
-			return xy;
-		};
-	
-		controller.elements = [];
+	var addBackground = function(drawBackground, backgroundStyle)
+	{
+		var controller = this;
 		
-		this.add  = function ()
-		{
-			if (DEBUG)
-			{
-				controller.logMessage("Controller.addElement: Adding element - args:" + arguments.length );
-			}
-			var args = [].slice.call(arguments);
+		if (DEBUG) controller.logMessage('Adding background');
 
-			var identificationData = args.filter(function(arg){ return arg && arg[0]=="name";})[0] || ["name","Unknown"];
-			var imageData = args.filter(function(arg){ return arg && arg[0]=="image";})[0]; // mandatory
-			var positionData = args.filter(function(arg){ return arg && arg[0]=="position";})[0]; // mandatory
-			
-			var element = new CreJs.Creanvas.Element(controller, identificationData, imageData, positionData);
-
-			var decoratorArguments = args.filter(function(arg){ return arg && arg[0]!="name" && arg[0]!="position" && arg[0]!="image";});
-			
-			if (decoratorArguments.length > 0 && CreJs.Creanvas.elementDecorators)
-			{
-				if (DEBUG) element.debug('New element',  "apply " + decoratorArguments.length + " decorators");
-				element.applyElementDecorators.apply(element, decoratorArguments);
-			}
-			
-			controller.elements.push(element);
-			
-			return element;
-		};
-			
-		//background
-		controller.logMessage('Adding background');
-		this.add(
+		controller.add(
 			["name",'background'],
 			["image", 
 				{
 					"left" :0,
-					"width":canvas.width/controller.lengthScale,
 					"top":0,
-					"height":canvas.height/controller.lengthScale,
-					"draw": controllerData["drawBackground"] || function(context)
+					"width":controller.context.canvas.width/controller.lengthScale,
+					"height":controller.context.canvas.height/controller.lengthScale,
+					"draw": drawBackground || function(context)
 					{
-						context.fillStyle = controllerData["backgroundStyle"] || "#FFF";
-						context.fillRect(0,0,canvas.width/controller.lengthScale,canvas.height/controller.lengthScale);
+						context.fillStyle = backgroundStyle || creanvas.Controller.DEFAULT_BACKGROUND_COLOUR;
+						context.fillRect(0,0,controller.context.canvas.width/controller.lengthScale,controller.context.canvas.height/controller.lengthScale);
 					}
 				}
 			],
-			["position", 
-			 	{
-					"z": -Infinity	
-				}
-			]
+			["position", {"z": -Infinity }]
 		);
+	};
+	
+	var startController = function()
+	{
+		var controller = this;
 
 		setInterval(
-				function()
-				{
-					if (needRedraw && !isDrawing)
-					{						
-						//needRedraw = false;
-						isDrawing = true;
-					
-						controller.elements
+			function()
+			{
+				if (controller.needRedraw && !controller.isDrawing)
+				{						
+					controller.isDrawing = true;					
+					controller
+						.elements
 						.sort(function(a,b){return ((a.elementZ || 0) - (b.elementZ || 0));})
 						.forEach(function(element)
 						{
-//							controller.logMessage ("Redraw " + element.elementName + "/" + element.elementId);
-							
-							controller.context.translate(element.elementX*controller.lengthScale, element.elementY*controller.lengthScale);
-							controller.context.rotate(element.elementAngle || 0);
-							controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
-																		
-							controller.context.drawImage(
-									element.temporaryRenderingContext.canvas,
-									0, 0, element.widthInPoints, element.heightInPoints,
-									element.leftInPoints, element.topInPoints, element.widthInPoints, element.heightInPoints);
-							
-							controller.context.scale(1/(element.elementScaleX || 1), 1/(element.elementScaleY) || 1);
-							controller.context.rotate(- (element.elementAngle || 0));
-							controller.context.translate(-element.elementX*controller.lengthScale, - element.elementY*controller.lengthScale);
-						});
-						
-						isDrawing = false;
-												
+							draw.call(controller, element);
+						});					
+					controller.isDrawing = false;
+				}
+				else
+				{
+					if (DEBUG) controller.logMessage ("No redraw");
+				}
+			},
+			controller.refreshTime);	
+	};
+	
+	var draw = function(element)
+	{
+		var controller = this;
+		
+		controller.context.translate(element.elementX*controller.lengthScale, element.elementY*controller.lengthScale);
+		controller.context.rotate(element.elementAngle || 0);
+		controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
+													
+		controller.context.drawImage(
+			element.temporaryRenderingContext.canvas,
+			0, 0, element.widthInPoints, element.heightInPoints,
+			element.leftInPoints, element.topInPoints, element.widthInPoints, element.heightInPoints);
+		
+		controller.context.scale(1/(element.elementScaleX || 1), 1/(element.elementScaleY) || 1);
+		controller.context.rotate(- (element.elementAngle || 0));
+		controller.context.translate(-element.elementX*controller.lengthScale, - element.elementY*controller.lengthScale);		
+	};
+		
+	creanvas.Controller.prototype.logMessage = function(logData){
+		if (this.logger)
+			this.logger(logData);
+		};
+
+	creanvas.Controller.prototype.triggerPointedElementEvent = function(eventId, event)
+	{
+		var hit = false;
+		this
+			.elements
+			.filter(function(e){return e.canHandleEvent(eventId);})
+			.sort(function(a,b){return (b.elementZ || 0 - a.elementZ || 0);})
+			.forEach(
+				function(element)
+				{						
+					if (hit)
+						return;
+					
+					if (element.hit(event.x, event.y))
+					{
+						element.elementEvents.getEvent(eventId).dispatch(event);
+						hit = true;
+					}
+				}
+			);
+	};
+
+	creanvas.Controller.prototype.triggerElementEventByIdentifier = function(eventId, event)
+	{
+		this.elements
+		.forEach(
+			function(element)
+			{							
+				if (element.touchIdentifier == event.touchIdentifier)
+				{
+					element.elementEvents.getEvent(eventId).dispatch(event);
+				}
+			});
+	};
+	
+	creanvas.Controller.prototype.registerCanvasPointerEvent = function (controlEventId, customEventId)
+	{
+		var controller = this;
+		
+		controller.context.canvas.addEventListener(controlEventId,
+			function(event)
+			{
+				setTimeout(function()
+				{	
+					var triggerEvent = function(clientXY, touchIdentifier)
+					{							
+						if (DEBUG)
+						{
+							controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+						}
+						var eventData = controller.getWebappXYFromClientXY(clientXY);
+						eventData.touchIdentifier = touchIdentifier;
+						controller.triggerPointedElementEvent(customEventId, eventData);
+					};
+					
+					if (event.changedTouches)
+					{
+						for(var i=0;i<event.changedTouches.length;i++)
+						{
+							 triggerEvent(event.changedTouches[i], event.changedTouches[i].identifier);
+						}
 					}
 					else
 					{
-						controller.logMessage ("No redraw");
+						triggerEvent(event, -1);
 					}
-				},
-				refreshTime);	
-				
-		this["addElement"] = this.add;
-		this["redraw"] = this.triggerRedraw;
-		this["stop"] = this.stopController;
+				});
+			});
+	};
+	
+	creanvas.Controller.prototype.registerTouchIdentifierEvent = function (controlEventId, customEventId)
+	{
+		var controller = this;
+		
+		this.context.canvas.addEventListener(
+				controlEventId,
+			function(event)
+			{
+				setTimeout(function()
+				{	
+					var triggerEvent = function(clientXY, touchIdentifier)
+					{							
+						if (DEBUG)
+						{
+							controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
+						}
+						var eventData = controller.getWebappXYFromClientXY(clientXY);
+						eventData.touchIdentifier = touchIdentifier;
+						controller.triggerElementEventByIdentifier(customEventId, eventData);
+					};
+
+					
+					if (event.changedTouches)
+					{
+						for(var i=0;i<event.changedTouches.length;i++)
+						{
+							 triggerEvent(event.changedTouches[i], event.changedTouches[i].identifier);
+						}
+					}
+					else
+					{
+						triggerEvent(event, -1);
+					}
+				});
+			});
+	};
+	
+	creanvas.Controller.prototype.stopController = function()
+	{
+		this.elementEvents.getEvent('deactivate').dispatch();
+		this.elements = [];
 	};
 
-	// Available after ADVANCED_OPTIMIZATION 
-	CreJs.Creanvas["Controller"] = CreJs.Creanvas.Controller;
+	creanvas.Controller.prototype.triggerRedraw = function()
+	{		
+		this.needRedraw = true;
+	};	
+
+	creanvas.Controller.prototype.getWebappXYFromClientXY  = function(clientXY)
+	{
+		var boundings = this.context.canvas.getBoundingClientRect();
+		var xy = { 
+			x: (clientXY.clientX-boundings.left) * this.context.canvas.width/boundings.width/this.lengthScale,
+			y: (clientXY.clientY-boundings.top) * this.context.canvas.height/boundings.height/this.lengthScale};
+		if (DEBUG) this.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ") - WebAppXY: (" + xy.x + "," + xy.y + ")" );
+		return xy;
+	};
+
+	creanvas.Controller.prototype.add  = function ()
+	{
+		var controller = this;
+		
+		if (DEBUG) controller.logMessage("Controller.addElement: Adding element - args:" + arguments.length );
+
+		var args = [].slice.call(arguments);
+
+		var identificationData = args.filter(function(arg){ return arg && arg[0]=="name";})[0] || ["name","Unknown"];
+		var imageData = args.filter(function(arg){ return arg && arg[0]=="image";})[0]; // mandatory
+		var positionData = args.filter(function(arg){ return arg && arg[0]=="position";})[0]; // mandatory
+		
+		var element = new CreJs.Creanvas.Element(controller, identificationData, imageData, positionData);
+
+		element.elementId = controller.elements.length == 0 ? 0 : controller.elements[controller.elements.length-1].elementId + 1;
+		
+		var decoratorArguments = args.filter(function(arg){ return arg && arg[0]!="name" && arg[0]!="position" && arg[0]!="image";});
+		
+		if (decoratorArguments.length > 0 && CreJs.Creanvas.elementDecorators)
+		{
+			if (DEBUG) element.debug('New element',  "apply " + decoratorArguments.length + " decorators");
+			element.applyElementDecorators.apply(element, decoratorArguments);
+		}
+		
+		controller.elements.push(element);
+		
+		return element;
+	};
+
+	creanvas.Controller.DEFAULT_REFRESH_TIME = 50;
+	creanvas.Controller.DEFAULT_BACKGROUND_COLOUR = "#FFF";
+
+	// Export interface 
+	creanvas["Controller"] = creanvas.Controller;
+	creanvas.Controller.prototype["addElement"] = creanvas.Controller.prototype.add;
+	creanvas.Controller.prototype["redraw"] = creanvas.Controller.prototype.triggerRedraw;
+	creanvas.Controller.prototype["stop"] = creanvas.Controller.prototype.stopController;
 }());

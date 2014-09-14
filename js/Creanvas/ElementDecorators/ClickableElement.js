@@ -9,78 +9,59 @@ var CreJs = CreJs || {};
 	{
 		applyTo: function(element, clickData)
 		{	
+			var isPointerDown = false;
+			var ondown  = clickData["ondown"];
+			var onup = clickData["onup"];
 			var onclick  = clickData["onclick"];
+
+			this.touchIdentifier = null;	
 						
 			if (onclick)
 			{
-				element.onClick = function(event)
+				var onClick = function(e)
 				{
-					if(DEBUG) element.debug("onClick", onclick );
-	
-					onclick.call(element, event);						
-	
+					if (DEBUG) element.debug("Clickable", "onclick");
+					onclick.call(element, e);						
 					element.triggerRedraw();
 				};
 				
-				element.elementEvents.getEvent('click').addListener(element.onClick);
+				element.elementEvents.getEvent('click').addListener(onClick);
 			}
 
-			var isPointerDown = false;
-			this.touchIdentifier = null;	
-
-			var ondown  = clickData["ondown"];
-			var onup = clickData["onup"];
-
-			var onDown = function(e)
-			{				
-				if (DEBUG)
-				{
-					element.controller.logMessage('Registered down - identifier: ' + e.touchIdentifier);
-				}
-
-				element.touchIdentifier = e.touchIdentifier;
-
-				isPointerDown = true;
-
-				if (ondown)
-				{
-					if(DEBUG) element.debug("onDown", ondown);
-	
-					ondown.call(element, event);						
-	
-					element.triggerRedraw();
-				}
-			};
-	
-			var onUp = function(e)
+			if (ondown)
 			{
-				if (!isPointerDown)
-					return;
-
-				if (element.touchIdentifier != e.touchIdentifier)
-					return;
-
-				if (DEBUG)
-				{
-					element.controller.logMessage('registerd up - identifier: ' + e.touchIdentifier);
-				}
-				
-				isPointerDown = false;
-				
-				if (onup)
-				{
-					if(DEBUG) element.debug("onUp", onup);
-	
-					onup.call(element, event);						
-	
+				var onDown = function(e)
+				{				
+					if (DEBUG) element.debug("Clickable", "onDown: Identifier: " + e.touchIdentifier);	
+					element.touchIdentifier = e.touchIdentifier;	
+					isPointerDown = true;	
+					ondown.call(element, event);								
 					element.triggerRedraw();
-				}
+				};
 
-			};
-						
-			element.elementEvents.getEvent('pointerDown').addListener(onDown);
+				element.elementEvents.getEvent('pointerDown').addListener(onDown);
+			}
 	
-			element.elementEvents.getEvent('pointerUp').addListener(onUp);
+			if (onup)
+			{
+				var onUp = function(e)
+				{
+					if (!isPointerDown)
+						return;
+	
+					if (element.touchIdentifier != e.touchIdentifier)
+						return;
+	
+					if (DEBUG) element.debug("Clickable", "onUp: Identifier: " + e.touchIdentifier);	
+					
+					isPointerDown = false;
+					
+					onup.call(element, event);								
+					element.triggerRedraw();
+				};							
+		
+				element.elementEvents.getEvent('pointerUp').addListener(onUp);
+			}
 		}
 	};
 }());

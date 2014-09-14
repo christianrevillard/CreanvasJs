@@ -1,7 +1,8 @@
+/*
 (function()
 {
 	var helpers = CreJs.CreHelpers = CreJs.CreHelpers|| {};
-	
+
 	helpers.GetGuid = function()
 	{
 		var timeStampPart = Date.now().toString(16);
@@ -15,7 +16,7 @@
 					return v.toString(16);});		
 	};	
 	
-	helpers.repeatString = function s(s,n)
+	/*helpers.repeatString = function s(s,n)
 	{
 		if (n<=0)
 			return '';
@@ -26,3 +27,4 @@
 	// Available after ADVANCED_OPTIMIZATION 
 	//CreJs['CreHelpers'] = CreJs.CreHelpers;
 })();
+*/

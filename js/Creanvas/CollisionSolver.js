@@ -148,7 +148,7 @@
 			var elementMOI = element.fixed ? Infinity:element.getMomentOfInertia();
 			var otherMOI = other.fixed ? Infinity:other.getMomentOfInertia();
 
-			var F = element.coefficient * other.coefficient * 2 *
+			var F = element.collisionCoefficient * other.collisionCoefficient * 2 *
 				(localSpeedOther.v - localSpeedElement.v + other.omega * otherRot.z - element.omega * elementRot.z)
 				/( 1/otherMass + 1/elementMass + otherRot.z*otherRot.z/otherMOI + elementRot.z*elementRot.z/elementMOI );
 					
@@ -169,7 +169,7 @@
 		{			
 			var toCheck = getCollidableElements();
 			
-			var others, center, collisionPoint, other;
+			var others, center, collisionPoint, other = null;
 			
 			center = element.getCenter();
 			others = toCheck.filter(function(other){ 

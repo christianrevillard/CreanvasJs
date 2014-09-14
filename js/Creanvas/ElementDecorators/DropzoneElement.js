@@ -9,7 +9,6 @@ var CreJs = CreJs || {};
 	{
 		applyTo: function(element, dropzoneData)
 		{
-			// Externally usable - handle ADVANCED_OPTIMIZATION
 			var availableSpots = dropzoneData["availableSpots"];
 			var dropX = dropzoneData["dropX"];
 			var dropY = dropzoneData["dropY"];
@@ -21,10 +20,7 @@ var CreJs = CreJs || {};
 				if (availableSpots <= 0)
 					return
 									
-				if (DEBUG)
-				{
-					element.controller.logMessage('drop event on dropzone ' + element.elementId + ', dropped ' + e.droppedElement.id);
-				}
+				if (DEBUG) element.debug('dropzone.drop', 'dropping: ' + e.droppedElement.id);
 
 				availableSpots--;
 				e.droppedElement.x = dropX || element.elementX;
@@ -40,10 +36,7 @@ var CreJs = CreJs || {};
 	
 			element.drag = function(draggedElement) {
 	
-				if (DEBUG)
-				{
-					element.controller.logMessage('dragging from dropzone ' + element.elementId + ', dragged ' + draggedElement.id);
-				}
+				if (DEBUG) element.debug('dropzone.drag', 'dragging  ' + draggedElement.id);
 				
 				draggedElement.dropZone = null;
 				availableSpots++;
@@ -53,7 +46,7 @@ var CreJs = CreJs || {};
 				element.triggerRedraw();
 			};
 			
-			Object.defineProperty(element, "droppedElements", { get: function() {return this.droppedElementsList; }});
+			Object.defineProperty(element, "droppedElements", { get: function() {return element.droppedElementsList; }});
 		}
 	};
 }());

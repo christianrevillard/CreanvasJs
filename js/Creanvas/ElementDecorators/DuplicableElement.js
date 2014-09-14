@@ -13,7 +13,6 @@ var CreJs = CreJs || {};
 	{
 		applyTo: function(element, duplicableData) {
 			
-			// Externally usable - handle ADVANCED_OPTIMIZATION
 			var isBlocked =  duplicableData["isBlocked"];
 			var generatorCount = duplicableData["generatorCount"] || Infinity;
 			

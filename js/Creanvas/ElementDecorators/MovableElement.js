@@ -13,9 +13,6 @@ var CreJs = CreJs || {};
 	{
 		applyTo: function(element, movableData)
 		{
-			// Externally usable - handle ADVANCED_OPTIMIZATION
-			// movableData.isBlocked = movableData.isBlocked || movableData["isBlocked"];
-
 			var isMoving = false;
 			this.touchIdentifier = null;	
 			var movingFrom = null;
@@ -23,10 +20,8 @@ var CreJs = CreJs || {};
 			
 			element.startMoving = function(e)
 			{				
-				if (DEBUG)
-				{
-					element.controller.logMessage('Starting moving - identifier: ' + e.touchIdentifier);
-				}
+				if (DEBUG) element.debug('movable.startMoving', 'identifier: ' + e.touchIdentifier);
+
 				isMoving = true;
 				element.touchIdentifier = e.touchIdentifier;
 				movingFrom = {x:e.x, y:e.y};	
@@ -39,26 +34,21 @@ var CreJs = CreJs || {};
 	
 			element.moveCompleted = function(e)
 			{
-				if (DEBUG)
-				{
-					element.controller.logMessage('Completed move - identifier: ' + e.touchIdentifier);
-				}
+				if (DEBUG) element.debug('movable.moveCompleted', 'identifier: ' + e.touchIdentifier);
+
 				isMoving = false;
 				movingFrom = null;
 				if (element.isDroppable)
 				{
-					if (DEBUG)
-					{
-						element.controller.logMessage('Trigger drop - identifier: ' + e.touchIdentifier);
-					}
+					if (DEBUG) element.debug('movable.moveCompleted', 'trigger drop - identifier: ' + e.touchIdentifier);
 					
 					element.controller.triggerPointedElementEvent(
-							'drop', 
-							{
-								x:e.x,
-								y:e.y,
-								droppedElement:element
-							}); 
+						'drop', 
+						{
+							x:e.x,
+							y:e.y,
+							droppedElement:element
+						}); 
 				}
 			};
 			
@@ -85,10 +75,7 @@ var CreJs = CreJs || {};
 				if (!isMovingLogged)
 				{
 					isMovingLogged = true;
-					if (DEBUG)
-					{
-						element.controller.logMessage('pointereMove event on movable ' + element.elementId + " (" + element.touchIdentifier + ")");
-					}
+					if (DEBUG) element.debug('movable.move', 'identifier: ' + element.touchIdentifier);
 				}
 
 				element.elementX += e.x-movingFrom.x;
@@ -106,10 +93,7 @@ var CreJs = CreJs || {};
 				if (isBlocked && isBlocked()) 
 					return;
 
-				if (DEBUG)
-				{
-					element.controller.logMessage('End detected for touch ' + element.touchIdentifier);
-				}
+				if (DEBUG) element.debug('movable.moveend', 'identifier: ' + element.touchIdentifier);
 				
 				element.elementX += e.x-movingFrom.x;
 				element.elementY += e.y-movingFrom.y;

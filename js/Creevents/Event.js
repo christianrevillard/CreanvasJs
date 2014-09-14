@@ -9,8 +9,6 @@
 		
 		var nextHandlerId = 0;
 		
-		helpers = CreJs.CreHelpers;
-
 		var eventHandlers = [];
 
 		var logger = new CreJs.Crelog.Logger();
@@ -62,8 +60,8 @@
 			eventHandlers = eventHandlers.filter(function(registered){ return registered.handlerId != handlerId;});
 		};
 		
-		this["addListener"] = this.addListener;
-		this["removeListener"] = this.removeListener;
+		this["addEventListener"] = this.addListener;
+		this["removeEventListener"] = this.removeListener;
 	};
 	
 	// Available after ADVANCED_OPTIMIZATION 
