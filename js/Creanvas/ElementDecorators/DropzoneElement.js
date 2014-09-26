@@ -28,7 +28,7 @@ var CreJs = CreJs || {};
 				e.droppedElement.dropZone = element;
 				element.droppedElementsList.push(e.droppedElement);
 				e.droppedElement.elementEvents.getEvent('dropped').dispatch({dropZone:element, droppedElement:e.droppedElement});
-				element.elementEvents.getEvent('droppedIn').dispatch({dropZone:element, droppedElement:e.droppedElement});
+				element.elementEvents.getEvent('droppedIn').dispatch({"dropZone":element, "droppedElement":e.droppedElement});
 				element.triggerRedraw();
 			};
 	

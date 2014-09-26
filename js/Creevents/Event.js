@@ -62,6 +62,7 @@
 		
 		this["addEventListener"] = this.addListener;
 		this["removeEventListener"] = this.removeListener;
+		this["dispatch"] = this.dispatch;
 	};
 	
 	// Available after ADVANCED_OPTIMIZATION 
