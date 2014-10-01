@@ -283,7 +283,7 @@
 		return xy;
 	};
 
-	creanvas.Controller.prototype.add  = function ()
+	creanvas.Controller.prototype.add = function ()
 	{
 		var controller = this;
 		

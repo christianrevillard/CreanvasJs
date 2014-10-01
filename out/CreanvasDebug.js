@@ -1157,21 +1157,44 @@ var CreJs = CreJs || {};
   var creanvas = CreJs.CreanvasNodeClient;
   creanvas.NodeJsController = function(controllerData) {
     var controller = this;
+    controller.refreshTime = controllerData["controller.refreshTime"] || creanvas.NodeJsController.DEFAULT_REFRESH_TIME;
+    this.clientToServerBuffering = 100;
     var canvas = controllerData["canvas"];
     this.logger = controllerData["log"];
     this.lengthScale = controllerData["lengthScale"] || canvas.height / controllerData["realHeight"] || canvas.width / controllerData["realWidth"] || 1;
-    timeScale = controllerData["timeScale"] || 1;
     this.nodeSocket = controllerData["nodeSocket"];
     this.drawingMethods = [];
-    controller.needRedraw = true;
-    controller.isDrawing = false;
+    var emitBuffer = [];
+    this.emitToServer = function(action, actionData, overrideActionKey) {
+      if (overrideActionKey && emitBuffer.length > 0) {
+        var toOverride = emitBuffer.filter(function(e) {
+          return e.overrideActionKey == overrideActionKey;
+        });
+        if (toOverride.length > 0) {
+          toOverride.forEach(function(e) {
+            e.actionData = actionData;
+          });
+          return;
+        }
+      }
+      emitBuffer.push({action:action, actionData:actionData, overrideActionKey:overrideActionKey});
+      setTimeout(function() {
+        if (emitBuffer.length == 0) {
+          return;
+        }
+        emitBuffer.forEach(function(e) {
+          controller.nodeSocket.emit(e.action, JSON.stringify(e.actionData));
+          emitBuffer = [];
+        });
+      }, controller.clientToServerBuffering);
+    };
     if (DEBUG) {
       this.logMessage("Starting controller");
     }
-    controller.refreshTime = controllerData["controller.refreshTime"] || creanvas.NodeJsController.DEFAULT_REFRESH_TIME;
     controller.elements = [];
-    controller.elementEvents = new CreJs.Creevents.EventContainer;
     controller.context = canvas.getContext("2d");
+    controller.needRedraw = true;
+    controller.isDrawing = false;
     controller.context.setTransform(1, 0, 0, 1, 0, 0);
     registerCanvasEvents.call(controller);
     addBackground.call(controller, controllerData["drawBackground"], controllerData["backgroundStyle"]);
@@ -1182,36 +1205,43 @@ var CreJs = CreJs || {};
         var el = controller.elements.filter(function(e) {
           return e.id == updated.id;
         })[0];
-        el.x = updated.x;
-        el.y = updated.y;
+        el.elementX = updated["x"] || el.elementX;
+        el.elementY = updated["y"] || el.elementY;
+        el.elementZ = updated["z"] || el.elementY;
+        el.elementAngle = updated["angle"] || el.elementAngle;
       });
-      (new CreJs.Crelog.Logger).logMessage("MOVED:" + msg);
+      needRedraw = true;
     });
     this.nodeSocket.on("addElement", function(msg) {
       var data = JSON.parse(msg);
-      controller.add(["name", data.name], ["image", {"left":data.left, "top":data.top, "width":data.width, "height":data.height, "draw":controller.drawingMethods.filter(function(e) {
-        return e.elementType == data.elementType;
-      })[0].draw}], ["position", {"x":data.x, "y":data.y, "z":data.z}]);
+      if (DEBUG) {
+        controller.logMessage("Adding element " + data["drawingMethod"] + " in (" + data["x"] + "," + data["y"] + "," + data["z"] + ")");
+      }
+      var element = controller.add(["name", data["name"]], ["image", {"left":data["left"], "top":data["top"], "width":data["width"], "height":data["height"], "draw":controller.drawingMethods.filter(function(e) {
+        return e.drawingMethod == data["drawingMethod"];
+      })[0].draw}], ["position", {"x":data.x, "y":data.y, "z":data.z, "angle":data.angle}]);
+      element.id = data.id;
     });
   };
   var registerCanvasEvents = function() {
     this.registerCanvasPointerEvent("click", "click");
     this.registerCanvasPointerEvent("mousedown", "pointerDown");
     this.registerCanvasPointerEvent("touchstart", "pointerDown");
-    this.registerTouchIdentifierEvent("mousemove", "pointerMove");
-    this.registerTouchIdentifierEvent("touchmove", "pointerMove");
-    this.registerTouchIdentifierEvent("mouseup", "pointerUp");
-    this.registerTouchIdentifierEvent("touchend", "pointerUp");
+    this.registerCanvasPointerEvent("mousemove", "pointerMove");
+    this.registerCanvasPointerEvent("touchmove", "pointerMove");
+    this.registerCanvasPointerEvent("mouseup", "pointerUp");
+    this.registerCanvasPointerEvent("touchend", "pointerUp");
   };
   var addBackground = function(drawBackground, backgroundStyle) {
     var controller = this;
     if (DEBUG) {
       controller.logMessage("Adding background");
     }
-    controller.add(["name", "background"], ["image", {"left":0, "top":0, "width":controller.context.canvas.width / controller.lengthScale, "height":controller.context.canvas.height / controller.lengthScale, "draw":drawBackground || function(context) {
+    var background = controller.add(["name", "background"], ["image", {"left":0, "top":0, "width":controller.context.canvas.width / controller.lengthScale, "height":controller.context.canvas.height / controller.lengthScale, "draw":drawBackground || function(context) {
       context.fillStyle = backgroundStyle || creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR;
       context.fillRect(0, 0, controller.context.canvas.width / controller.lengthScale, controller.context.canvas.height / controller.lengthScale);
     }}], ["position", {"z":-Infinity}]);
+    background.id = 0;
   };
   var startController = function() {
     var controller = this;
@@ -1236,31 +1266,16 @@ var CreJs = CreJs || {};
       this.logger(logData);
     }
   };
-  creanvas.NodeJsController.prototype.triggerPointedElementEvent = function(eventId, event) {
+  creanvas.NodeJsController.prototype.triggerElementEvent = function(eventId, event) {
     var controller = this;
-    var hit = false;
-    this.elements.filter(function(e) {
-      return e.canHandleEvent(eventId);
+    var hits = this.elements.filter(function(e) {
+      return e.hit(event.x, event.y);
     }).sort(function(a, b) {
       return b.elementZ || 0 - a.elementZ || 0;
-    }).forEach(function(element) {
-      if (hit) {
-        return;
-      }
-      if (element.hit(event.x, event.y)) {
-        controller.nodeSocket.emit("dispatchEvent", JSON.stringify({"element":element.id, "event":eventId, "touchIdentifier":event.touchIdentifier}));
-        element.elementEvents.getEvent(eventId).dispatch(event);
-        hit = true;
-      }
+    }).map(function(e) {
+      return{id:e.id, z:e.elementZ};
     });
-  };
-  creanvas.NodeJsController.prototype.triggerElementEventByIdentifier = function(eventId, event) {
-    this.elements.forEach(function(element) {
-      if (element.touchIdentifier == event.touchIdentifier) {
-        controller.nodeSocket.emit("dispatchEvent", JSON.stringify({"element":element.id, "event":eventId}));
-        element.elementEvents.getEvent(eventId).dispatch(event);
-      }
-    });
+    controller.emitToServer("pointerEvent", {"eventId":eventId, "x":event.x, "y":event.y, "touchIdentifier":event.touchIdentifier, "hits":hits}, eventId + ":" + event.touchIdentifier + hits.join());
   };
   creanvas.NodeJsController.prototype.registerCanvasPointerEvent = function(controlEventId, customEventId) {
     var controller = this;
@@ -1270,9 +1285,9 @@ var CreJs = CreJs || {};
           if (DEBUG) {
             controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
           }
-          var eventData = controller.getCanvasXYFromClientXY(clientXY);
+          var eventData = controller.getRealXYFromClientXY(clientXY);
           eventData.touchIdentifier = touchIdentifier;
-          controller.triggerPointedElementEvent(customEventId, eventData);
+          controller.triggerElementEvent.call(controller, customEventId, eventData);
         };
         if (event.changedTouches) {
           for (var i = 0;i < event.changedTouches.length;i++) {
@@ -1284,47 +1299,16 @@ var CreJs = CreJs || {};
       });
     });
   };
-  creanvas.NodeJsController.prototype.registerTouchIdentifierEvent = function(controlEventId, customEventId) {
-    var controller = this;
-    this.context.canvas.addEventListener(controlEventId, function(event) {
-      setTimeout(function() {
-        var triggerEvent = function(clientXY, touchIdentifier) {
-          if (DEBUG) {
-            controller.logMessage("Canvas event " + controlEventId + " with touchIdentifier " + touchIdentifier);
-          }
-          var eventData = controller.getCanvasXYFromClientXY(clientXY);
-          eventData.touchIdentifier = touchIdentifier;
-          controller.triggerElementEventByIdentifier(customEventId, eventData);
-        };
-        if (event.changedTouches) {
-          for (var i = 0;i < event.changedTouches.length;i++) {
-            controller.nodeSocket.emit("dispatchEvent", JSON.stringify({"touchIdentifier":event.changedTouches[i].identifier, "event":customEventId, "x":event.changedTouches[i].x, "y":event.changedTouches[i].y}));
-            triggerEvent(event.changedTouches[i], event.changedTouches[i].identifier);
-          }
-        } else {
-          controller.nodeSocket.emit("dispatchEvent", JSON.stringify({"touchIdentifier":-1, "event":customEventId, "x":event.x, "y":event.y}));
-          triggerEvent(event, -1);
-        }
-      });
-    });
-  };
-  creanvas.NodeJsController.prototype.stopController = function() {
-    this.elementEvents.getEvent("deactivate").dispatch();
-    this.elements = [];
-  };
-  creanvas.NodeJsController.prototype.triggerRedraw = function() {
-    this.needRedraw = true;
-  };
-  creanvas.NodeJsController.prototype.getCanvasXYFromClientXY = function(clientXY) {
+  creanvas.NodeJsController.prototype.getRealXYFromClientXY = function(clientXY) {
     var boundings = this.context.canvas.getBoundingClientRect();
-    var xy = {x:(clientXY.clientX - boundings.left) * this.context.canvas.width / boundings.width, y:(clientXY.clientY - boundings.top) * this.context.canvas.height / boundings.height};
+    var xy = {x:(clientXY.clientX - boundings.left) * this.context.canvas.width / boundings.width / this.lengthScale, y:(clientXY.clientY - boundings.top) * this.context.canvas.height / boundings.height / this.lengthScale};
     if (DEBUG) {
-      this.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ") - CanvasXY: (" + xy.x + "," + xy.y + ")");
+      this.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ") - RealXY: (" + xy.x + "," + xy.y + ")");
     }
     return xy;
   };
-  creanvas.NodeJsController.prototype.addElementDrawing = function(elementType, draw) {
-    this.drawingMethods.push({elementType:elementType, draw:draw});
+  creanvas.NodeJsController.prototype.addElementDrawing = function(drawingMethod, draw) {
+    this.drawingMethods.push({drawingMethod:drawingMethod, draw:draw});
   };
   creanvas.NodeJsController.prototype.add = function() {
     var controller = this;
@@ -1342,46 +1326,23 @@ var CreJs = CreJs || {};
       return arg && arg[0] == "position";
     })[0];
     var element = new CreJs.CreanvasNodeClient.NodeJsElement(controller, identificationData, imageData, positionData);
-    element.elementId = controller.elements.length == 0 ? 0 : controller.elements[controller.elements.length - 1].elementId + 1;
-    controller.nodeSocket.emit("registerElement", JSON.stringify({"id":element.id, "x":element.x, "y":element.y}));
-    var decoratorArguments = args.filter(function(arg) {
-      return arg && arg[0] != "name" && arg[0] != "position" && arg[0] != "image";
-    });
-    if (decoratorArguments.length > 0 && CreJs.Creanvas.elementDecorators) {
-      if (DEBUG) {
-        element.debug("New element", "apply " + decoratorArguments.length + " decorators");
-      }
-      decoratorArguments.forEach(function(decoratorArgument) {
-        controller.nodeSocket.emit("decorate", JSON.stringify({"element":element.id, "decorator":decoratorArgument[0], "arguments":decoratorArgument[1]}));
-      });
-    }
     controller.elements.push(element);
     return element;
   };
   creanvas.NodeJsController.DEFAULT_REFRESH_TIME = 50;
   creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR = "#FFF";
   creanvas["NodeJsController"] = creanvas.NodeJsController;
-  creanvas.NodeJsController.prototype["addElement"] = creanvas.NodeJsController.prototype.add;
-  creanvas.NodeJsController.prototype["redraw"] = creanvas.NodeJsController.prototype.triggerRedraw;
-  creanvas.NodeJsController.prototype["stop"] = creanvas.NodeJsController.prototype.stopController;
+  creanvas.NodeJsController.prototype["addElementDrawing"] = creanvas.NodeJsController.prototype.addElementDrawing;
+  creanvas.NodeJsController.prototype["startApplication"] = creanvas.NodeJsController.prototype.startApplication;
 })();
 (function() {
   var creanvas = CreJs.CreanvasNodeClient;
   creanvas.NodeJsElement = function(controller, identificationData, imageData, positionData) {
     var element = this;
     this.controller = controller;
-    this.cachedValues = [];
-    this.clonerData = [];
-    this.elementEvents = this.elementEvents || new CreJs.Creevents.EventContainer;
     setIdentification(element, identificationData[1]);
     setImage(element, imageData[1]);
     setPosition(element, positionData[1]);
-    this.clonerData.push(identificationData);
-    this.clonerData.push(imageData);
-    this.clonerData.push(positionData);
-    element.controller.elementEvents.getEvent("deactivate").addListener(function(e) {
-      element.deactivate();
-    });
     this.drawMyself = function() {
       var element = this;
       element.controller.context.scale(element.controller.lengthScale, element.controller.lengthScale);
@@ -1423,12 +1384,6 @@ var CreJs = CreJs || {};
     element.right = imageData["right"] == 0 ? 0 : imageData["right"] || element.left + width;
     element.elementWidth = width || element.right - element.left;
     element.elementHeight = height || element.bottom - element.top;
-    element.topInPoints = Math.round(element.top * element.controller.lengthScale);
-    element.leftInPoints = Math.round(element.left * element.controller.lengthScale);
-    element.bottomInPoints = Math.round(element.bottom * element.controller.lengthScale);
-    element.rightInPoints = Math.round(element.right * element.controller.lengthScale);
-    element.widthInPoints = Math.round(element.elementWidth * element.controller.lengthScale);
-    element.heightInPoints = Math.round(element.elementHeight * element.controller.lengthScale);
     element.elementScaleX = imageData["scaleX"] || 1;
     element.elementScaleY = imageData["scaleY"] || 1;
     element.draw = imageData["draw"];
@@ -1439,8 +1394,8 @@ var CreJs = CreJs || {};
     tempCanvas.width = stuff;
     tempCanvas.height = stuff;
     element.temporaryRenderingContext.beginPath();
-    element.temporaryRenderingContext.translate(-stuff * element.left / element.width, -stuff * element.top / element.height);
-    element.temporaryRenderingContext.scale(stuff / element.width, stuff / element.height);
+    element.temporaryRenderingContext.translate(-stuff * element.left / element.elementWidth, -stuff * element.top / element.elementHeight);
+    element.temporaryRenderingContext.scale(stuff / element.elementWidth, stuff / element.elementHeight);
     element.draw.call(element, element.temporaryRenderingContext);
     var stuffImage = element.temporaryRenderingContext.getImageData(0, 0, stuff, stuff);
     element.edges = [];
@@ -1477,7 +1432,7 @@ var CreJs = CreJs || {};
       if (!match) {
         return;
       }
-      element.edges.push({x:(x + dx) * element.width / stuff + element.left, y:(y + dy) * element.height / stuff + element.top});
+      element.edges.push({x:(x + dx) * element.elementWidth / stuff + element.left, y:(y + dy) * element.elementHeight / stuff + element.top});
       imageX = x;
       imageY = y;
       currentEdge = edge;
@@ -1554,157 +1509,10 @@ var CreJs = CreJs || {};
     if (!this.edges) {
       return false;
     }
+    var x = pointerX * this.controller.lengthScale;
+    var y = pointerY * this.controller.lengthScale;
     this.drawMyEdges();
-    return this.controller.context.isPointInPath(pointerX, pointerY);
+    return this.controller.context.isPointInPath(x, y);
   };
-  creanvas.NodeJsElement.prototype.applyElementDecorator = function(decoratorType, decoratorSettings) {
-    if (DEBUG) {
-      this.debug("applyElementDecorator", decoratorType);
-    }
-    var decorator = CreJs.Creanvas.elementDecorators[decoratorType];
-    if (decorator) {
-      this.clonerData.push([decoratorType, decoratorSettings]);
-      decorator.applyTo(this, decoratorSettings);
-    } else {
-      if (DEBUG) {
-        this.debug("applyElementDecorator", "Not found: " + decoratorType);
-      }
-    }
-  };
-  creanvas.NodeJsElement.prototype.getCacheableValue = function(cacheKey, currentKey, getData) {
-    if (this.cachedValues[cacheKey] && this.cachedValues[cacheKey].key == currentKey) {
-      return this.cachedValues[cacheKey].value;
-    }
-    var newValue = getData.call(this);
-    this.cachedValues[cacheKey] = {key:currentKey, value:newValue};
-    return newValue;
-  };
-  creanvas.NodeJsElement.prototype.cloneElement = function(ignoreDecorators) {
-    if (DEBUG) {
-      this.debug("cloneElement", "start cloning");
-    }
-    var elementsToApply = ignoreDecorators ? this.clonerData.filter(function(d) {
-      return ignoreDecorators.every(function(toIgnore) {
-        return toIgnore != d[0];
-      });
-    }) : this.clonerData;
-    if (DEBUG) {
-      this.debug("cloneElement", "apply " + elementsToApply.length + " stuff");
-    }
-    return this.controller.add.apply(this.controller, elementsToApply);
-  };
-  creanvas.NodeJsElement.prototype.canHandleEvent = function(eventId) {
-    return eventId == "click" || eventId == "pointerDown" || this.elementEvents.hasEvent(eventId);
-  };
-  creanvas.NodeJsElement.prototype.deactivate = function() {
-    this.temporaryRenderingContext = null;
-  };
-  creanvas.NodeJsElement.prototype.triggerRedraw = function() {
-    this.controller.triggerRedraw();
-  };
-  creanvas.NodeJsElement.prototype.getWebappXY = function(imageX, imageY) {
-    return{x:this.elementX + (imageX * this.elementScaleX * Math.cos(this.elementAngle) - imageY * this.elementScaleY * Math.sin(this.elementAngle)) / this.controller.lengthScale, y:this.elementY + (imageX * this.elementScaleX * Math.sin(this.elementAngle) + imageY * this.elementScaleY * Math.cos(this.elementAngle)) / this.controller.lengthScale};
-  };
-  creanvas.NodeJsElement.prototype.getElementXY = function(webAppX, webAppY) {
-    return{x:Math.round(((webAppX - this.elementX) * this.controller.lengthScale * Math.cos(this.elementAngle) + (webAppY - this.elementY) * this.controller.lengthScale * Math.sin(this.elementAngle)) / this.elementScaleX), y:Math.round(((webAppY - this.elementY) * this.controller.lengthScale * Math.cos(this.elementAngle) - (webAppX - this.elementX) * this.controller.lengthScale * Math.sin(this.elementAngle)) / this.elementScaleY)};
-  };
-  creanvas.NodeJsElement.prototype.getCenter = function() {
-    return this.getWebappXY(this.leftInPoints + this.widthInPoints / 2, this.topInPoints + this.heightInPoints / 2);
-  };
-  creanvas.NodeJsElement.prototype.getClientCorners = function() {
-    var element = this;
-    return this.getCacheableValue("getClientCorners", element.elementX + "" + element.elementY + "" + element.elementAngle + "" + element.elementScaleX + "" + element.elementScaleX, function() {
-      var corners = [];
-      corners.push({x:element.leftInPoints, y:element.topInPoints});
-      corners.push({x:element.rightInPoints, y:element.topInPoints});
-      corners.push({x:element.rightInPoints, y:element.bottomInPoints});
-      corners.push({x:element.leftInPoints, y:element.bottomInPoints});
-      return corners.map(function(point) {
-        return element.getWebappXY(point.x, point.y);
-      });
-    });
-  };
-  creanvas.NodeJsElement.prototype.getClientRect = function() {
-    var element = this;
-    return this.getCacheableValue("getClientRect", element.elementX + "" + element.elementY + "" + element.elementAngle + "" + element.elementScaleX + "" + element.elementScaleX, function() {
-      var clientCorners = element.getClientCorners();
-      return{top:clientCorners.reduce(function(a, b) {
-        return Math.min(a, b.y);
-      }, Infinity), bottom:clientCorners.reduce(function(a, b) {
-        return Math.max(a, b.y);
-      }, -Infinity), left:clientCorners.reduce(function(a, b) {
-        return Math.min(a, b.x);
-      }, Infinity), right:clientCorners.reduce(function(a, b) {
-        return Math.max(a, b.x);
-      }, -Infinity)};
-    });
-  };
-  creanvas.NodeJsElement.prototype.applyElementDecorators = function() {
-    var element = this;
-    var newDecorators = [].slice.apply(arguments);
-    newDecorators.forEach(function(decoratorArgument) {
-      element.applyElementDecorator(decoratorArgument[0], decoratorArgument[1]);
-    });
-  };
-  if (DEBUG) {
-    creanvas.NodeJsElement.prototype.debug = function(source, message) {
-      this.controller.logMessage("Element." + source + ": " + message + ". Element: " + this.elementName + "/" + this.elementId);
-    };
-  }
-  creanvas.NodeJsElement.prototype["clone"] = creanvas.NodeJsElement.prototype.cloneElement;
-  creanvas.NodeJsElement.prototype["applyDecorator"] = creanvas.NodeJsElement.prototype.applyElementDecorator;
-  creanvas.NodeJsElement.prototype["applyDecorators"] = creanvas.NodeJsElement.prototype.applyElementDecorators;
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "width", {get:function() {
-    return this.elementWidth;
-  }, set:function(y) {
-    this.elementWidth = y;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "height", {get:function() {
-    return this.elementHeight;
-  }, set:function(y) {
-    this.elementHeight = y;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "scaleX", {get:function() {
-    return this.elementScaleX;
-  }, set:function(y) {
-    this.elementScaleX = y;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "scaleY", {get:function() {
-    return this.elementScaleY;
-  }, set:function(y) {
-    this.elementScaleY = y;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "x", {get:function() {
-    return this.elementX;
-  }, set:function(y) {
-    this.elementX = y;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "y", {get:function() {
-    return this.elementY;
-  }, set:function(y) {
-    this.elementY = y;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "z", {get:function() {
-    return this.elementZ;
-  }, set:function(y) {
-    this.elementZ = y;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "angle", {get:function() {
-    return this.elementAngle;
-  }, set:function(y) {
-    this.elementAngle = y;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "name", {get:function() {
-    return this.elementName;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "id", {get:function() {
-    return this.elementId;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "image", {get:function() {
-    return this.elementImage;
-  }});
-  Object.defineProperty(creanvas.NodeJsElement.prototype, "events", {get:function() {
-    return this.elementEvents;
-  }});
 })();
 

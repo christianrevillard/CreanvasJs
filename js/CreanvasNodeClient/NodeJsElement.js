@@ -5,29 +5,19 @@
 	var creanvas = CreJs.CreanvasNodeClient;
 
 	// decorators as additional arguments.
-	creanvas.NodeJsElement = function(controller, identificationData,
-			imageData, positionData) {
+	creanvas.NodeJsElement = function(
+			controller, 
+			identificationData,
+			imageData, 
+			positionData) {
 
 		var element = this;
 
 		this.controller = controller;
-		this.cachedValues = [];
-		this.clonerData = [];
-		this.elementEvents = this.elementEvents
-				|| new CreJs.Creevents.EventContainer();
 
 		setIdentification(element, identificationData[1]);
 		setImage(element, imageData[1]);
 		setPosition(element, positionData[1]);
-
-		this.clonerData.push(identificationData);
-		this.clonerData.push(imageData);
-		this.clonerData.push(positionData);
-
-		element.controller.elementEvents.getEvent('deactivate').addListener(
-				function(e) {
-					element.deactivate();
-				});
 
 		this.drawMyself = function() {
 
@@ -99,25 +89,15 @@
 		element.elementWidth = width || (element.right - element.left);
 		element.elementHeight = height || (element.bottom - element.top);
 
-		element.topInPoints = Math.round(element.top
-				* element.controller.lengthScale);
-		element.leftInPoints = Math.round(element.left
-				* element.controller.lengthScale);
-		element.bottomInPoints = Math.round(element.bottom
-				* element.controller.lengthScale);
-		element.rightInPoints = Math.round(element.right
-				* element.controller.lengthScale);
-		element.widthInPoints = Math.round(element.elementWidth
-				* element.controller.lengthScale);
-		element.heightInPoints = Math.round(element.elementHeight
-				* element.controller.lengthScale);
-
 		// scaling decorator ?? => should be
 		element.elementScaleX = imageData["scaleX"] || 1;
 		element.elementScaleY = imageData["scaleY"] || 1;
 
 		element.draw = imageData["draw"];
 
+		
+		// Edges calculation to do in addElementDrawing, so only once per drawing, and allow shift without recalculation!
+		
 		// draw in a 50/50 points matrix
 		var tempCanvas = element.controller.context.canvas.ownerDocument
 				.createElement('canvas');
@@ -130,8 +110,8 @@
 		tempCanvas.height = stuff;
 
 		element.temporaryRenderingContext.beginPath();
-		element.temporaryRenderingContext.translate(-stuff*element.left/element.width, -stuff*element.top/element.height);
-		element.temporaryRenderingContext.scale(stuff / element.width, stuff / element.height);
+		element.temporaryRenderingContext.translate(-stuff*element.left/element.elementWidth, -stuff*element.top/element.elementHeight);
+		element.temporaryRenderingContext.scale(stuff / element.elementWidth, stuff / element.elementHeight);
 		element.draw.call(element, element.temporaryRenderingContext);
 		
 		var stuffImage = element.temporaryRenderingContext.getImageData(0, 0, stuff, stuff);
@@ -176,8 +156,8 @@
 				return;
 			
 			element.edges.push({
-				x: (x + dx)*element.width/stuff+ element.left,
-				y: (y + dy)*element.height/stuff+ element.top}); 
+				x: (x + dx)*element.elementWidth/stuff+ element.left,
+				y: (y + dy)*element.elementHeight/stuff+ element.top}); 
 
 			imageX = x;
 			imageY = y;
@@ -283,281 +263,17 @@
 	};
 
 	creanvas.NodeJsElement.prototype.hit = function(pointerX, pointerY) {
+		
 		if (!this.edges)
 			return false;
+
+		var x = pointerX*this.controller.lengthScale;
+		var y = pointerY*this.controller.lengthScale;
+
+	//	if (x<this.elementX + this.left || x>this.elementX + this.right ||  y<this.elementY + this.top || y>this.elementY + this.bottom)
+		//	return false;
+		
 		this.drawMyEdges();
-		return this.controller.context.isPointInPath(pointerX, pointerY);
+		return this.controller.context.isPointInPath(x,y);
 	};
-
-	creanvas.NodeJsElement.prototype.applyElementDecorator = function(
-			decoratorType, decoratorSettings) {
-		if (DEBUG)
-			this.debug("applyElementDecorator", decoratorType);
-
-		var decorator = CreJs.Creanvas.elementDecorators[decoratorType];
-
-		if (decorator) {
-			this.clonerData.push([ decoratorType, decoratorSettings ]);
-			decorator.applyTo(this, decoratorSettings);
-		} else {
-			if (DEBUG)
-				this.debug("applyElementDecorator", "Not found: "
-						+ decoratorType);
-		}
-	};
-
-	creanvas.NodeJsElement.prototype.getCacheableValue = function(cacheKey,
-			currentKey, getData) {
-		if (this.cachedValues[cacheKey]
-				&& this.cachedValues[cacheKey].key == currentKey) {
-			return this.cachedValues[cacheKey].value;
-		}
-		var newValue = getData.call(this);
-		this.cachedValues[cacheKey] = {
-			key : currentKey,
-			value : newValue
-		};
-		return newValue;
-	};
-
-	// unpractical syntax... ignore is unnatural here TODO
-	creanvas.NodeJsElement.prototype.cloneElement = function(ignoreDecorators) {
-		if (DEBUG)
-			this.debug("cloneElement", "start cloning");
-
-		var elementsToApply = ignoreDecorators ? this.clonerData
-				.filter(function(d) {
-					return ignoreDecorators.every(function(toIgnore) {
-						return toIgnore != d[0];
-					});
-				}) : this.clonerData;
-
-		if (DEBUG)
-			this.debug("cloneElement", "apply " + elementsToApply.length
-					+ " stuff");
-
-		return this.controller.add.apply(this.controller, elementsToApply);
-	};
-
-	creanvas.NodeJsElement.prototype.canHandleEvent = function(eventId) {
-		// click, pointerDown, always stopped by top element, even if not
-		// handled
-		return eventId == 'click' || eventId == 'pointerDown'
-				|| this.elementEvents.hasEvent(eventId);
-	};
-
-	creanvas.NodeJsElement.prototype.deactivate = function() {
-		this.temporaryRenderingContext = null;
-	};
-
-	creanvas.NodeJsElement.prototype.triggerRedraw = function() {
-		this.controller.triggerRedraw();
-	};
-
-	// coordinate in Web app canvas according to scale
-	creanvas.NodeJsElement.prototype.getWebappXY = function(imageX, imageY) {
-		return {
-			x : this.elementX
-					+ (imageX * this.elementScaleX
-							* Math.cos(this.elementAngle) - imageY
-							* this.elementScaleY * Math.sin(this.elementAngle))
-					/ this.controller.lengthScale,
-			y : this.elementY
-					+ (imageX * this.elementScaleX
-							* Math.sin(this.elementAngle) + imageY
-							* this.elementScaleY * Math.cos(this.elementAngle))
-					/ this.controller.lengthScale
-		};
-	};
-
-	// coordinates inside element image, in points
-	creanvas.NodeJsElement.prototype.getElementXY = function(webAppX, webAppY) {
-		return {
-			x : Math
-					.round(((webAppX - this.elementX)
-							* this.controller.lengthScale
-							* Math.cos(this.elementAngle) + (webAppY - this.elementY)
-							* this.controller.lengthScale
-							* Math.sin(this.elementAngle))
-							/ this.elementScaleX),
-			y : Math
-					.round(((webAppY - this.elementY)
-							* this.controller.lengthScale
-							* Math.cos(this.elementAngle) - (webAppX - this.elementX)
-							* this.controller.lengthScale
-							* Math.sin(this.elementAngle))
-							/ this.elementScaleY)
-		};
-	};
-
-	creanvas.NodeJsElement.prototype.getCenter = function() {
-		return this.getWebappXY(this.leftInPoints + this.widthInPoints / 2,
-				this.topInPoints + this.heightInPoints / 2);
-	};
-
-	creanvas.NodeJsElement.prototype.getClientCorners = function() {
-		var element = this;
-
-		return this.getCacheableValue('getClientCorners', element.elementX + ''
-				+ element.elementY + '' + element.elementAngle + ''
-				+ element.elementScaleX + '' + element.elementScaleX,
-				function() {
-					var corners = [];
-					corners.push({
-						x : element.leftInPoints,
-						y : element.topInPoints
-					});
-					corners.push({
-						x : element.rightInPoints,
-						y : element.topInPoints
-					});
-					corners.push({
-						x : element.rightInPoints,
-						y : element.bottomInPoints
-					});
-					corners.push({
-						x : element.leftInPoints,
-						y : element.bottomInPoints
-					});
-
-					return corners.map(function(point) {
-						return element.getWebappXY(point.x, point.y);
-					});
-				});
-	};
-
-	creanvas.NodeJsElement.prototype.getClientRect = function() {
-		var element = this;
-
-		return this.getCacheableValue('getClientRect', element.elementX + ''
-				+ element.elementY + '' + element.elementAngle + ''
-				+ element.elementScaleX + '' + element.elementScaleX,
-				function() {
-					var clientCorners = element.getClientCorners();
-
-					return {
-						top : clientCorners.reduce(function(a, b) {
-							return Math.min(a, b.y);
-						}, Infinity),
-						bottom : clientCorners.reduce(function(a, b) {
-							return Math.max(a, b.y);
-						}, -Infinity),
-						left : clientCorners.reduce(function(a, b) {
-							return Math.min(a, b.x);
-						}, Infinity),
-						right : clientCorners.reduce(function(a, b) {
-							return Math.max(a, b.x);
-						}, -Infinity)
-					};
-				});
-	};
-
-	creanvas.NodeJsElement.prototype.applyElementDecorators = function() {
-		var element = this;
-
-		var newDecorators = [].slice.apply(arguments);
-
-		newDecorators.forEach(function(decoratorArgument) {
-			element.applyElementDecorator(decoratorArgument[0],
-					decoratorArgument[1]);
-		});
-	};
-
-	if (DEBUG) {
-		creanvas.NodeJsElement.prototype.debug = function(source, message) {
-			this.controller.logMessage("Element." + source + ": " + message
-					+ ". Element: " + this.elementName + "/" + this.elementId);
-		};
-	}
-
-	// Export interface
-
-	creanvas.NodeJsElement.prototype["clone"] = creanvas.NodeJsElement.prototype.cloneElement;
-	creanvas.NodeJsElement.prototype["applyDecorator"] = creanvas.NodeJsElement.prototype.applyElementDecorator;
-	creanvas.NodeJsElement.prototype["applyDecorators"] = creanvas.NodeJsElement.prototype.applyElementDecorators;
-
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "width", {
-		get : function() {
-			return this.elementWidth;
-		},
-		set : function(y) {
-			this.elementWidth = y;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "height", {
-		get : function() {
-			return this.elementHeight;
-		},
-		set : function(y) {
-			this.elementHeight = y;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "scaleX", {
-		get : function() {
-			return this.elementScaleX;
-		},
-		set : function(y) {
-			this.elementScaleX = y;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "scaleY", {
-		get : function() {
-			return this.elementScaleY;
-		},
-		set : function(y) {
-			this.elementScaleY = y;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "x", {
-		get : function() {
-			return this.elementX;
-		},
-		set : function(y) {
-			this.elementX = y;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "y", {
-		get : function() {
-			return this.elementY;
-		},
-		set : function(y) {
-			this.elementY = y;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "z", {
-		get : function() {
-			return this.elementZ;
-		},
-		set : function(y) {
-			this.elementZ = y;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "angle", {
-		get : function() {
-			return this.elementAngle;
-		},
-		set : function(y) {
-			this.elementAngle = y;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "name", {
-		get : function() {
-			return this.elementName;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "id", {
-		get : function() {
-			return this.elementId;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "image", {
-		get : function() {
-			return this.elementImage;
-		}
-	});
-	Object.defineProperty(creanvas.NodeJsElement.prototype, "events", {
-		get : function() {
-			return this.elementEvents;
-		}
-	});
 }());
