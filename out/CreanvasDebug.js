@@ -1389,7 +1389,6 @@ var CreJs = CreJs || {};
     element.draw = imageData["draw"];
     var tempCanvas = element.controller.context.canvas.ownerDocument.createElement("canvas");
     element.temporaryRenderingContext = tempCanvas.getContext("2d");
-    element.controller.context.canvas.ownerDocument.body.appendChild(tempCanvas);
     var stuff = 50;
     tempCanvas.width = stuff;
     tempCanvas.height = stuff;

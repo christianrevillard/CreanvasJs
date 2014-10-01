@@ -102,7 +102,7 @@
 		var tempCanvas = element.controller.context.canvas.ownerDocument
 				.createElement('canvas');
 		element.temporaryRenderingContext = tempCanvas.getContext("2d");
-		element.controller.context.canvas.ownerDocument.body.appendChild(tempCanvas);
+//		element.controller.context.canvas.ownerDocument.body.appendChild(tempCanvas);
 
 		var stuff = 50;		
 		
