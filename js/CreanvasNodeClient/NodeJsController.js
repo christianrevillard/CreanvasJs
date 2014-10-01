@@ -10,7 +10,7 @@
 	creanvas.NodeJsController = function(controllerData) {
 		var controller = this;
 		controller.refreshTime = controllerData["controller.refreshTime"] || creanvas.NodeJsController.DEFAULT_REFRESH_TIME;
-		this.clientToServerBuffering = 100;
+		this.clientToServerBuffering = 50;
 		
 		var canvas = controllerData["canvas"];
 		this.logger = controllerData['log'];		
@@ -84,7 +84,7 @@
 				var el = controller.elements.filter(function(e){ return e.id == updated.id;})[0];
 				el.elementX = updated["x"] || el.elementX;
 				el.elementY = updated["y"] || el.elementY;
-				el.elementZ = updated["z"] || el.elementY;
+				el.elementZ = updated["z"] || el.elementZ;
 				el.elementAngle = updated["angle"] || el.elementAngle;
 			});
 			
