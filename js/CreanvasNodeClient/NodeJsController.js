@@ -77,37 +77,44 @@
 		addBackground.call(controller, controllerData["drawBackground"], controllerData["backgroundStyle"]);
 		startController.call(controller);
 		
-		this.nodeSocket.on('update', function(msg){
+		this.nodeSocket.on('updateClientElements', function(msg){
 			var data = JSON.parse(msg);
 			
-			data.forEach(function(updated){
-				var el = controller.elements.filter(function(e){ return e.id == updated.id;})[0];
-				el.elementX = updated["x"] || el.elementX;
-				el.elementY = updated["y"] || el.elementY;
-				el.elementZ = updated["z"] || el.elementZ;
-				el.elementAngle = updated["angle"] || el.elementAngle;
+			data.updates.forEach(function(updated){
+				var els = controller.elements.filter(function(e){ return e.id == updated.id;});
+				
+				if (els.length>0) { 
+					// updates			
+					var el = els[0];
+					el.elementX = updated["x"] || el.elementX;
+					el.elementY = updated["y"] || el.elementY;
+					el.elementZ = updated["z"] || el.elementZ;
+					el.elementAngle = updated["angle"] || el.elementAngle;
+				}
+				else {
+					//inserts
+					if (DEBUG) controller.logMessage('Adding element ' + updated['drawingMethod'] + ' in (' + updated["x"] + ',' + updated["y"] + ',' + updated["z"] +')');
+	
+					var element = controller.add(
+							["name",updated["name"]],
+							["image", {
+								"left" :updated["left"],
+								"top": updated['top'],
+								"width": updated['width'],
+								"height": updated['height'],
+								"draw": controller.drawingMethods.filter(function(e){ return e.drawingMethod == updated['drawingMethod'];})[0].draw
+							}],
+							["position", {"x": updated["x"], "y": updated["y"], "z": updated["z"], "angle":updated["angle"]}]);
+					element.id = updated.id;
+				}
 			});
-			
+
+			data.deletes.forEach(function(deleted){
+				controller.removeElementById(deleted.id);
+			});
+
 			needRedraw = true;
 		  });	  
-
-		this.nodeSocket.on('addElement', function(msg){
-			var data = JSON.parse(msg);
-
-			if (DEBUG) controller.logMessage('Adding element ' + data['drawingMethod'] + ' in (' + data["x"] + ',' + data["y"] + ',' + data["z"] +')');
-
-			var element = controller.add(
-					["name",data["name"]],
-					["image", {
-						"left" :data["left"],
-						"top": data['top'],
-						"width": data['width'],
-						"height": data['height'],
-						"draw": controller.drawingMethods.filter(function(e){ return e.drawingMethod == data['drawingMethod'];})[0].draw
-					}],
-					["position", {"x": data.x, "y": data.y, "z": data.z, "angle":data.angle }]);
-			element.id = data.id;
-		});
 	};
 	
 	var registerCanvasEvents = function()
