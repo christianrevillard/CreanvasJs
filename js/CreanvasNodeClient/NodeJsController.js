@@ -18,6 +18,7 @@
 //		timeScale = controllerData["timeScale"] || 1;
 		this.nodeSocket = controllerData["nodeSocket"];				
 		this.drawingMethods = [];
+		this.textDrawingMethods = [];
 		
 		var emitBuffer = [];
 
@@ -68,6 +69,9 @@
 		if (DEBUG) this.logMessage('Starting controller');
 		
 		controller.elements = [];
+		controller.pendingMessages = [];
+		controller.currentMessages = null;
+
 		controller.context = canvas.getContext("2d");		
 		controller.needRedraw = true;
 		controller.isDrawing = false;
@@ -76,7 +80,41 @@
 		registerCanvasEvents.call(controller);
 		addBackground.call(controller, controllerData["drawBackground"], controllerData["backgroundStyle"]);
 		startController.call(controller);
-		
+
+		this.nodeSocket.on('textMessage', function(msg){		
+			var data = JSON.parse(msg);
+			var textType = data['textType'] || 'default';
+			var registeredType = controller.textDrawingMethods.filter(function(e){ return e.textType == textType;})[0];
+			
+			controller.pendingMessages.push(
+			{
+				message: data['message'],
+				draw: registeredType.draw,
+				duration: data["duration"] || registeredType.defaultDuration || 2000
+			});
+
+			var nextMessage = function()
+			{
+				if (controller.pendingMessages.length>0)
+				{
+					controller.currentMessage = controller.pendingMessages.shift();
+
+					setTimeout(
+						function() { nextMessage();},
+						controller.currentMessage.duration
+					);
+				}
+				else
+				{
+					controller.currentMessage = null;
+				}
+			};
+
+			if (!controller.currentMessage)				
+				nextMessage();
+
+		});	  	
+
 		this.nodeSocket.on('updateClientElements', function(msg){
 			var data = JSON.parse(msg);
 			
@@ -172,6 +210,12 @@
 						{
 							element.drawMyself();
 						});					
+
+					if (controller.currentMessage)
+					{
+						controller.currentMessage.draw(controller.context, controller.currentMessage.message);
+					}					
+
 					controller.isDrawing = false;
 				}
 				else
@@ -260,7 +304,12 @@
 	{
 		this.drawingMethods.push({drawingMethod:drawingMethod, draw:draw});
 	};
-	
+
+	creanvas.NodeJsController.prototype.addTextDrawing = function(textType, draw, defaultDuration)
+	{
+		this.textDrawingMethods.push({textType:textType, draw:draw, defaultDuration:defaultDuration});
+	};
+
 	
 	creanvas.NodeJsController.prototype.add  = function ()
 	{

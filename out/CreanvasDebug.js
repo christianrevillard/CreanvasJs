@@ -1164,6 +1164,7 @@ var CreJs = CreJs || {};
     this.lengthScale = controllerData["lengthScale"] || canvas.height / controllerData["realHeight"] || canvas.width / controllerData["realWidth"] || 1;
     this.nodeSocket = controllerData["nodeSocket"];
     this.drawingMethods = [];
+    this.textDrawingMethods = [];
     var emitBuffer = [];
     this.emitToServer = function(action, actionData, overrideActionKey) {
       if (overrideActionKey && emitBuffer.length > 0) {
@@ -1192,6 +1193,8 @@ var CreJs = CreJs || {};
       this.logMessage("Starting controller");
     }
     controller.elements = [];
+    controller.pendingMessages = [];
+    controller.currentMessages = null;
     controller.context = canvas.getContext("2d");
     controller.needRedraw = true;
     controller.isDrawing = false;
@@ -1199,6 +1202,27 @@ var CreJs = CreJs || {};
     registerCanvasEvents.call(controller);
     addBackground.call(controller, controllerData["drawBackground"], controllerData["backgroundStyle"]);
     startController.call(controller);
+    this.nodeSocket.on("textMessage", function(msg) {
+      var data = JSON.parse(msg);
+      var textType = data["textType"] || "default";
+      var registeredType = controller.textDrawingMethods.filter(function(e) {
+        return e.textType == textType;
+      })[0];
+      controller.pendingMessages.push({message:data["message"], draw:registeredType.draw, duration:data["duration"] || registeredType.defaultDuration || 2E3});
+      var nextMessage = function() {
+        if (controller.pendingMessages.length > 0) {
+          controller.currentMessage = controller.pendingMessages.shift();
+          setTimeout(function() {
+            nextMessage();
+          }, controller.currentMessage.duration);
+        } else {
+          controller.currentMessage = null;
+        }
+      };
+      if (!controller.currentMessage) {
+        nextMessage();
+      }
+    });
     this.nodeSocket.on("updateClientElements", function(msg) {
       var data = JSON.parse(msg);
       data.updates.forEach(function(updated) {
@@ -1257,6 +1281,9 @@ var CreJs = CreJs || {};
         }).forEach(function(element) {
           element.drawMyself();
         });
+        if (controller.currentMessage) {
+          controller.currentMessage.draw(controller.context, controller.currentMessage.message);
+        }
         controller.isDrawing = false;
       } else {
         if (DEBUG) {
@@ -1313,6 +1340,9 @@ var CreJs = CreJs || {};
   };
   creanvas.NodeJsController.prototype.addElementDrawing = function(drawingMethod, draw) {
     this.drawingMethods.push({drawingMethod:drawingMethod, draw:draw});
+  };
+  creanvas.NodeJsController.prototype.addTextDrawing = function(textType, draw, defaultDuration) {
+    this.textDrawingMethods.push({textType:textType, draw:draw, defaultDuration:defaultDuration});
   };
   creanvas.NodeJsController.prototype.add = function() {
     var controller = this;
