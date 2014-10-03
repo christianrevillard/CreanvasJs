@@ -18,7 +18,6 @@
 //		timeScale = controllerData["timeScale"] || 1;
 		this.nodeSocket = controllerData["nodeSocket"];				
 		this.drawingMethods = [];
-		this.textDrawingMethods = [];
 		
 		var emitBuffer = [];
 
@@ -69,8 +68,6 @@
 		if (DEBUG) this.logMessage('Starting controller');
 		
 		controller.elements = [];
-		controller.pendingMessages = [];
-		controller.currentMessages = null;
 
 		controller.context = canvas.getContext("2d");		
 		controller.needRedraw = true;
@@ -83,37 +80,11 @@
 
 		this.nodeSocket.on('textMessage', function(msg){		
 			var data = JSON.parse(msg);
-			var textType = data['textType'] || 'default';
-			var registeredType = controller.textDrawingMethods.filter(function(e){ return e.textType == textType;})[0];
-			
-			controller.pendingMessages.push(
+			if (controller.onTextMessage)
 			{
-				message: data['message'],
-				draw: registeredType.draw,
-				duration: data["duration"] || registeredType.defaultDuration || 2000
-			});
-
-			var nextMessage = function()
-			{
-				if (controller.pendingMessages.length>0)
-				{
-					controller.currentMessage = controller.pendingMessages.shift();
-
-					setTimeout(
-						function() { nextMessage();},
-						controller.currentMessage.duration
-					);
-				}
-				else
-				{
-					controller.currentMessage = null;
-				}
-			};
-
-			if (!controller.currentMessage)				
-				nextMessage();
-
-		});	  	
+				controller.onTextMessage(data);
+			}			
+		}); 	
 
 		this.nodeSocket.on('updateClientElements', function(msg){
 			var data = JSON.parse(msg);
@@ -127,20 +98,21 @@
 					el.elementX = updated["x"] || el.elementX;
 					el.elementY = updated["y"] || el.elementY;
 					el.elementZ = updated["z"] || el.elementZ;
+					el.elementScaleX = updated["scaleX"] || el.elementScaleX;
+					el.elementScaleY = updated["scaleY"] || el.elementScaleY;
 					el.elementAngle = updated["angle"] || el.elementAngle;
 				}
 				else {
 					//inserts
 					if (DEBUG) controller.logMessage('Adding element ' + updated['drawingMethod'] + ' in (' + updated["x"] + ',' + updated["y"] + ',' + updated["z"] +')');
 	
+					var drawingMethod = controller.drawingMethods.filter(function(e){ return e.drawingMethod == updated['drawingMethod'];})[0];
+					
 					var element = controller.add(
 							["name",updated["name"]],
 							["image", {
-								"left" :updated["left"],
-								"top": updated['top'],
-								"width": updated['width'],
-								"height": updated['height'],
-								"draw": controller.drawingMethods.filter(function(e){ return e.drawingMethod == updated['drawingMethod'];})[0].draw
+								"edges" :drawingMethod.edges,
+								"draw": drawingMethod.draw
 							}],
 							["position", {"x": updated["x"], "y": updated["y"], "z": updated["z"], "angle":updated["angle"]}]);
 					element.id = updated.id;
@@ -176,10 +148,10 @@
 			["name",'background'],
 			["image", 
 				{
-					"left" :0,
-					"top":0,
-					"width":controller.context.canvas.width/controller.lengthScale,
-					"height":controller.context.canvas.height/controller.lengthScale,
+					//"left" :0,
+					//"top":0,
+					//"width":controller.context.canvas.width/controller.lengthScale,
+					//"height":controller.context.canvas.height/controller.lengthScale,
 					"draw": drawBackground || function(context)
 					{
 						context.fillStyle = backgroundStyle || creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR;
@@ -211,9 +183,9 @@
 							element.drawMyself();
 						});					
 
-					if (controller.currentMessage)
+					if (controller.displayMessage)
 					{
-						controller.currentMessage.draw(controller.context, controller.currentMessage.message);
+						controller.displayMessage(controller.context);
 					}					
 
 					controller.isDrawing = false;
@@ -300,16 +272,187 @@
 		return xy;
 	};
 	
-	creanvas.NodeJsController.prototype.addElementDrawing = function(drawingMethod, draw)
+	creanvas.NodeJsController.prototype.getEdges = function(draw, left, width, top, height)
 	{
-		this.drawingMethods.push({drawingMethod:drawingMethod, draw:draw});
-	};
+		var controller = this;
+		var edges = [];
+		
+		var stuff = 50;	// can be overriden if needed for complex figures	
+		
+		// draw in a 50/50 points matrix
+		var tempCanvas = controller.context.canvas.ownerDocument.createElement('canvas');
+		var temporaryRenderingContext = tempCanvas.getContext("2d");
+//		element.controller.context.canvas.ownerDocument.body.appendChild(tempCanvas);
 
-	creanvas.NodeJsController.prototype.addTextDrawing = function(textType, draw, defaultDuration)
+		
+		tempCanvas.width = stuff;
+		tempCanvas.height = stuff;
+
+		temporaryRenderingContext.beginPath();
+		temporaryRenderingContext.translate(-stuff*left/width, -stuff*top/height);
+		temporaryRenderingContext.scale(stuff / width, stuff / height);
+		draw(temporaryRenderingContext);
+		
+		var stuffImage = temporaryRenderingContext.getImageData(0, 0, stuff, stuff);
+		
+		var startEdge = null;
+		var transparencyLimit = 1;
+		
+		var imageX= null;
+		var imageY = null;
+		var currentEdge = null;
+		
+		var checkPoint = function(x,y,edge)
+		{
+			if (stuffImage.data[y*stuff*4 + x*4 + 3] < transparencyLimit)
+				return false;
+							
+			var match = false;
+			
+			if (edge == "top")
+			{
+				match = y==0 || stuffImage.data[(y-1)*stuff*4 + x*4 + 3] < transparencyLimit;
+				dx = 0.5; dy=0;
+			}
+			if (edge == "left")
+			{
+				match = x==0 || stuffImage.data[y*stuff*4 + (x-1)*4 + 3] < transparencyLimit;
+				dx = 0; dy=0.5;
+			}
+			if (edge == "right")
+			{
+				match = x==stuff-1 || stuffImage.data[y*stuff*4 + (x+1)*4 + 3] < transparencyLimit;
+				dx = 1; dy=0.5;
+			}
+			if (edge == "bottom")
+			{
+				match = y==stuff-1 || stuffImage.data[(y+1)*stuff*4 + x*4 + 3] < transparencyLimit;
+				dx = 0.5; dy=1;
+			};
+
+			if (!match)
+				return;
+			
+			edges.push({
+				x: (x + dx)*width/stuff + left,
+				y: (y + dy)*height/stuff + top}); 
+
+			imageX = x;
+			imageY = y;
+			currentEdge = edge;
+
+			return true;
+		};
+			
+		for (var forX=0;forX<stuff; forX++)
+		{
+			for (var forY=0;forY<stuff; forY++)
+			{
+				if (checkPoint(forX, forY, "top"))
+				{
+					startEdge = {x:imageX, y:imageY};
+					forX = stuff; forY=stuff;
+				}
+			}
+		}
+
+		if (startEdge)
+		{						
+			do 
+			{
+				if (currentEdge == "top")
+				{
+					if (imageX<stuff-1 && imageY>0 && checkPoint(imageX+1, imageY-1, "left"))
+					{
+						continue;
+					}
+					
+					if (imageX<stuff-1 && checkPoint(imageX+1, imageY, "top"))
+					{
+						continue;
+					}
+					
+					if (checkPoint(imageX, imageY, "right"))
+					{
+						continue;
+					}
+				}
+				else if (currentEdge == "right")
+				{
+					if (imageX<stuff-1 && imageY<stuff-1 && checkPoint(imageX+1, imageY+1, "top"))
+					{
+						continue;
+					}
+					
+					if (imageY<stuff-1 && checkPoint(imageX, imageY+1, "right"))
+					{
+						continue;
+					}
+					
+					if (checkPoint(imageX, imageY, "bottom"))
+					{
+						continue;
+					}
+				}
+				else if (currentEdge == "bottom")
+				{
+					if (imageX>0 && imageY<stuff-1 && checkPoint(imageX-1, imageY+1, "right"))
+					{
+						continue;
+					}
+					
+					if (imageX>0 && checkPoint(imageX-1, imageY, "bottom"))
+					{
+						continue;
+					}
+					
+					if (checkPoint(imageX, imageY, "left"))
+					{
+						continue;
+					}
+				}
+				else if (currentEdge == "left")
+				{
+					if (imageX>0 && imageY>0 && checkPoint(imageX-1, imageY-1, "bottom"))
+					{
+						continue;
+					}
+					
+					if (imageY>0 && checkPoint(imageX, imageY-1, "left"))
+					{
+						continue;
+					}
+					
+					if (checkPoint(imageX, imageY, "top"))
+					{
+						continue;
+					}
+				}
+			} while (imageX != startEdge.x || imageY != startEdge.y);
+		}		
+		
+		return edges;
+	};
+		
+	creanvas.NodeJsController.prototype.addElementDrawing = function(drawingMethod, draw, boxData)
 	{
-		this.textDrawingMethods.push({textType:textType, draw:draw, defaultDuration:defaultDuration});
-	};
+		
+		// support height/width; left/width|left/right+top/height|top/bottom
+		var width = boxData["width"];
+		var height = boxData["height"];
 
+		var top = boxData["top"] == 0 ? 0 : boxData["top"] || (-height / 2);
+		var left = boxData["left"] == 0 ? 0 : boxData["left"] || (-width / 2);
+		var bottom = boxData["bottom"] == 0 ? 0 : boxData["bottom"] || (top + height);
+		var right = boxData["right"] == 0 ? 0 : boxData["right"]|| (left + width);
+		width = width || (right - left);
+		height = height || (bottom - top);
+		
+		// compute edges
+		var edges = this.getEdges(draw, left, width, top, height);
+		
+		this.drawingMethods.push({drawingMethod:drawingMethod, draw:draw, edges:edges});
+	};
 	
 	creanvas.NodeJsController.prototype.add  = function ()
 	{

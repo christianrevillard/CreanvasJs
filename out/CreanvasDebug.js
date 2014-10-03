@@ -1164,7 +1164,6 @@ var CreJs = CreJs || {};
     this.lengthScale = controllerData["lengthScale"] || canvas.height / controllerData["realHeight"] || canvas.width / controllerData["realWidth"] || 1;
     this.nodeSocket = controllerData["nodeSocket"];
     this.drawingMethods = [];
-    this.textDrawingMethods = [];
     var emitBuffer = [];
     this.emitToServer = function(action, actionData, overrideActionKey) {
       if (overrideActionKey && emitBuffer.length > 0) {
@@ -1193,8 +1192,6 @@ var CreJs = CreJs || {};
       this.logMessage("Starting controller");
     }
     controller.elements = [];
-    controller.pendingMessages = [];
-    controller.currentMessages = null;
     controller.context = canvas.getContext("2d");
     controller.needRedraw = true;
     controller.isDrawing = false;
@@ -1204,23 +1201,8 @@ var CreJs = CreJs || {};
     startController.call(controller);
     this.nodeSocket.on("textMessage", function(msg) {
       var data = JSON.parse(msg);
-      var textType = data["textType"] || "default";
-      var registeredType = controller.textDrawingMethods.filter(function(e) {
-        return e.textType == textType;
-      })[0];
-      controller.pendingMessages.push({message:data["message"], draw:registeredType.draw, duration:data["duration"] || registeredType.defaultDuration || 2E3});
-      var nextMessage = function() {
-        if (controller.pendingMessages.length > 0) {
-          controller.currentMessage = controller.pendingMessages.shift();
-          setTimeout(function() {
-            nextMessage();
-          }, controller.currentMessage.duration);
-        } else {
-          controller.currentMessage = null;
-        }
-      };
-      if (!controller.currentMessage) {
-        nextMessage();
+      if (controller.onTextMessage) {
+        controller.onTextMessage(data);
       }
     });
     this.nodeSocket.on("updateClientElements", function(msg) {
@@ -1234,14 +1216,17 @@ var CreJs = CreJs || {};
           el.elementX = updated["x"] || el.elementX;
           el.elementY = updated["y"] || el.elementY;
           el.elementZ = updated["z"] || el.elementZ;
+          el.elementScaleX = updated["scaleX"] || el.elementScaleX;
+          el.elementScaleY = updated["scaleY"] || el.elementScaleY;
           el.elementAngle = updated["angle"] || el.elementAngle;
         } else {
           if (DEBUG) {
             controller.logMessage("Adding element " + updated["drawingMethod"] + " in (" + updated["x"] + "," + updated["y"] + "," + updated["z"] + ")");
           }
-          var element = controller.add(["name", updated["name"]], ["image", {"left":updated["left"], "top":updated["top"], "width":updated["width"], "height":updated["height"], "draw":controller.drawingMethods.filter(function(e) {
+          var drawingMethod = controller.drawingMethods.filter(function(e) {
             return e.drawingMethod == updated["drawingMethod"];
-          })[0].draw}], ["position", {"x":updated["x"], "y":updated["y"], "z":updated["z"], "angle":updated["angle"]}]);
+          })[0];
+          var element = controller.add(["name", updated["name"]], ["image", {"edges":drawingMethod.edges, "draw":drawingMethod.draw}], ["position", {"x":updated["x"], "y":updated["y"], "z":updated["z"], "angle":updated["angle"]}]);
           element.id = updated.id;
         }
       });
@@ -1265,7 +1250,7 @@ var CreJs = CreJs || {};
     if (DEBUG) {
       controller.logMessage("Adding background");
     }
-    var background = controller.add(["name", "background"], ["image", {"left":0, "top":0, "width":controller.context.canvas.width / controller.lengthScale, "height":controller.context.canvas.height / controller.lengthScale, "draw":drawBackground || function(context) {
+    var background = controller.add(["name", "background"], ["image", {"draw":drawBackground || function(context) {
       context.fillStyle = backgroundStyle || creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR;
       context.fillRect(0, 0, controller.context.canvas.width / controller.lengthScale, controller.context.canvas.height / controller.lengthScale);
     }}], ["position", {"z":-Infinity}]);
@@ -1281,8 +1266,8 @@ var CreJs = CreJs || {};
         }).forEach(function(element) {
           element.drawMyself();
         });
-        if (controller.currentMessage) {
-          controller.currentMessage.draw(controller.context, controller.currentMessage.message);
+        if (controller.displayMessage) {
+          controller.displayMessage(controller.context);
         }
         controller.isDrawing = false;
       } else {
@@ -1338,11 +1323,131 @@ var CreJs = CreJs || {};
     }
     return xy;
   };
-  creanvas.NodeJsController.prototype.addElementDrawing = function(drawingMethod, draw) {
-    this.drawingMethods.push({drawingMethod:drawingMethod, draw:draw});
+  creanvas.NodeJsController.prototype.getEdges = function(draw, left, width, top, height) {
+    var controller = this;
+    var edges = [];
+    var stuff = 50;
+    var tempCanvas = controller.context.canvas.ownerDocument.createElement("canvas");
+    var temporaryRenderingContext = tempCanvas.getContext("2d");
+    tempCanvas.width = stuff;
+    tempCanvas.height = stuff;
+    temporaryRenderingContext.beginPath();
+    temporaryRenderingContext.translate(-stuff * left / width, -stuff * top / height);
+    temporaryRenderingContext.scale(stuff / width, stuff / height);
+    draw(temporaryRenderingContext);
+    var stuffImage = temporaryRenderingContext.getImageData(0, 0, stuff, stuff);
+    var startEdge = null;
+    var transparencyLimit = 1;
+    var imageX = null;
+    var imageY = null;
+    var currentEdge = null;
+    var checkPoint = function(x, y, edge) {
+      if (stuffImage.data[y * stuff * 4 + x * 4 + 3] < transparencyLimit) {
+        return false;
+      }
+      var match = false;
+      if (edge == "top") {
+        match = y == 0 || stuffImage.data[(y - 1) * stuff * 4 + x * 4 + 3] < transparencyLimit;
+        dx = .5;
+        dy = 0;
+      }
+      if (edge == "left") {
+        match = x == 0 || stuffImage.data[y * stuff * 4 + (x - 1) * 4 + 3] < transparencyLimit;
+        dx = 0;
+        dy = .5;
+      }
+      if (edge == "right") {
+        match = x == stuff - 1 || stuffImage.data[y * stuff * 4 + (x + 1) * 4 + 3] < transparencyLimit;
+        dx = 1;
+        dy = .5;
+      }
+      if (edge == "bottom") {
+        match = y == stuff - 1 || stuffImage.data[(y + 1) * stuff * 4 + x * 4 + 3] < transparencyLimit;
+        dx = .5;
+        dy = 1;
+      }
+      if (!match) {
+        return;
+      }
+      edges.push({x:(x + dx) * width / stuff + left, y:(y + dy) * height / stuff + top});
+      imageX = x;
+      imageY = y;
+      currentEdge = edge;
+      return true;
+    };
+    for (var forX = 0;forX < stuff;forX++) {
+      for (var forY = 0;forY < stuff;forY++) {
+        if (checkPoint(forX, forY, "top")) {
+          startEdge = {x:imageX, y:imageY};
+          forX = stuff;
+          forY = stuff;
+        }
+      }
+    }
+    if (startEdge) {
+      do {
+        if (currentEdge == "top") {
+          if (imageX < stuff - 1 && imageY > 0 && checkPoint(imageX + 1, imageY - 1, "left")) {
+            continue;
+          }
+          if (imageX < stuff - 1 && checkPoint(imageX + 1, imageY, "top")) {
+            continue;
+          }
+          if (checkPoint(imageX, imageY, "right")) {
+            continue;
+          }
+        } else {
+          if (currentEdge == "right") {
+            if (imageX < stuff - 1 && imageY < stuff - 1 && checkPoint(imageX + 1, imageY + 1, "top")) {
+              continue;
+            }
+            if (imageY < stuff - 1 && checkPoint(imageX, imageY + 1, "right")) {
+              continue;
+            }
+            if (checkPoint(imageX, imageY, "bottom")) {
+              continue;
+            }
+          } else {
+            if (currentEdge == "bottom") {
+              if (imageX > 0 && imageY < stuff - 1 && checkPoint(imageX - 1, imageY + 1, "right")) {
+                continue;
+              }
+              if (imageX > 0 && checkPoint(imageX - 1, imageY, "bottom")) {
+                continue;
+              }
+              if (checkPoint(imageX, imageY, "left")) {
+                continue;
+              }
+            } else {
+              if (currentEdge == "left") {
+                if (imageX > 0 && imageY > 0 && checkPoint(imageX - 1, imageY - 1, "bottom")) {
+                  continue;
+                }
+                if (imageY > 0 && checkPoint(imageX, imageY - 1, "left")) {
+                  continue;
+                }
+                if (checkPoint(imageX, imageY, "top")) {
+                  continue;
+                }
+              }
+            }
+          }
+        }
+      } while (imageX != startEdge.x || imageY != startEdge.y);
+    }
+    return edges;
   };
-  creanvas.NodeJsController.prototype.addTextDrawing = function(textType, draw, defaultDuration) {
-    this.textDrawingMethods.push({textType:textType, draw:draw, defaultDuration:defaultDuration});
+  creanvas.NodeJsController.prototype.addElementDrawing = function(drawingMethod, draw, boxData) {
+    var width = boxData["width"];
+    var height = boxData["height"];
+    var top = boxData["top"] == 0 ? 0 : boxData["top"] || -height / 2;
+    var left = boxData["left"] == 0 ? 0 : boxData["left"] || -width / 2;
+    var bottom = boxData["bottom"] == 0 ? 0 : boxData["bottom"] || top + height;
+    var right = boxData["right"] == 0 ? 0 : boxData["right"] || left + width;
+    width = width || right - left;
+    height = height || bottom - top;
+    var edges = this.getEdges(draw, left, width, top, height);
+    this.drawingMethods.push({drawingMethod:drawingMethod, draw:draw, edges:edges});
   };
   creanvas.NodeJsController.prototype.add = function() {
     var controller = this;
@@ -1410,127 +1515,10 @@ var CreJs = CreJs || {};
     element.elementName = identificationData;
   };
   var setImage = function(element, imageData) {
-    var width = imageData["width"];
-    var height = imageData["height"];
-    element.top = imageData["top"] == 0 ? 0 : imageData["top"] || -height / 2;
-    element.left = imageData["left"] == 0 ? 0 : imageData["left"] || -width / 2;
-    element.bottom = imageData["bottom"] == 0 ? 0 : imageData["bottom"] || element.top + height;
-    element.right = imageData["right"] == 0 ? 0 : imageData["right"] || element.left + width;
-    element.elementWidth = width || element.right - element.left;
-    element.elementHeight = height || element.bottom - element.top;
     element.elementScaleX = imageData["scaleX"] || 1;
     element.elementScaleY = imageData["scaleY"] || 1;
     element.draw = imageData["draw"];
-    var tempCanvas = element.controller.context.canvas.ownerDocument.createElement("canvas");
-    element.temporaryRenderingContext = tempCanvas.getContext("2d");
-    var stuff = 50;
-    tempCanvas.width = stuff;
-    tempCanvas.height = stuff;
-    element.temporaryRenderingContext.beginPath();
-    element.temporaryRenderingContext.translate(-stuff * element.left / element.elementWidth, -stuff * element.top / element.elementHeight);
-    element.temporaryRenderingContext.scale(stuff / element.elementWidth, stuff / element.elementHeight);
-    element.draw.call(element, element.temporaryRenderingContext);
-    var stuffImage = element.temporaryRenderingContext.getImageData(0, 0, stuff, stuff);
-    element.edges = [];
-    var startEdge = null;
-    var transparencyLimit = 1;
-    var imageX = null;
-    var imageY = null;
-    var currentEdge = null;
-    var checkPoint = function(x, y, edge) {
-      if (stuffImage.data[y * stuff * 4 + x * 4 + 3] < transparencyLimit) {
-        return false;
-      }
-      var match = false;
-      if (edge == "top") {
-        match = y == 0 || stuffImage.data[(y - 1) * stuff * 4 + x * 4 + 3] < transparencyLimit;
-        dx = .5;
-        dy = 0;
-      }
-      if (edge == "left") {
-        match = x == 0 || stuffImage.data[y * stuff * 4 + (x - 1) * 4 + 3] < transparencyLimit;
-        dx = 0;
-        dy = .5;
-      }
-      if (edge == "right") {
-        match = x == stuff - 1 || stuffImage.data[y * stuff * 4 + (x + 1) * 4 + 3] < transparencyLimit;
-        dx = 1;
-        dy = .5;
-      }
-      if (edge == "bottom") {
-        match = y == stuff - 1 || stuffImage.data[(y + 1) * stuff * 4 + x * 4 + 3] < transparencyLimit;
-        dx = .5;
-        dy = 1;
-      }
-      if (!match) {
-        return;
-      }
-      element.edges.push({x:(x + dx) * element.elementWidth / stuff + element.left, y:(y + dy) * element.elementHeight / stuff + element.top});
-      imageX = x;
-      imageY = y;
-      currentEdge = edge;
-      return true;
-    };
-    for (var forX = 0;forX < stuff;forX++) {
-      for (var forY = 0;forY < stuff;forY++) {
-        if (checkPoint(forX, forY, "top")) {
-          startEdge = {x:imageX, y:imageY};
-          forX = stuff;
-          forY = stuff;
-        }
-      }
-    }
-    if (startEdge) {
-      do {
-        if (currentEdge == "top") {
-          if (imageX < stuff - 1 && imageY > 0 && checkPoint(imageX + 1, imageY - 1, "left")) {
-            continue;
-          }
-          if (imageX < stuff - 1 && checkPoint(imageX + 1, imageY, "top")) {
-            continue;
-          }
-          if (checkPoint(imageX, imageY, "right")) {
-            continue;
-          }
-        } else {
-          if (currentEdge == "right") {
-            if (imageX < stuff - 1 && imageY < stuff - 1 && checkPoint(imageX + 1, imageY + 1, "top")) {
-              continue;
-            }
-            if (imageY < stuff - 1 && checkPoint(imageX, imageY + 1, "right")) {
-              continue;
-            }
-            if (checkPoint(imageX, imageY, "bottom")) {
-              continue;
-            }
-          } else {
-            if (currentEdge == "bottom") {
-              if (imageX > 0 && imageY < stuff - 1 && checkPoint(imageX - 1, imageY + 1, "right")) {
-                continue;
-              }
-              if (imageX > 0 && checkPoint(imageX - 1, imageY, "bottom")) {
-                continue;
-              }
-              if (checkPoint(imageX, imageY, "left")) {
-                continue;
-              }
-            } else {
-              if (currentEdge == "left") {
-                if (imageX > 0 && imageY > 0 && checkPoint(imageX - 1, imageY - 1, "bottom")) {
-                  continue;
-                }
-                if (imageY > 0 && checkPoint(imageX, imageY - 1, "left")) {
-                  continue;
-                }
-                if (checkPoint(imageX, imageY, "top")) {
-                  continue;
-                }
-              }
-            }
-          }
-        }
-      } while (imageX != startEdge.x || imageY != startEdge.y);
-    }
+    element.edges = imageData["edges"];
   };
   var setPosition = function(element, position) {
     element.elementX = position["x"] || 0;
