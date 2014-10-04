@@ -1163,7 +1163,7 @@ var CreJs = CreJs || {};
     this.logger = controllerData["log"];
     this.lengthScale = controllerData["lengthScale"] || canvas.height / controllerData["realHeight"] || canvas.width / controllerData["realWidth"] || 1;
     this.nodeSocket = controllerData["nodeSocket"];
-    this.drawingMethods = [];
+    this.elementTypes = [];
     var emitBuffer = [];
     this.emitToServer = function(action, actionData, overrideActionKey) {
       if (overrideActionKey && emitBuffer.length > 0) {
@@ -1197,7 +1197,6 @@ var CreJs = CreJs || {};
     controller.isDrawing = false;
     controller.context.setTransform(1, 0, 0, 1, 0, 0);
     registerCanvasEvents.call(controller);
-    addBackground.call(controller, controllerData["drawBackground"], controllerData["backgroundStyle"]);
     startController.call(controller);
     this.nodeSocket.on("textMessage", function(msg) {
       var data = JSON.parse(msg);
@@ -1211,6 +1210,9 @@ var CreJs = CreJs || {};
         var els = controller.elements.filter(function(e) {
           return e.id == updated.id;
         });
+        var elementType = controller.elementTypes.filter(function(e) {
+          return e.elementType == updated["elementType"];
+        })[0];
         if (els.length > 0) {
           var el = els[0];
           el.elementX = updated["x"] || el.elementX;
@@ -1219,14 +1221,12 @@ var CreJs = CreJs || {};
           el.elementScaleX = updated["scaleX"] || el.elementScaleX;
           el.elementScaleY = updated["scaleY"] || el.elementScaleY;
           el.elementAngle = updated["angle"] || el.elementAngle;
+          el.elementType = elementType || el.elementType;
         } else {
           if (DEBUG) {
-            controller.logMessage("Adding element " + updated["drawingMethod"] + " in (" + updated["x"] + "," + updated["y"] + "," + updated["z"] + ")");
+            controller.logMessage("Adding element " + updated["elementType"] + " in (" + updated["x"] + "," + updated["y"] + "," + updated["z"] + ")");
           }
-          var drawingMethod = controller.drawingMethods.filter(function(e) {
-            return e.drawingMethod == updated["drawingMethod"];
-          })[0];
-          var element = controller.add(["name", updated["name"]], ["image", {"edges":drawingMethod.edges, "draw":drawingMethod.draw}], ["position", {"x":updated["x"], "y":updated["y"], "z":updated["z"], "angle":updated["angle"]}]);
+          var element = controller.add(["name", updated["name"]], ["image", {"elementType":elementType}], ["position", {"x":updated["x"], "y":updated["y"], "z":updated["z"], "angle":updated["angle"]}]);
           element.id = updated.id;
         }
       });
@@ -1235,6 +1235,7 @@ var CreJs = CreJs || {};
       });
       needRedraw = true;
     });
+    controller.addBackground(null);
   };
   var registerCanvasEvents = function() {
     this.registerCanvasPointerEvent("click", "click");
@@ -1244,17 +1245,6 @@ var CreJs = CreJs || {};
     this.registerCanvasPointerEvent("touchmove", "pointerMove");
     this.registerCanvasPointerEvent("mouseup", "pointerUp");
     this.registerCanvasPointerEvent("touchend", "pointerUp");
-  };
-  var addBackground = function(drawBackground, backgroundStyle) {
-    var controller = this;
-    if (DEBUG) {
-      controller.logMessage("Adding background");
-    }
-    var background = controller.add(["name", "background"], ["image", {"draw":drawBackground || function(context) {
-      context.fillStyle = backgroundStyle || creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR;
-      context.fillRect(0, 0, controller.context.canvas.width / controller.lengthScale, controller.context.canvas.height / controller.lengthScale);
-    }}], ["position", {"z":-Infinity}]);
-    background.id = 0;
   };
   var startController = function() {
     var controller = this;
@@ -1277,10 +1267,28 @@ var CreJs = CreJs || {};
       }
     }, controller.refreshTime);
   };
+  creanvas.NodeJsController.prototype.addBackground = function(draw) {
+    var controller = this;
+    controller.removeElementById(0);
+    if (DEBUG) {
+      controller.logMessage("Adding background");
+    }
+    draw = draw || function(context) {
+      context.fillStyle = creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR;
+      context.fillRect(0, 0, controller.context.canvas.width / controller.lengthScale, controller.context.canvas.height / controller.lengthScale);
+    };
+    var background = controller.add(["name", "background"], ["image", {"elementType":{draw:draw}}], ["position", {"x":0, "y":0, "z":-Infinity}]);
+    background.id = 0;
+  };
   creanvas.NodeJsController.prototype.logMessage = function(logData) {
     if (this.logger) {
       this.logger(logData);
     }
+  };
+  creanvas.NodeJsController.prototype.removeElementById = function(id) {
+    this.elements = this.elements.filter(function(e) {
+      return e.id != id;
+    });
   };
   creanvas.NodeJsController.prototype.triggerElementEvent = function(eventId, event) {
     var controller = this;
@@ -1323,74 +1331,85 @@ var CreJs = CreJs || {};
     }
     return xy;
   };
-  creanvas.NodeJsController.prototype.getEdges = function(draw, left, width, top, height) {
+  creanvas.NodeJsController.prototype.getEdges = function(draw, boxData) {
     var controller = this;
     var edges = [];
-    var stuff = 50;
+    var width = boxData["width"];
+    var height = boxData["height"];
+    var top = boxData["top"] == 0 ? 0 : boxData["top"] || -height / 2;
+    var left = boxData["left"] == 0 ? 0 : boxData["left"] || -width / 2;
+    var bottom = boxData["bottom"] == 0 ? 0 : boxData["bottom"] || top + height;
+    var right = boxData["right"] == 0 ? 0 : boxData["right"] || left + width;
+    width = width || right - left;
+    height = height || bottom - top;
+    if (width == 0 || height == 0) {
+      return null;
+    }
+    var edgeResolution = boxData["edgeResolution"] || 50;
     var tempCanvas = controller.context.canvas.ownerDocument.createElement("canvas");
     var temporaryRenderingContext = tempCanvas.getContext("2d");
-    tempCanvas.width = stuff;
-    tempCanvas.height = stuff;
+    tempCanvas.width = edgeResolution;
+    tempCanvas.height = edgeResolution;
     temporaryRenderingContext.beginPath();
-    temporaryRenderingContext.translate(-stuff * left / width, -stuff * top / height);
-    temporaryRenderingContext.scale(stuff / width, stuff / height);
+    temporaryRenderingContext.translate(-edgeResolution * left / width, -edgeResolution * top / height);
+    temporaryRenderingContext.scale(edgeResolution / width, edgeResolution / height);
     draw(temporaryRenderingContext);
-    var stuffImage = temporaryRenderingContext.getImageData(0, 0, stuff, stuff);
+    var edgeImage = temporaryRenderingContext.getImageData(0, 0, edgeResolution, edgeResolution);
     var startEdge = null;
     var transparencyLimit = 1;
     var imageX = null;
     var imageY = null;
     var currentEdge = null;
     var checkPoint = function(x, y, edge) {
-      if (stuffImage.data[y * stuff * 4 + x * 4 + 3] < transparencyLimit) {
+      if (edgeImage.data[y * edgeResolution * 4 + x * 4 + 3] < transparencyLimit) {
         return false;
       }
       var match = false;
       if (edge == "top") {
-        match = y == 0 || stuffImage.data[(y - 1) * stuff * 4 + x * 4 + 3] < transparencyLimit;
+        match = y == 0 || edgeImage.data[(y - 1) * edgeResolution * 4 + x * 4 + 3] < transparencyLimit;
         dx = .5;
         dy = 0;
       }
       if (edge == "left") {
-        match = x == 0 || stuffImage.data[y * stuff * 4 + (x - 1) * 4 + 3] < transparencyLimit;
+        match = x == 0 || edgeImage.data[y * edgeResolution * 4 + (x - 1) * 4 + 3] < transparencyLimit;
         dx = 0;
         dy = .5;
       }
       if (edge == "right") {
-        match = x == stuff - 1 || stuffImage.data[y * stuff * 4 + (x + 1) * 4 + 3] < transparencyLimit;
+        match = x == edgeResolution - 1 || edgeImage.data[y * edgeResolution * 4 + (x + 1) * 4 + 3] < transparencyLimit;
         dx = 1;
         dy = .5;
       }
       if (edge == "bottom") {
-        match = y == stuff - 1 || stuffImage.data[(y + 1) * stuff * 4 + x * 4 + 3] < transparencyLimit;
+        match = y == edgeResolution - 1 || edgeImage.data[(y + 1) * edgeResolution * 4 + x * 4 + 3] < transparencyLimit;
         dx = .5;
         dy = 1;
       }
       if (!match) {
         return;
       }
-      edges.push({x:(x + dx) * width / stuff + left, y:(y + dy) * height / stuff + top});
+      edges.push({x:(x + dx) * width / edgeResolution + left, y:(y + dy) * height / edgeResolution + top});
       imageX = x;
       imageY = y;
       currentEdge = edge;
       return true;
     };
-    for (var forX = 0;forX < stuff;forX++) {
-      for (var forY = 0;forY < stuff;forY++) {
+    for (var forX = 0;forX < edgeResolution;forX++) {
+      for (var forY = 0;forY < edgeResolution;forY++) {
         if (checkPoint(forX, forY, "top")) {
           startEdge = {x:imageX, y:imageY};
-          forX = stuff;
-          forY = stuff;
+          forX = edgeResolution;
+          forY = edgeResolution;
         }
       }
     }
     if (startEdge) {
       do {
         if (currentEdge == "top") {
-          if (imageX < stuff - 1 && imageY > 0 && checkPoint(imageX + 1, imageY - 1, "left")) {
+          if (imageX < edgeResolution - 1 && imageY > 0 && checkPoint(imageX + 1, imageY - 1, "left")) {
             continue;
           }
-          if (imageX < stuff - 1 && checkPoint(imageX + 1, imageY, "top")) {
+          if (imageX < edgeResolution - 1 && checkPoint(imageX + 1, imageY, "top")) {
             continue;
           }
           if (checkPoint(imageX, imageY, "right")) {
@@ -1398,10 +1417,10 @@ var CreJs = CreJs || {};
           }
         } else {
           if (currentEdge == "right") {
-            if (imageX < stuff - 1 && imageY < stuff - 1 && checkPoint(imageX + 1, imageY + 1, "top")) {
+            if (imageX < edgeResolution - 1 && imageY < edgeResolution - 1 && checkPoint(imageX + 1, imageY + 1, "top")) {
               continue;
             }
-            if (imageY < stuff - 1 && checkPoint(imageX, imageY + 1, "right")) {
+            if (imageY < edgeResolution - 1 && checkPoint(imageX, imageY + 1, "right")) {
               continue;
             }
             if (checkPoint(imageX, imageY, "bottom")) {
@@ -1409,7 +1428,7 @@ var CreJs = CreJs || {};
             }
           } else {
             if (currentEdge == "bottom") {
-              if (imageX > 0 && imageY < stuff - 1 && checkPoint(imageX - 1, imageY + 1, "right")) {
+              if (imageX > 0 && imageY < edgeResolution - 1 && checkPoint(imageX - 1, imageY + 1, "right")) {
                 continue;
               }
               if (imageX > 0 && checkPoint(imageX - 1, imageY, "bottom")) {
@@ -1437,17 +1456,9 @@ var CreJs = CreJs || {};
     }
     return edges;
   };
-  creanvas.NodeJsController.prototype.addElementDrawing = function(drawingMethod, draw, boxData) {
-    var width = boxData["width"];
-    var height = boxData["height"];
-    var top = boxData["top"] == 0 ? 0 : boxData["top"] || -height / 2;
-    var left = boxData["left"] == 0 ? 0 : boxData["left"] || -width / 2;
-    var bottom = boxData["bottom"] == 0 ? 0 : boxData["bottom"] || top + height;
-    var right = boxData["right"] == 0 ? 0 : boxData["right"] || left + width;
-    width = width || right - left;
-    height = height || bottom - top;
-    var edges = this.getEdges(draw, left, width, top, height);
-    this.drawingMethods.push({drawingMethod:drawingMethod, draw:draw, edges:edges});
+  creanvas.NodeJsController.prototype.addElementType = function(elementType, draw, boxData) {
+    var edges = boxData == null ? null : this.getEdges(draw, boxData);
+    this.elementTypes.push({elementType:elementType, draw:draw, edges:edges});
   };
   creanvas.NodeJsController.prototype.add = function() {
     var controller = this;
@@ -1471,7 +1482,7 @@ var CreJs = CreJs || {};
   creanvas.NodeJsController.DEFAULT_REFRESH_TIME = 50;
   creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR = "#FFF";
   creanvas["NodeJsController"] = creanvas.NodeJsController;
-  creanvas.NodeJsController.prototype["addElementDrawing"] = creanvas.NodeJsController.prototype.addElementDrawing;
+  creanvas.NodeJsController.prototype["addElementType"] = creanvas.NodeJsController.prototype.addElementType;
   creanvas.NodeJsController.prototype["startApplication"] = creanvas.NodeJsController.prototype.startApplication;
 })();
 (function() {
@@ -1489,21 +1500,21 @@ var CreJs = CreJs || {};
       element.controller.context.rotate(element.elementAngle || 0);
       element.controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
       controller.context.beginPath();
-      element.draw(controller.context);
+      element.elementType.draw(controller.context);
       controller.context.setTransform(1, 0, 0, 1, 0, 0);
     };
     this.drawMyEdges = function() {
       var element = this;
-      if (element.edges && element.edges.length > 0) {
+      if (element.elementType.edges && element.elementType.edges.length > 0) {
         element.controller.context.scale(element.controller.lengthScale, element.controller.lengthScale);
         element.controller.context.translate(element.elementX, element.elementY);
         element.controller.context.rotate(element.elementAngle || 0);
         element.controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
         element.controller.context.beginPath();
-        var current = element.edges[0];
+        var current = element.elementType.edges[0];
         element.controller.context.moveTo(current.x, current.y);
-        for (var i = 1;i < element.edges.length;i++) {
-          current = element.edges[i];
+        for (var i = 1;i < element.elementType.edges.length;i++) {
+          current = element.elementType.edges[i];
           element.controller.context.lineTo(current.x, current.y);
         }
         element.controller.context.closePath();
@@ -1517,8 +1528,7 @@ var CreJs = CreJs || {};
   var setImage = function(element, imageData) {
     element.elementScaleX = imageData["scaleX"] || 1;
     element.elementScaleY = imageData["scaleY"] || 1;
-    element.draw = imageData["draw"];
-    element.edges = imageData["edges"];
+    element.elementType = imageData["elementType"];
   };
   var setPosition = function(element, position) {
     element.elementX = position["x"] || 0;
@@ -1527,7 +1537,7 @@ var CreJs = CreJs || {};
     element.elementAngle = position["angle"] || 0;
   };
   creanvas.NodeJsElement.prototype.hit = function(pointerX, pointerY) {
-    if (!this.edges) {
+    if (!this.elementType.edges) {
       return false;
     }
     var x = pointerX * this.controller.lengthScale;

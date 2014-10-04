@@ -33,7 +33,7 @@
 					element.elementScaleY || 1);
 
 			controller.context.beginPath();
-			element.draw(controller.context);
+			element.elementType.draw(controller.context);
 			controller.context.setTransform(1, 0, 0, 1, 0, 0);
 
 		};
@@ -41,7 +41,7 @@
 		this.drawMyEdges = function() {
 
 			var element = this;
-			if (element.edges && element.edges.length>0)
+			if (element.elementType.edges && element.elementType.edges.length>0)
 			{
 	
 				element.controller.context.scale(element.controller.lengthScale,
@@ -54,11 +54,11 @@
 						element.elementScaleY || 1);
 			
 				element.controller.context.beginPath();
-				var current = element.edges[0];
+				var current = element.elementType.edges[0];
 				element.controller.context.moveTo(current.x, current.y);
-				for (var i=1; i<element.edges.length; i++)
+				for (var i=1; i<element.elementType.edges.length; i++)
 				{
-					current = element.edges[i];
+					current = element.elementType.edges[i];
 					element.controller.context.lineTo(current.x, current.y);
 				}
 				element.controller.context.closePath();
@@ -79,8 +79,7 @@
 		element.elementScaleX = imageData["scaleX"] || 1;
 		element.elementScaleY = imageData["scaleY"] || 1;
 
-		element.draw = imageData["draw"];
-		element.edges = imageData["edges"];
+		element.elementType = imageData["elementType"];
 	};
 
 	var setPosition = function(element, position) {
@@ -93,7 +92,7 @@
 
 	creanvas.NodeJsElement.prototype.hit = function(pointerX, pointerY) {
 		
-		if (!this.edges)
+		if (!this.elementType.edges)
 			return false;
 
 		var x = pointerX*this.controller.lengthScale;
