@@ -91,15 +91,21 @@
 	};
 
 	creanvas.NodeJsElement.prototype.hit = function(pointerX, pointerY) {
-		
+
+		/*
+		// do not know about top,left here... may use radius if implemented for collision, but scale...
+		if (
+			pointerX < this.elementX + this.left || 
+			pointerX > this.elementX + this.right ||  
+			pointerY < this.elementY + this.top || 
+			pointerY > this.elementY + this.bottom)
+		return false;
+		 */
 		if (!this.elementType.edges)
 			return false;
 
 		var x = pointerX*this.controller.lengthScale;
 		var y = pointerY*this.controller.lengthScale;
-
-	//	if (x<this.elementX + this.left || x>this.elementX + this.right ||  y<this.elementY + this.top || y>this.elementY + this.bottom)
-		//	return false;
 		
 		this.drawMyEdges();
 		return this.controller.context.isPointInPath(x,y);

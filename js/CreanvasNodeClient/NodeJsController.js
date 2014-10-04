@@ -81,28 +81,29 @@
 			data.updates.forEach(function(updated){
 				var els = controller.elements.filter(function(e){ return e.id == updated.id;});
 				
-				var elementType = controller.elementTypes.filter(function(e){ return e.elementType == updated['elementType'];})[0];
-
 				if (els.length>0) { 
 					// updates			
 					var el = els[0];
-					el.elementX = updated["x"] || el.elementX;
-					el.elementY = updated["y"] || el.elementY;
-					el.elementZ = updated["z"] || el.elementZ;
-					el.elementScaleX = updated["scaleX"] || el.elementScaleX;
-					el.elementScaleY = updated["scaleY"] || el.elementScaleY;
-					el.elementAngle = updated["angle"] || el.elementAngle;
+					el.elementX = updated["elementX"] || el.elementX;
+					el.elementY = updated["elementY"] || el.elementY;
+					el.elementZ = updated["elementZ"] || el.elementZ;
+					el.elementScaleX = updated["elementScaleX"] || el.elementScaleX;
+					el.elementScaleY = updated["elementScaleY"] || el.elementScaleY;
+					el.elementAngle = updated["elementAngle"] || el.elementAngle;
 
-					el.elementType = elementType || el.elementType;
+					if (updated['typeName'] && el.elementType.typeName != updated['typeName'])
+					{
+						el.elementType = controller.elementTypes.filter(function(e){ return e.typeName == updated['typeName'];})[0];
+					}
 				}
 				else {
 					//inserts
-					if (DEBUG) controller.logMessage('Adding element ' + updated['elementType'] + ' in (' + updated["x"] + ',' + updated["y"] + ',' + updated["z"] +')');
+					if (DEBUG) controller.logMessage('Adding element ' + updated['typeName'] + ' in (' + updated["elementX"] + ',' + updated["elementY"] + ',' + updated["elementZ"] +')');
 						
 					var element = controller.add(
 							["name",updated["name"]],
-							["image", {"elementType" :elementType}],
-							["position", {"x": updated["x"], "y": updated["y"], "z": updated["z"], "angle":updated["angle"]}]);
+							["image", {"elementType" :controller.elementTypes.filter(function(e){ return e.typeName == updated['typeName'];})[0]}],
+							["position", {"x": updated["elementX"], "y": updated["elementY"], "z": updated["elementZ"], "angle":updated["elementAngle"]}]);
 					element.id = updated.id;
 				}
 			});
@@ -435,12 +436,12 @@
 		return edges;
 	};
 		
-	creanvas.NodeJsController.prototype.addElementType = function(elementType, draw, boxData)
+	creanvas.NodeJsController.prototype.addElementType = function(typeName, draw, boxData)
 	{
 				// compute edges
 		var edges = boxData == null ? null : this.getEdges(draw, boxData);
 		
-		this.elementTypes.push({elementType:elementType, draw:draw, edges:edges});
+		this.elementTypes.push({typeName:typeName, draw:draw, edges:edges});
 	};
 
 	creanvas.NodeJsController.prototype.add  = function ()
