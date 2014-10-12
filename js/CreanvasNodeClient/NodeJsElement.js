@@ -23,9 +23,6 @@
 
 			var element = this;
 
-			element.controller.context.scale(element.controller.lengthScale,
-					element.controller.lengthScale);
-
 			element.controller.context.translate(element.elementX,
 					element.elementY);
 			element.controller.context.rotate(element.elementAngle || 0);
@@ -34,40 +31,14 @@
 
 			controller.context.beginPath();
 			element.elementType.draw(controller.context);
-			controller.context.setTransform(1, 0, 0, 1, 0, 0);
+
+			element.controller.context.scale(1/(element.elementScaleX || 1), 1/(element.elementScaleY || 1));
+
+			element.controller.context.rotate(- (element.elementAngle || 0));
+
+			element.controller.context.translate(-element.elementX, - element.elementY);			
 
 		};
-
-		this.drawMyEdges = function() {
-
-			var element = this;
-			if (element.elementType.edges && element.elementType.edges.length>0)
-			{
-	
-				element.controller.context.scale(element.controller.lengthScale,
-						element.controller.lengthScale);
-	
-				element.controller.context.translate(element.elementX,
-						element.elementY);
-				element.controller.context.rotate(element.elementAngle || 0);
-				element.controller.context.scale(element.elementScaleX || 1,
-						element.elementScaleY || 1);
-			
-				element.controller.context.beginPath();
-				var current = element.elementType.edges[0];
-				element.controller.context.moveTo(current.x, current.y);
-				for (var i=1; i<element.elementType.edges.length; i++)
-				{
-					current = element.elementType.edges[i];
-					element.controller.context.lineTo(current.x, current.y);
-				}
-				element.controller.context.closePath();
-			}
-			
-			controller.context.setTransform(1, 0, 0, 1, 0, 0);
-		};
-
-
 	};
 
 	var setIdentification = function(element, identificationData) {
@@ -78,7 +49,6 @@
 		// scaling decorator ?? => should be
 		element.elementScaleX = imageData["scaleX"] || 1;
 		element.elementScaleY = imageData["scaleY"] || 1;
-
 		element.elementType = imageData["elementType"];
 	};
 
@@ -88,26 +58,5 @@
 		element.elementY = position["y"] || 0;
 		element.elementZ = position["z"] || 0;
 		element.elementAngle = position["angle"] || 0;
-	};
-
-	creanvas.NodeJsElement.prototype.hit = function(pointerX, pointerY) {
-
-		/*
-		// do not know about top,left here... may use radius if implemented for collision, but scale...
-		if (
-			pointerX < this.elementX + this.left || 
-			pointerX > this.elementX + this.right ||  
-			pointerY < this.elementY + this.top || 
-			pointerY > this.elementY + this.bottom)
-		return false;
-		 */
-		if (!this.elementType.edges)
-			return false;
-
-		var x = pointerX*this.controller.lengthScale;
-		var y = pointerY*this.controller.lengthScale;
-		
-		this.drawMyEdges();
-		return this.controller.context.isPointInPath(x,y);
-	};
+	};	
 }());

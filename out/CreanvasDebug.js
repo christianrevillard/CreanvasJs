@@ -1193,9 +1193,9 @@ var CreJs = CreJs || {};
     }
     controller.elements = [];
     controller.context = canvas.getContext("2d");
+    controller.context.setTransform(controller.lengthScale, 0, 0, controller.lengthScale, 0, 0);
     controller.needRedraw = true;
     controller.isDrawing = false;
-    controller.context.setTransform(1, 0, 0, 1, 0, 0);
     registerCanvasEvents.call(controller);
     startController.call(controller);
     this.nodeSocket.on("textMessage", function(msg) {
@@ -1295,14 +1295,7 @@ var CreJs = CreJs || {};
   };
   creanvas.NodeJsController.prototype.triggerElementEvent = function(eventId, event) {
     var controller = this;
-    var hits = this.elements.filter(function(e) {
-      return e.hit(event.x, event.y);
-    }).sort(function(a, b) {
-      return b.elementZ || 0 - a.elementZ || 0;
-    }).map(function(e) {
-      return{id:e.id, z:e.elementZ};
-    });
-    controller.emitToServer("pointerEvent", {"eventId":eventId, "x":event.x, "y":event.y, "touchIdentifier":event.touchIdentifier, "hits":hits}, eventId + ":" + event.touchIdentifier + hits.join());
+    controller.emitToServer("pointerEvent", {"eventId":eventId, "x":event.x, "y":event.y, "touchIdentifier":event.touchIdentifier}, eventId + ":" + event.touchIdentifier);
   };
   creanvas.NodeJsController.prototype.registerCanvasPointerEvent = function(controlEventId, customEventId) {
     var controller = this;
@@ -1329,6 +1322,7 @@ var CreJs = CreJs || {};
   creanvas.NodeJsController.prototype.getRealXYFromClientXY = function(clientXY) {
     var boundings = this.context.canvas.getBoundingClientRect();
     var xy = {x:(clientXY.clientX - boundings.left) * this.context.canvas.width / boundings.width / this.lengthScale, y:(clientXY.clientY - boundings.top) * this.context.canvas.height / boundings.height / this.lengthScale};
+    console.log("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ") - RealXY: (" + xy.x + "," + xy.y + ")");
     if (DEBUG) {
       this.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ") - RealXY: (" + xy.x + "," + xy.y + ")");
     }
@@ -1459,9 +1453,13 @@ var CreJs = CreJs || {};
     }
     return edges;
   };
+  creanvas.NodeJsController.prototype.isPointInPath = function(x, y) {
+    return this.context.isPointInPath(x * this.lengthScale, y * this.lengthScale);
+  };
   creanvas.NodeJsController.prototype.addElementType = function(typeName, draw, boxData) {
     var edges = boxData == null ? null : this.getEdges(draw, boxData);
     this.elementTypes.push({typeName:typeName, draw:draw, edges:edges});
+    this.emitToServer("registerEdges", {"typeName":typeName, "edges":edges});
   };
   creanvas.NodeJsController.prototype.add = function() {
     var controller = this;
@@ -1498,31 +1496,14 @@ var CreJs = CreJs || {};
     setPosition(element, positionData[1]);
     this.drawMyself = function() {
       var element = this;
-      element.controller.context.scale(element.controller.lengthScale, element.controller.lengthScale);
       element.controller.context.translate(element.elementX, element.elementY);
       element.controller.context.rotate(element.elementAngle || 0);
       element.controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
       controller.context.beginPath();
       element.elementType.draw(controller.context);
-      controller.context.setTransform(1, 0, 0, 1, 0, 0);
-    };
-    this.drawMyEdges = function() {
-      var element = this;
-      if (element.elementType.edges && element.elementType.edges.length > 0) {
-        element.controller.context.scale(element.controller.lengthScale, element.controller.lengthScale);
-        element.controller.context.translate(element.elementX, element.elementY);
-        element.controller.context.rotate(element.elementAngle || 0);
-        element.controller.context.scale(element.elementScaleX || 1, element.elementScaleY || 1);
-        element.controller.context.beginPath();
-        var current = element.elementType.edges[0];
-        element.controller.context.moveTo(current.x, current.y);
-        for (var i = 1;i < element.elementType.edges.length;i++) {
-          current = element.elementType.edges[i];
-          element.controller.context.lineTo(current.x, current.y);
-        }
-        element.controller.context.closePath();
-      }
-      controller.context.setTransform(1, 0, 0, 1, 0, 0);
+      element.controller.context.scale(1 / (element.elementScaleX || 1), 1 / (element.elementScaleY || 1));
+      element.controller.context.rotate(-(element.elementAngle || 0));
+      element.controller.context.translate(-element.elementX, -element.elementY);
     };
   };
   var setIdentification = function(element, identificationData) {
@@ -1538,15 +1519,6 @@ var CreJs = CreJs || {};
     element.elementY = position["y"] || 0;
     element.elementZ = position["z"] || 0;
     element.elementAngle = position["angle"] || 0;
-  };
-  creanvas.NodeJsElement.prototype.hit = function(pointerX, pointerY) {
-    if (!this.elementType.edges) {
-      return false;
-    }
-    var x = pointerX * this.controller.lengthScale;
-    var y = pointerY * this.controller.lengthScale;
-    this.drawMyEdges();
-    return this.controller.context.isPointInPath(x, y);
   };
 })();
 

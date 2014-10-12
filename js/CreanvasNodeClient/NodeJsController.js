@@ -15,7 +15,9 @@
 		var canvas = controllerData["canvas"];
 		this.logger = controllerData['log'];		
 		this.lengthScale =  controllerData["lengthScale"] ||  canvas.height / controllerData["realHeight"] || canvas.width / controllerData["realWidth"]|| 1;
-//		timeScale = controllerData["timeScale"] || 1;
+
+		
+		//		timeScale = controllerData["timeScale"] || 1;
 		this.nodeSocket = controllerData["nodeSocket"];				
 		this.elementTypes = [];
 		
@@ -60,10 +62,12 @@
 		controller.elements = [];
 
 		controller.context = canvas.getContext("2d");		
+
+		controller.context.setTransform(controller.lengthScale,0,0,controller.lengthScale,0,0);
+
 		controller.needRedraw = true;
 		controller.isDrawing = false;
 		
-		controller.context.setTransform(1,0,0,1,0,0);
 		registerCanvasEvents.call(controller);
 		startController.call(controller);
 
@@ -139,14 +143,16 @@
 			{
 				if (controller.needRedraw && !controller.isDrawing)
 				{						
-					controller.isDrawing = true;					
+					controller.isDrawing = true;															
+										
 					controller
 						.elements
 						.sort(function(a,b){return ((a.elementZ || 0) - (b.elementZ || 0));})
 						.forEach(function(element)
 						{
-							element.drawMyself();
+							element.drawMyself();							
 						});					
+														
 
 					if (controller.displayMessage)
 					{
@@ -195,22 +201,15 @@
 	{
 		var controller = this;	
 		
-		var hits = this
-			.elements
-			.filter(function(e){ return e.hit(event.x, event.y);})
-			.sort(function(a,b){return (b.elementZ || 0 - a.elementZ || 0);})
-			.map(function(e){ return {id:e.id, z:e.elementZ};});		
-		
 		controller.emitToServer(
 			'pointerEvent', 
 			{
 				"eventId":eventId, 
 				"x":event.x,
 				"y":event.y,
-				"touchIdentifier":event.touchIdentifier,
-				"hits": hits
+				"touchIdentifier":event.touchIdentifier
 			},
-			eventId + ':' + event.touchIdentifier + hits.join());
+			eventId + ':' + event.touchIdentifier );
 	};
 	
 	creanvas.NodeJsController.prototype.registerCanvasPointerEvent = function (controlEventId, customEventId)
@@ -256,12 +255,15 @@
 			x: (clientXY.clientX-boundings.left) * this.context.canvas.width/boundings.width / this.lengthScale,
 			y: (clientXY.clientY-boundings.top) * this.context.canvas.height/boundings.height /  this.lengthScale};
 		
+		console.log("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ") - RealXY: (" + xy.x + "," + xy.y + ")" );
 		if (DEBUG) this.logMessage("ClientXY: (" + clientXY.clientX + "," + clientXY.clientY + ") - RealXY: (" + xy.x + "," + xy.y + ")" );
 		return xy;
 	};
-	
+
 	creanvas.NodeJsController.prototype.getEdges = function(draw, boxData)
 	{
+		// TODO, send raw imagedata, compute edges on server,,,
+		
 		var controller = this;
 		var edges = [];
 
@@ -435,13 +437,30 @@
 		
 		return edges;
 	};
-		
+
+	// x,y in Real values
+	creanvas.NodeJsController.prototype.isPointInPath = function(x,y)
+	{
+		// convert to Canvas XY
+		return this.context.isPointInPath(x*this.lengthScale,y*this.lengthScale);
+	};
+
 	creanvas.NodeJsController.prototype.addElementType = function(typeName, draw, boxData)
 	{
 				// compute edges
 		var edges = boxData == null ? null : this.getEdges(draw, boxData);
 		
 		this.elementTypes.push({typeName:typeName, draw:draw, edges:edges});
+		
+		// send to server.
+		// should compute on server, really, but how without canvas ? or use nodes-canvas type stuff?
+		this.emitToServer(
+				'registerEdges', 
+				{
+					"typeName":typeName, 
+					"edges":edges
+					// could add a radius stuff.
+				});
 	};
 
 	creanvas.NodeJsController.prototype.add  = function ()
