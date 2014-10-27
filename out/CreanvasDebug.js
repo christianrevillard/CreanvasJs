@@ -1178,16 +1178,16 @@ var CreJs = CreJs || {};
         }
       }
       emitBuffer.push({action:action, actionData:actionData, overrideActionKey:overrideActionKey});
-      setTimeout(function() {
-        if (emitBuffer.length == 0) {
-          return;
-        }
-        emitBuffer.forEach(function(e) {
-          controller.nodeSocket.emit(e.action, JSON.stringify(e.actionData));
-          emitBuffer = [];
-        });
-      }, controller.clientToServerBuffering);
     };
+    setInterval(function() {
+      if (emitBuffer.length == 0) {
+        return;
+      }
+      emitBuffer.forEach(function(e) {
+        controller.nodeSocket.emit(e.action, JSON.stringify(e.actionData));
+        emitBuffer = [];
+      });
+    }, controller.clientToServerBuffering);
     if (DEBUG) {
       this.logMessage("Starting controller");
     }
@@ -1212,12 +1212,7 @@ var CreJs = CreJs || {};
         });
         if (els.length > 0) {
           var el = els[0];
-          el.elementX = updated["elementX"] || el.elementX;
-          el.elementY = updated["elementY"] || el.elementY;
-          el.elementZ = updated["elementZ"] || el.elementZ;
-          el.elementScaleX = updated["elementScaleX"] || el.elementScaleX;
-          el.elementScaleY = updated["elementScaleY"] || el.elementScaleY;
-          el.elementAngle = updated["elementAngle"] || el.elementAngle;
+          el.updated = updated;
           if (updated["typeName"] && el.elementType.typeName != updated["typeName"]) {
             el.elementType = controller.elementTypes.filter(function(e) {
               return e.typeName == updated["typeName"];
@@ -1480,7 +1475,7 @@ var CreJs = CreJs || {};
     controller.elements.push(element);
     return element;
   };
-  creanvas.NodeJsController.DEFAULT_REFRESH_TIME = 50;
+  creanvas.NodeJsController.DEFAULT_REFRESH_TIME = 40;
   creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR = "#FFF";
   creanvas["NodeJsController"] = creanvas.NodeJsController;
   creanvas.NodeJsController.prototype["addElementType"] = creanvas.NodeJsController.prototype.addElementType;
@@ -1494,6 +1489,16 @@ var CreJs = CreJs || {};
     setIdentification(element, identificationData[1]);
     setImage(element, imageData[1]);
     setPosition(element, positionData[1]);
+    setInterval(function() {
+      if (element.updated) {
+        element.elementX += .1 * ((element.updated["elementX"] === undefined ? element.elementX : element.updated["elementX"]) - element.elementX);
+        element.elementY += .1 * ((element.updated["elementY"] === undefined ? element.elementY : element.updated["elementY"]) - element.elementY);
+        element.elementZ += .1 * ((element.updated["elementZ"] === undefined ? element.elementZ : element.updated["elementZ"]) - element.elementZ);
+        element.elementScaleX += .1 * ((element.updated["elementScaleX"] === undefined ? element.elementScaleX : element.updated["elementScaleX"]) - element.elementScaleX);
+        element.elementScaleY += .1 * ((element.updated["elementScaleY"] === undefined ? element.elementScaleY : element.updated["elementScaleY"]) - element.elementScaleY);
+        element.elementAngle += .1 * ((element.updated["elementAngle"] === undefined ? element.elementAngle : element.updated["elementAngle"]) - element.elementAngle);
+      }
+    }, 40);
     this.drawMyself = function() {
       var element = this;
       element.controller.context.translate(element.elementX, element.elementY);

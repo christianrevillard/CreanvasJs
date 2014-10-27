@@ -37,25 +37,24 @@
 			}
 
 			emitBuffer.push({action:action, actionData:actionData, overrideActionKey:overrideActionKey});
-			
-			setTimeout(
-					function()
-					{
-						if (emitBuffer.length == 0)
-							return;
-						
-						emitBuffer.forEach(function(e) {
-							
-							controller.nodeSocket.emit(
-								e.action, 
-								JSON.stringify(e.actionData));	
-							
-						emitBuffer = [];
-						});
-					},
-					controller.clientToServerBuffering);
 		};
 		
+		setInterval(
+			function()
+			{
+				if (emitBuffer.length == 0)
+					return;
+				
+				emitBuffer.forEach(function(e) {
+					
+					controller.nodeSocket.emit(
+						e.action, 
+						JSON.stringify(e.actionData));	
+					
+				emitBuffer = [];
+				});
+			},
+			controller.clientToServerBuffering);		
 		
 		if (DEBUG) this.logMessage('Starting controller');
 		
@@ -88,12 +87,8 @@
 				if (els.length>0) { 
 					// updates			
 					var el = els[0];
-					el.elementX = updated["elementX"] || el.elementX;
-					el.elementY = updated["elementY"] || el.elementY;
-					el.elementZ = updated["elementZ"] || el.elementZ;
-					el.elementScaleX = updated["elementScaleX"] || el.elementScaleX;
-					el.elementScaleY = updated["elementScaleY"] || el.elementScaleY;
-					el.elementAngle = updated["elementAngle"] || el.elementAngle;
+					
+					el.updated = updated;
 
 					if (updated['typeName'] && el.elementType.typeName != updated['typeName'])
 					{
@@ -482,7 +477,7 @@
 		return element;
 	};
 
-	creanvas.NodeJsController.DEFAULT_REFRESH_TIME = 50;
+	creanvas.NodeJsController.DEFAULT_REFRESH_TIME = 40; // 25 times per second
 	creanvas.NodeJsController.DEFAULT_BACKGROUND_COLOUR = "#FFF";
 
 	// Export interface 
