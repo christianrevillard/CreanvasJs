@@ -10,12 +10,10 @@ var DEBUG = true;
 
 var CreJs = CreJs || {};
 CreJs.Creanvas = CreJs.Creanvas || {};
-CreJs.CreanvasNodeClient = CreJs.CreanvasNodeClient || {};
 
 // Export
 window["CreJs"] = CreJs;
 CreJs["Creanvas"] = CreJs.Creanvas;
-CreJs["CreanvasNodeClient"] = CreJs.CreanvasNodeClient; // own?
 
 if (TEST)
 {
